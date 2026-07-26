@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import { ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { Eye, EyeOff, Plus, ArrowDownCircle, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, Plus, ArrowUpRight, Sparkles } from 'lucide-react';
 
 export const TotalAssetsHero = () => {
   const { wallet, openModal, marketData, arbitrageOpps, executeManualTrade } = useCrypto();
@@ -103,10 +103,10 @@ export const TotalAssetsHero = () => {
           </button>
           
           <button
-            onClick={() => openModal('WALLET')}
-            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-[#161a23] border border-slate-800 text-slate-300 font-mono font-semibold text-xs transition hover:border-slate-700"
+            onClick={() => openModal('WITHDRAW')}
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-[#161a23] border border-slate-800 text-rose-300 font-mono font-semibold text-xs transition hover:border-rose-800/80 hover:bg-rose-950/40"
           >
-            <ArrowDownCircle className="w-4 h-4 text-[#34d399]" />
+            <ArrowUpRight className="w-4 h-4 text-rose-400" />
             <span>Withdraw</span>
           </button>
         </div>
@@ -196,7 +196,7 @@ export const TotalAssetsHero = () => {
         <div className="pt-2 border-t border-slate-800/60 space-y-1.5">
           <div className="flex justify-between text-[10px] text-slate-400">
             <span>Portfolio Allocation: Cash (68%) • BTC (16%) • ETH (10%) • SOL (6%)</span>
-            <span className="text-slate-300 font-bold">100% Allocated</span>
+            <span className="text-slate-[#34d399] font-bold">100% Allocated</span>
           </div>
           <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden flex">
             <div style={{ width: '68%' }} className="h-full bg-[#34d399]" />

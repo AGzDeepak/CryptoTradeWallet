@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import { db, collection, addDoc, serverTimestamp } from '../config/firebase';
 import { 
-  X, Wallet, Copy, Check, Bell, Sliders, ArrowDownCircle, PlusCircle, LogOut, 
+  X, Wallet, Copy, Check, Bell, Sliders, ArrowDownCircle, ArrowUpRight, PlusCircle, LogOut, 
   Trash2, Zap, CheckCircle2, AlertTriangle, Info, AlertOctagon, ShieldCheck, 
   Link2, Bot, Send, Star, HelpCircle, MessageSquare, Sparkles, User, RefreshCw
 } from 'lucide-react';
@@ -14,6 +14,7 @@ export const GlobalModals = () => {
     closeModal, 
     wallet, 
     depositFunds, 
+    withdrawFunds,
     resetWallet, 
     openModal,
     notifications,
@@ -34,6 +35,13 @@ export const GlobalModals = () => {
   // Deposit state
   const [depositAmount, setDepositAmount] = useState('10000');
   const [depositCurrency, setDepositCurrency] = useState('USDT');
+
+  // Withdraw state
+  const [withdrawAmount, setWithdrawAmount] = useState('5000');
+  const [withdrawCurrency, setWithdrawCurrency] = useState('USDT');
+  const [withdrawAddress, setWithdrawAddress] = useState('0x71C765b28F3D140a831C28190d7B41');
+  const [withdrawNetwork, setWithdrawNetwork] = useState('Arbitrum One');
+  const [withdrawSuccess, setWithdrawSuccess] = useState(false);
 
   // Strategy config state
   const [minProfit, setMinProfit] = useState('0.25');
@@ -72,6 +80,18 @@ export const GlobalModals = () => {
     closeModal();
   };
 
+  const handleConfirmWithdrawal = (e) => {
+    e.preventDefault();
+    const success = withdrawFunds(parseFloat(withdrawAmount), withdrawAddress, withdrawCurrency);
+    if (success) {
+      setWithdrawSuccess(true);
+      setTimeout(() => {
+        setWithdrawSuccess(false);
+        closeModal();
+      }, 1400);
+    }
+  };
+
   const handleConnectWeb3 = async () => {
     await connectRealWallet(selectedWalletType);
   };
@@ -104,8 +124,8 @@ export const GlobalModals = () => {
         aiResponseText = "Your $100,000.00 USDT Demo Paper Wallet is 100% risk-free! It uses live real-time price feeds to simulate realistic execution, position PnL, and auto-settlements without real funds.";
       } else if (queryLower.includes('bot') || queryLower.includes('autopilot') || queryLower.includes('strategy')) {
         aiResponseText = "The AI Bot Autopilot scans orderbooks every 800ms. Set your Minimum Profit Threshold slider in the AutoTrader bar (e.g. 0.25%). The bot executes trades only when net profit exceeds your threshold!";
-      } else if (queryLower.includes('deposit') || queryLower.includes('fund')) {
-        aiResponseText = "Click the '+ Deposit' button at the top to add mock funds ($1k, $5k, $10k, $50k) to your virtual paper balance at any time.";
+      } else if (queryLower.includes('deposit') || queryLower.includes('withdraw')) {
+        aiResponseText = "Click '+ Deposit' to add mock funds or 'Withdraw' to transfer USDT to your Web3 destination address instantly.";
       }
 
       const aiMsg = {
@@ -170,6 +190,7 @@ export const GlobalModals = () => {
           <h3 className="text-base font-extrabold text-white flex items-center gap-2 font-mono">
             {activeModal === 'WALLET' && <Wallet className="w-5 h-5 text-cyan-400" />}
             {activeModal === 'DEPOSIT' && <ArrowDownCircle className="w-5 h-5 text-[#34d399]" />}
+            {activeModal === 'WITHDRAW' && <ArrowUpRight className="w-5 h-5 text-rose-400" />}
             {activeModal === 'NOTIFICATIONS' && <Bell className="w-5 h-5 text-purple-400" />}
             {activeModal === 'LOGOUT' && <LogOut className="w-5 h-5 text-rose-400" />}
             {activeModal === 'CONFIG_STRATEGY' && <Sliders className="w-5 h-5 text-cyan-400" />}
@@ -178,6 +199,7 @@ export const GlobalModals = () => {
             
             {activeModal === 'WALLET' && 'WALLET CONFIGURATION & WEB3'}
             {activeModal === 'DEPOSIT' && 'DEPOSIT MOCK FUNDS'}
+            {activeModal === 'WITHDRAW' && 'WITHDRAW FUNDS TO WEB3 WALLET'}
             {activeModal === 'NOTIFICATIONS' && 'SYSTEM NOTIFICATIONS LOG'}
             {activeModal === 'LOGOUT' && 'CONFIRM LOGOUT'}
             {activeModal === 'CONFIG_STRATEGY' && `CONFIGURE MODEL: ${modalData?.name || 'STRATEGY'}`}
@@ -249,10 +271,13 @@ export const GlobalModals = () => {
                       onClick={() => openModal('DEPOSIT')}
                       className="flex-1 py-2.5 bg-[#34d399] hover:bg-[#6ee7b7] text-black font-bold rounded-xl flex items-center justify-center gap-1.5 font-sans"
                     >
-                      <PlusCircle className="w-4 h-4" /> Deposit Demo Funds
+                      <PlusCircle className="w-4 h-4" /> Deposit
                     </button>
-                    <button onClick={() => { resetWallet(); closeModal(); }} className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-rose-300 font-bold rounded-xl border border-slate-800 font-sans">
-                      Reset ($100k)
+                    <button
+                      onClick={() => openModal('WITHDRAW')}
+                      className="flex-1 py-2.5 bg-rose-950/80 hover:bg-rose-900 text-rose-300 font-bold rounded-xl border border-rose-800 flex items-center justify-center gap-1.5 font-sans"
+                    >
+                      <ArrowUpRight className="w-4 h-4 text-rose-400" /> Withdraw
                     </button>
                   </div>
                 </div>
@@ -329,7 +354,165 @@ export const GlobalModals = () => {
             </div>
           )}
 
-          {/* 6. AI SUPPORT ASSISTANT MODAL */}
+          {/* 2. DEPOSIT MODAL */}
+          {activeModal === 'DEPOSIT' && (
+            <form onSubmit={handleConfirmDeposit} className="space-y-4">
+              <div>
+                <label className="text-slate-400 block mb-1">Select Currency</label>
+                <select
+                  value={depositCurrency}
+                  onChange={(e) => setDepositCurrency(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono text-xs outline-none"
+                >
+                  <option value="USDT">Tether (USDT)</option>
+                  <option value="USDC">USD Coin (USDC)</option>
+                  <option value="BTC">Bitcoin (BTC)</option>
+                  <option value="ETH">Ethereum (ETH)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-slate-400 block mb-1">Deposit Amount ($)</label>
+                <input
+                  type="number"
+                  step="500"
+                  value={depositAmount}
+                  onChange={(e) => setDepositAmount(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-[#34d399] font-bold text-sm outline-none"
+                />
+              </div>
+
+              <div className="flex space-x-2 pt-1">
+                {['1000', '5000', '10000', '50000'].map((amt) => (
+                  <button
+                    key={amt}
+                    type="button"
+                    onClick={() => setDepositAmount(amt)}
+                    className="flex-1 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-[11px]"
+                  >
+                    +${parseInt(amt).toLocaleString()}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 bg-[#34d399] hover:bg-[#6ee7b7] text-black font-extrabold rounded-xl shadow-lg mt-2 font-sans"
+              >
+                CONFIRM MOCK DEPOSIT
+              </button>
+            </form>
+          )}
+
+          {/* 3. WITHDRAW MODAL (NEW & FULLY INTERACTIVE) */}
+          {activeModal === 'WITHDRAW' && (
+            <div className="space-y-4 font-sans">
+              {withdrawSuccess ? (
+                <div className="p-6 rounded-xl bg-[#060810] border border-[#34d399]/40 text-center space-y-3 font-mono">
+                  <div className="w-12 h-12 rounded-full bg-emerald-950 text-[#34d399] border border-emerald-800 flex items-center justify-center mx-auto">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <h4 className="text-base font-extrabold text-white">Withdrawal Dispatched!</h4>
+                  <p className="text-xs text-slate-400 font-sans">
+                    Transfer of <strong className="text-[#34d399]">${parseFloat(withdrawAmount).toLocaleString()} {withdrawCurrency}</strong> to <code className="text-cyan-400">{withdrawAddress.substring(0, 10)}...</code> is processing on {withdrawNetwork}.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleConfirmWithdrawal} className="space-y-4 font-mono text-xs">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-[#060810] border border-slate-800">
+                    <span className="text-slate-400">Available Balance:</span>
+                    <span className="text-sm font-bold text-[#34d399]">
+                      ${wallet.virtualBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-slate-400 block mb-1">Asset Currency</label>
+                      <select
+                        value={withdrawCurrency}
+                        onChange={(e) => setWithdrawCurrency(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none"
+                      >
+                        <option value="USDT">USDT (Tether)</option>
+                        <option value="USDC">USDC (USD Coin)</option>
+                        <option value="ETH">ETH (Ethereum)</option>
+                        <option value="BTC">BTC (Bitcoin)</option>
+                        <option value="SOL">SOL (Solana)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-slate-400 block mb-1">Network Chain</label>
+                      <select
+                        value={withdrawNetwork}
+                        onChange={(e) => setWithdrawNetwork(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-[#34d399] font-bold outline-none"
+                      >
+                        <option value="Arbitrum One">Arbitrum One</option>
+                        <option value="Ethereum Mainnet">Ethereum Mainnet</option>
+                        <option value="Polygon">Polygon</option>
+                        <option value="Solana Mainnet">Solana Mainnet</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-slate-400 block mb-1">Destination Web3 Address</label>
+                    <input
+                      type="text"
+                      value={withdrawAddress}
+                      onChange={(e) => setWithdrawAddress(e.target.value)}
+                      placeholder="0x71C765b28F3D140a831C28190d7B41"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-cyan-400 font-mono text-xs outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-slate-400">Withdraw Amount ($)</label>
+                      <span className="text-slate-500 text-[10px]">Fee: $0.85 (0.0002 ETH)</span>
+                    </div>
+                    <input
+                      type="number"
+                      step="100"
+                      value={withdrawAmount}
+                      onChange={(e) => setWithdrawAmount(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-rose-400 font-bold text-sm outline-none"
+                    />
+                  </div>
+
+                  <div className="flex space-x-2 pt-0.5">
+                    {[
+                      { label: '25%', val: (wallet.virtualBalance * 0.25).toFixed(0) },
+                      { label: '50%', val: (wallet.virtualBalance * 0.50).toFixed(0) },
+                      { label: '75%', val: (wallet.virtualBalance * 0.75).toFixed(0) },
+                      { label: 'MAX', val: wallet.virtualBalance.toFixed(0) }
+                    ].map((btn) => (
+                      <button
+                        key={btn.label}
+                        type="button"
+                        onClick={() => setWithdrawAmount(btn.val)}
+                        className="flex-1 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-[11px]"
+                      >
+                        {btn.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-3 bg-rose-600 hover:bg-rose-500 text-white font-extrabold rounded-xl shadow-lg mt-2 font-sans flex items-center justify-center space-x-2 uppercase tracking-wider text-xs"
+                  >
+                    <ArrowUpRight className="w-4 h-4" />
+                    <span>CONFIRM WITHDRAWAL</span>
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
+
+          {/* 4. AI SUPPORT ASSISTANT MODAL */}
           {activeModal === 'AI_SUPPORT' && (
             <div className="space-y-3 font-sans">
               <div className="flex items-center justify-between p-3 rounded-xl bg-[#060810] border border-slate-800 text-xs font-mono">
@@ -428,7 +611,7 @@ export const GlobalModals = () => {
             </div>
           )}
 
-          {/* 7. USER FEEDBACK SUBMISSION MODAL */}
+          {/* 5. USER FEEDBACK SUBMISSION MODAL */}
           {activeModal === 'FEEDBACK' && (
             <div className="space-y-4 font-sans">
               {feedbackSubmitted ? (
@@ -504,57 +687,7 @@ export const GlobalModals = () => {
             </div>
           )}
 
-          {/* 2. DEPOSIT MODAL */}
-          {activeModal === 'DEPOSIT' && (
-            <form onSubmit={handleConfirmDeposit} className="space-y-4">
-              <div>
-                <label className="text-slate-400 block mb-1">Select Currency</label>
-                <select
-                  value={depositCurrency}
-                  onChange={(e) => setDepositCurrency(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono text-xs outline-none"
-                >
-                  <option value="USDT">Tether (USDT)</option>
-                  <option value="USDC">USD Coin (USDC)</option>
-                  <option value="BTC">Bitcoin (BTC)</option>
-                  <option value="ETH">Ethereum (ETH)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-slate-400 block mb-1">Deposit Amount ($)</label>
-                <input
-                  type="number"
-                  step="500"
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-[#34d399] font-bold text-sm outline-none"
-                />
-              </div>
-
-              <div className="flex space-x-2 pt-1">
-                {['1000', '5000', '10000', '50000'].map((amt) => (
-                  <button
-                    key={amt}
-                    type="button"
-                    onClick={() => setDepositAmount(amt)}
-                    className="flex-1 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-[11px]"
-                  >
-                    +${parseInt(amt).toLocaleString()}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-3 bg-[#34d399] hover:bg-[#6ee7b7] text-black font-extrabold rounded-xl shadow-lg mt-2 font-sans"
-              >
-                CONFIRM MOCK DEPOSIT
-              </button>
-            </form>
-          )}
-
-          {/* 3. NOTIFICATIONS MODAL */}
+          {/* 6. NOTIFICATIONS MODAL */}
           {activeModal === 'NOTIFICATIONS' && (
             <div className="space-y-3 font-sans">
               <div className="flex justify-between items-center pb-2 border-b border-slate-800 text-xs font-mono">
@@ -618,7 +751,7 @@ export const GlobalModals = () => {
             </div>
           )}
 
-          {/* 4. LOGOUT MODAL */}
+          {/* 7. LOGOUT MODAL */}
           {activeModal === 'LOGOUT' && (
             <div className="space-y-4 text-center">
               <p className="text-slate-300 font-sans text-sm">
@@ -635,7 +768,7 @@ export const GlobalModals = () => {
             </div>
           )}
 
-          {/* 5. CONFIG STRATEGY MODAL */}
+          {/* 8. CONFIG STRATEGY MODAL */}
           {activeModal === 'CONFIG_STRATEGY' && (
             <div className="space-y-4">
               <div>

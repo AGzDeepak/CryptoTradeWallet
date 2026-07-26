@@ -95,7 +95,6 @@ export const CryptoProvider = ({ children }) => {
   const connectRealWallet = async (walletType = 'MetaMask') => {
     try {
       if (!isWeb3Available()) {
-        // Simulated Web3 Wallet for Demo Testing if browser extension not installed
         const simulated = {
           address: '0x71C765b28F3D140a831C28190d7B41',
           shortAddress: '0x71C7...d7B41',
@@ -348,6 +347,34 @@ export const CryptoProvider = ({ children }) => {
     addNotification(`Mock Deposit Successful: +$${num.toLocaleString()} ${currency}`, 'success');
   };
 
+  // Withdraw Funds Handler
+  const withdrawFunds = (amount, address = '0x71C7...d7B41', currency = 'USDT') => {
+    const num = parseFloat(amount);
+    if (isNaN(num) || num <= 0) {
+      addNotification('Invalid withdrawal amount.', 'warning');
+      audioFx.playAlertChime();
+      return false;
+    }
+
+    if (num > wallet.virtualBalance) {
+      addNotification(`Withdrawal Failed: Amount ($${num.toLocaleString()}) exceeds available balance ($${wallet.virtualBalance.toLocaleString()})!`, 'danger');
+      audioFx.playAlertChime();
+      return false;
+    }
+
+    setWallet(w => ({
+      ...w,
+      virtualBalance: parseFloat((w.virtualBalance - num).toFixed(2)),
+      totalEquity: parseFloat((w.totalEquity - num).toFixed(2))
+    }));
+
+    const shortAddr = address.length > 10 ? `${address.substring(0, 6)}...${address.substring(address.length - 4)}` : address;
+
+    audioFx.playTradeSuccess();
+    addNotification(`Withdrawal Initiated: -$${num.toLocaleString()} ${currency} transferred to ${shortAddr}`, 'success');
+    return true;
+  };
+
   // Order Placement
   const executeOrder = (side, symbol, exchange, amount, priceOverride = null) => {
     const coin = marketData.find(c => c.symbol === symbol) || marketData[0];
@@ -573,6 +600,7 @@ export const CryptoProvider = ({ children }) => {
         autoTradeCount,
         wallet,
         depositFunds,
+        withdrawFunds,
         executeOrder,
         openPositions,
         closePosition,

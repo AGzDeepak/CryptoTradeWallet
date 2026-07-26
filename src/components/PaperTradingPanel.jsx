@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { Wallet, RefreshCw, ShoppingBag, ShieldAlert, ArrowDownCircle, PlusCircle, CheckCircle2 } from 'lucide-react';
+import { Wallet, RefreshCw, ShoppingBag, ShieldAlert, ArrowUpRight, PlusCircle } from 'lucide-react';
 
 export const PaperTradingPanel = () => {
   const { wallet, resetWallet, openPositions, tradeHistory, executeOrder, openModal } = useCrypto();
@@ -36,7 +36,15 @@ export const PaperTradingPanel = () => {
             className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-black text-xs font-bold transition hover:brightness-110 shadow-md"
           >
             <PlusCircle className="w-4 h-4" />
-            <span>Deposit Funds</span>
+            <span>Deposit</span>
+          </button>
+
+          <button
+            onClick={() => openModal('WITHDRAW')}
+            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full bg-rose-950/80 hover:bg-rose-900 border border-rose-800 text-rose-300 text-xs font-mono font-semibold transition"
+          >
+            <ArrowUpRight className="w-4 h-4 text-rose-400" />
+            <span>Withdraw</span>
           </button>
           
           <button
@@ -54,7 +62,7 @@ export const PaperTradingPanel = () => {
         <div className="woofi-subcard">
           <span className="text-xs text-slate-400 font-mono uppercase block mb-1">Available Cash</span>
           <span className="text-xl font-extrabold font-mono text-white">
-            ${wallet.virtualBalance.toLocaleString()}
+            ${wallet.virtualBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </span>
           <span className="text-[10px] text-slate-500 font-mono block mt-1">USDT Available</span>
         </div>
@@ -62,7 +70,7 @@ export const PaperTradingPanel = () => {
         <div className="woofi-subcard">
           <span className="text-xs text-slate-400 font-mono uppercase block mb-1">Total Net Equity</span>
           <span className="text-xl font-extrabold font-mono text-cyan-400">
-            ${wallet.totalEquity.toLocaleString()}
+            ${wallet.totalEquity.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </span>
           <span className="text-[10px] text-cyan-500/80 font-mono block mt-1">Cash + Active Orders</span>
         </div>
@@ -70,7 +78,7 @@ export const PaperTradingPanel = () => {
         <div className="woofi-subcard">
           <span className="text-xs text-slate-400 font-mono uppercase block mb-1">Today's Profit</span>
           <span className="text-xl font-extrabold font-mono text-emerald-400">
-            +${wallet.todayProfit.toLocaleString()}
+            +${wallet.todayProfit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </span>
           <span className="text-[10px] text-emerald-500/80 font-mono block mt-1">ROI: +{wallet.roiPct}%</span>
         </div>
