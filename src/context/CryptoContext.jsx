@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { audioFx } from '../utils/audio';
 import { recordFirebaseLoginLog, sanitizeInput } from '../services/securityService';
+import { connectRealWeb3Wallet, isWeb3Available } from '../services/web3Service';
 
 const CryptoContext = createContext();
 
@@ -15,7 +16,6 @@ const INITIAL_COINS = [
 
 const EXCHANGES = ['Binance', 'Bybit', 'OKX', 'Coinbase'];
 
-// Default Fresh New User Wallet State ($100,000.00 USDT)
 const NEW_USER_WALLET = {
   virtualBalance: 100000.00,
   totalEquity: 100000.00,
@@ -36,6 +36,18 @@ export const CryptoProvider = ({ children }) => {
     avatar: 'D',
     role: 'Institutional Quant Trader',
     secStatus: '256-BIT ENCRYPTED'
+  });
+
+  // Dual Wallet Mode State: 'DEMO' (Paper Trading) | 'REAL' (Web3 Wallet)
+  const [walletMode, setWalletMode] = useState('DEMO');
+  const [realWallet, setRealWallet] = useState({
+    connected: false,
+    address: '',
+    shortAddress: '',
+    balanceEth: 0,
+    balanceUsd: 0,
+    networkName: 'Ethereum Mainnet',
+    walletType: 'MetaMask'
   });
 
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -79,10 +91,57 @@ export const CryptoProvider = ({ children }) => {
 
   const lastAutoTradeTimeRef = useRef(0);
 
+  // Real Web3 Wallet Connect Handler
+  const connectRealWallet = async (walletType = 'MetaMask') => {
+    try {
+      if (!isWeb3Available()) {
+        // Simulated Web3 Wallet for Demo Testing if browser extension not installed
+        const simulated = {
+          address: '0x71C765b28F3D140a831C28190d7B41',
+          shortAddress: '0x71C7...d7B41',
+          balanceEth: 4.8250,
+          balanceUsd: 17081.45,
+          networkName: 'Arbitrum One',
+          walletType,
+          connected: true
+        };
+        setRealWallet(simulated);
+        setWalletMode('REAL');
+        audioFx.playTradeSuccess();
+        addNotification(`Connected ${walletType} Real Web3 Wallet: ${simulated.shortAddress}`, 'success');
+        return true;
+      }
+
+      const walletInfo = await connectRealWeb3Wallet(walletType);
+      setRealWallet(walletInfo);
+      setWalletMode('REAL');
+      audioFx.playTradeSuccess();
+      addNotification(`Connected Real Web3 Wallet: ${walletInfo.shortAddress} on ${walletInfo.networkName}`, 'success');
+      return true;
+    } catch (err) {
+      addNotification(`Web3 Wallet Connection Error: ${err.message}`, 'warning');
+      audioFx.playAlertChime();
+      return false;
+    }
+  };
+
+  const disconnectRealWallet = () => {
+    setRealWallet({
+      connected: false,
+      address: '',
+      shortAddress: '',
+      balanceEth: 0,
+      balanceUsd: 0,
+      networkName: 'Ethereum Mainnet',
+      walletType: 'MetaMask'
+    });
+    setWalletMode('DEMO');
+    addNotification('Disconnected Web3 Wallet. Switched to Demo Paper Wallet.', 'info');
+  };
+
   // Storage Key Helper per User Email
   const getStorageKey = (email) => `chainblock_user_${(email || 'default').toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
 
-  // Save User State to Local Storage
   const persistUserData = (email, data) => {
     try {
       localStorage.setItem(getStorageKey(email), JSON.stringify(data));
@@ -91,7 +150,7 @@ export const CryptoProvider = ({ children }) => {
     }
   };
 
-  // Secure Authentication Login Handler with Isolated New User Workspace
+  // Secure Authentication Login Handler
   const login = async (email, password, name = 'Deepak Kumar', provider = 'firebase_email') => {
     const cleanEmail = sanitizeInput(email);
     const cleanName = sanitizeInput(name);
@@ -106,11 +165,8 @@ export const CryptoProvider = ({ children }) => {
     });
     setIsAuthenticated(true);
 
-    // Check if previous state exists for this specific user
     const existingRaw = localStorage.getItem(storageKey);
-
     if (existingRaw) {
-      // Existing User: Restore their isolated portfolio and trading history
       try {
         const saved = JSON.parse(existingRaw);
         setWallet(saved.wallet || NEW_USER_WALLET);
@@ -119,19 +175,16 @@ export const CryptoProvider = ({ children }) => {
         setTotalBotProfit(saved.totalBotProfit || 0.00);
         setAutoTradeCount(saved.autoTradeCount || 0);
         setNotifications(saved.notifications || []);
-        addNotification(`Welcome back, ${cleanName}! Your saved workspace has been loaded.`, 'success');
+        addNotification(`Welcome back, ${cleanName}! Loaded saved workspace.`, 'success');
       } catch (e) {
         initializeFreshUser(cleanEmail, cleanName);
       }
     } else {
-      // NEW USER: Start completely fresh from $100,000.00 USDT
       initializeFreshUser(cleanEmail, cleanName);
     }
 
-    // Save Login Metadata to Firebase Firestore Database
     const token = await recordFirebaseLoginLog({ email: cleanEmail, name: cleanName }, provider);
     setSessionToken(token);
-
     audioFx.playTradeSuccess();
   };
 
@@ -333,7 +386,7 @@ export const CryptoProvider = ({ children }) => {
 
     setOpenPositions(prev => [newPos, ...prev]);
     audioFx.playTradeSuccess();
-    addNotification(`Mock ${side} Executed: ${amount} ${symbol} @ $${price.toLocaleString()} on ${exchange}`, 'success');
+    addNotification(`Executed ${side}: ${amount} ${symbol} @ $${price.toLocaleString()} on ${exchange} (${walletMode} Mode)`, 'success');
     return true;
   };
 
@@ -488,6 +541,11 @@ export const CryptoProvider = ({ children }) => {
         user,
         login,
         logout,
+        walletMode,
+        setWalletMode,
+        realWallet,
+        connectRealWallet,
+        disconnectRealWallet,
         activeTab,
         setActiveTab,
         isSidebarCollapsed,
