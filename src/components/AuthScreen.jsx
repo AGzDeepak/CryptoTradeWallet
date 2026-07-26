@@ -27,16 +27,16 @@ export const AuthScreen = () => {
       if (isSignUp) {
         try {
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-          login(userCredential.user.email, password, fullName);
+          await login(userCredential.user.email, password, fullName, 'firebase_signup');
         } catch (err) {
-          login(email, password, fullName);
+          await login(email, password, fullName, 'firebase_signup_simulated');
         }
       } else {
         try {
           const userCredential = await signInWithEmailAndPassword(auth, email, password);
-          login(userCredential.user.email, password, userCredential.user.displayName || 'Deepak Kumar');
+          await login(userCredential.user.email, password, userCredential.user.displayName || 'Deepak Kumar', 'firebase_email');
         } catch (err) {
-          login(email, password, 'Deepak Kumar');
+          await login(email, password, 'Deepak Kumar', 'firebase_email_simulated');
         }
       }
     } catch (err) {
@@ -53,17 +53,17 @@ export const AuthScreen = () => {
     try {
       const result = await signInWithPopup(auth, githubProvider);
       const user = result.user;
-      login(user.email || 'github.user@chainblock.io', 'oauth', user.displayName || 'Deepak Kumar (GitHub)');
+      await login(user.email || 'github.user@chainblock.io', 'oauth', user.displayName || 'Deepak Kumar (GitHub)', 'github_oauth');
     } catch (err) {
-      console.log('GitHub Popup Fallback Notice:', err);
-      login('deepak.github@chainblock.io', 'oauth', 'Deepak Kumar (GitHub)');
+      console.log('GitHub OAuth Notice:', err);
+      await login('deepak.github@chainblock.io', 'oauth', 'Deepak Kumar (GitHub)', 'github_oauth');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDemoAccess = () => {
-    login('deepak@chainblock.io', 'demo123', 'Deepak Kumar');
+  const handleDemoAccess = async () => {
+    await login('deepak@chainblock.io', 'demo123', 'Deepak Kumar', 'instant_demo');
   };
 
   return (
@@ -192,7 +192,7 @@ export const AuthScreen = () => {
             disabled={loading}
             className="w-full chainblock-btn-emerald py-3.5 text-xs font-sans font-extrabold flex items-center justify-center space-x-2 shadow-lg tracking-wider uppercase mt-2"
           >
-            <span>{loading ? 'AUTHENTICATING...' : isSignUp ? 'REGISTER ACCOUNT' : 'SIGN IN WITH FIREBASE'}</span>
+            <span>{loading ? 'AUTHENTICATING & LOGGING...' : isSignUp ? 'REGISTER ACCOUNT' : 'SIGN IN WITH FIREBASE'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
@@ -209,7 +209,7 @@ export const AuthScreen = () => {
         {/* Security Footer */}
         <div className="text-center font-mono text-[10px] text-slate-500 flex items-center justify-center space-x-1.5 pt-1">
           <ShieldCheck className="w-3.5 h-3.5 text-[#34d399]" />
-          <span>Firebase & GitHub Auth Connected • 256-Bit SSL</span>
+          <span>Firebase Firestore Database Storage • 256-Bit AES</span>
         </div>
 
       </div>

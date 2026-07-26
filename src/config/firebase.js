@@ -7,6 +7,18 @@ import {
   createUserWithEmailAndPassword,
   signOut 
 } from 'firebase/auth';
+import { 
+  getFirestore, 
+  collection, 
+  doc, 
+  setDoc, 
+  addDoc, 
+  serverTimestamp,
+  getDocs,
+  query,
+  orderBy,
+  limit 
+} from 'firebase/firestore';
 
 // Firebase Project Configuration
 const firebaseConfig = {
@@ -18,9 +30,10 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:847291038291:web:94a827bc19aef29184"
 };
 
-// Initialize Firebase App
+// Initialize Firebase App & Services
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+export const db = getFirestore(app);
 export const githubProvider = new GithubAuthProvider();
 
 // Scope request for GitHub user profile & email
@@ -31,5 +44,14 @@ export {
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signOut
+  signOut,
+  collection,
+  doc,
+  setDoc,
+  addDoc,
+  serverTimestamp,
+  getDocs,
+  query,
+  orderBy,
+  limit
 };

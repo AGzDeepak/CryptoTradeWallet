@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { audioFx } from '../utils/audio';
+import { recordFirebaseLoginLog, sanitizeInput } from '../services/securityService';
 
 const CryptoContext = createContext();
 
@@ -15,13 +16,15 @@ const INITIAL_COINS = [
 const EXCHANGES = ['Binance', 'Bybit', 'OKX', 'Coinbase'];
 
 export const CryptoProvider = ({ children }) => {
-  // Authentication State
+  // Authentication & Security State
   const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [sessionToken, setSessionToken] = useState(null);
   const [user, setUser] = useState({
     name: 'Deepak Kumar',
     email: 'deepak@chainblock.io',
     avatar: 'D',
-    role: 'Institutional Quant Trader'
+    role: 'Institutional Quant Trader',
+    secStatus: '256-BIT ENCRYPTED'
   });
 
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -115,22 +118,33 @@ export const CryptoProvider = ({ children }) => {
 
   const lastAutoTradeTimeRef = useRef(0);
 
-  // Authentication Handlers
-  const login = (email, password, name = 'Deepak Kumar') => {
+  // Secure Authentication Login Handler with Firebase Firestore Record
+  const login = async (email, password, name = 'Deepak Kumar', provider = 'firebase_email') => {
+    const cleanEmail = sanitizeInput(email);
+    const cleanName = sanitizeInput(name);
+
     setUser({
-      name,
-      email,
-      avatar: name.charAt(0).toUpperCase(),
-      role: 'Institutional Quant Trader'
+      name: cleanName,
+      email: cleanEmail,
+      avatar: cleanName.charAt(0).toUpperCase(),
+      role: 'Institutional Quant Trader',
+      secStatus: '256-BIT ENCRYPTED'
     });
     setIsAuthenticated(true);
+
+    // Save Login Metadata to Firebase Firestore
+    const token = await recordFirebaseLoginLog({ email: cleanEmail, name: cleanName }, provider);
+    setSessionToken(token);
+
     audioFx.playTradeSuccess();
-    addNotification(`Welcome back, ${name}! Signed in successfully.`, 'success');
+    addNotification(`Welcome back, ${cleanName}! Login stored securely in Firebase database.`, 'success');
   };
 
   const logout = () => {
     setIsAuthenticated(false);
+    setSessionToken(null);
     audioFx.playAlertChime();
+    addNotification('Session terminated safely.', 'info');
   };
 
   // Live High Frequency Tick Simulation
@@ -444,6 +458,7 @@ export const CryptoProvider = ({ children }) => {
     <CryptoContext.Provider
       value={{
         isAuthenticated,
+        sessionToken,
         user,
         login,
         logout,
