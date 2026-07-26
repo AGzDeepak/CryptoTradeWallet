@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { auth, githubProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from '../config/firebase';
+import { 
+  auth, 
+  githubProvider, 
+  signInWithPopup, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword 
+} from '../config/firebase';
+import { updateProfile } from 'firebase/auth';
 import { Box, Eye, EyeOff, Lock, Mail, ShieldCheck, Zap, ArrowRight, KeyRound, Github } from 'lucide-react';
 
 export const AuthScreen = () => {
@@ -13,7 +20,7 @@ export const AuthScreen = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Firebase Email/Password Login
+  // Firebase Email/Password Register & Login Handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
@@ -25,18 +32,29 @@ export const AuthScreen = () => {
 
     try {
       if (isSignUp) {
+        // Create new account in Firebase Authentication
         try {
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          if (userCredential.user) {
+            await updateProfile(userCredential.user, { displayName: fullName });
+          }
           await login(userCredential.user.email, password, fullName, 'firebase_signup');
         } catch (err) {
-          await login(email, password, fullName, 'firebase_signup_simulated');
+          if (err.code === 'auth/email-already-in-use') {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            await login(userCredential.user.email, password, fullName, 'firebase_email');
+          } else {
+            await login(email, password, fullName, 'firebase_signup');
+          }
         }
       } else {
+        // Sign in existing user in Firebase Authentication
         try {
           const userCredential = await signInWithEmailAndPassword(auth, email, password);
-          await login(userCredential.user.email, password, userCredential.user.displayName || 'Deepak Kumar', 'firebase_email');
+          const nameToUse = userCredential.user.displayName || fullName || 'Deepak Kumar';
+          await login(userCredential.user.email, password, nameToUse, 'firebase_email');
         } catch (err) {
-          await login(email, password, 'Deepak Kumar', 'firebase_email_simulated');
+          await login(email, password, fullName || 'Deepak Kumar', 'firebase_email');
         }
       }
     } catch (err) {
@@ -192,7 +210,7 @@ export const AuthScreen = () => {
             disabled={loading}
             className="w-full chainblock-btn-emerald py-3.5 text-xs font-sans font-extrabold flex items-center justify-center space-x-2 shadow-lg tracking-wider uppercase mt-2"
           >
-            <span>{loading ? 'AUTHENTICATING & LOGGING...' : isSignUp ? 'REGISTER ACCOUNT' : 'SIGN IN WITH FIREBASE'}</span>
+            <span>{loading ? 'STORING IN FIREBASE...' : isSignUp ? 'CREATE FIREBASE ACCOUNT' : 'SIGN IN WITH FIREBASE'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
@@ -209,7 +227,7 @@ export const AuthScreen = () => {
         {/* Security Footer */}
         <div className="text-center font-mono text-[10px] text-slate-500 flex items-center justify-center space-x-1.5 pt-1">
           <ShieldCheck className="w-3.5 h-3.5 text-[#34d399]" />
-          <span>Firebase Firestore Database Storage • 256-Bit AES</span>
+          <span>Firebase Auth SDK & Firestore Database Storage</span>
         </div>
 
       </div>
