@@ -20,12 +20,12 @@ import {
   limit 
 } from 'firebase/firestore';
 
-// Firebase Project Configuration
+// Firebase Project Configuration linked to tradebot-25d4f
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDemoConfigKeyForChainblockApp12345",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "chainblock-ai-trading.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "chainblock-ai-trading",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "chainblock-ai-trading.appspot.com",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDemoConfigKeyForTradebot25d4f",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "tradebot-25d4f.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "tradebot-25d4f",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "tradebot-25d4f.appspot.com",
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "847291038291",
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:847291038291:web:94a827bc19aef29184"
 };
