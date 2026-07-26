@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import { ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { Eye, EyeOff, Plus, ArrowRightLeft, ShieldCheck, ArrowDownCircle, ArrowUpRight, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, Plus, ArrowDownCircle, Sparkles } from 'lucide-react';
 
 export const TotalAssetsHero = () => {
   const { wallet, openModal, marketData, arbitrageOpps, executeManualTrade } = useCrypto();
@@ -24,11 +24,14 @@ export const TotalAssetsHero = () => {
 
   // Format number in standard en-US financial notation
   const formatUsd = (num) => {
-    return num.toLocaleString('en-US', {
+    return (num || 0).toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
   };
+
+  const currentBalance = wallet?.virtualBalance ?? 100000.00;
+  const btcEquivalent = (currentBalance / (btcCoin.basePrice || 67840.50)).toFixed(4);
 
   const assetCards = [
     {
@@ -83,10 +86,10 @@ export const TotalAssetsHero = () => {
 
           <div className="flex items-baseline space-x-3">
             <span className="text-3xl sm:text-4xl font-extrabold font-mono text-white tracking-tight">
-              {hideBalance ? '••••••••' : `$${formatUsd(wallet.virtualBalance || 98520.00)}`}
+              {hideBalance ? '••••••••' : `$${formatUsd(currentBalance)}`}
             </span>
           </div>
-          <span className="text-xs text-slate-500 font-mono block mt-1">~ 12.3452 BTC</span>
+          <span className="text-xs text-slate-500 font-mono block mt-1">~ {btcEquivalent} BTC</span>
         </div>
 
         {/* Quick Action Pill Buttons */}
@@ -159,7 +162,7 @@ export const TotalAssetsHero = () => {
         ))}
       </div>
 
-      {/* NEW: Filling the Empty Space with Live Arbitrage Signal & Asset Allocation Bar */}
+      {/* Live Arbitrage Signal & Asset Allocation Bar */}
       <div className="chainblock-card p-4 space-y-3 font-mono text-xs">
         <div className="flex items-center justify-between text-slate-400 text-[11px] pb-2 border-b border-slate-800/80">
           <span className="flex items-center gap-1.5 font-bold text-white">
