@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    background-color: #090b0e;
+    color: #f8fafc;
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  body.light-theme {
+    background-color: #f1f5f9;
+    color: #0f172a;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+/* Glassmorphism Design Tokens for Dark & Light Themes */
+.smooth-scroll-container {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  will-change: scroll-position;
+  contain: layout style;
+}
+
+@layer components {
+  /* Main Container Shell */
+  .chainblock-shell {
+    background: rgba(17, 20, 27, 0.85);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1.5rem;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9);
+    transition: all 0.3s ease;
+  }
+
+  .light-theme .chainblock-shell {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.08);
+  }
+
+  /* Glass Card */
+  .chainblock-card {
+    background: rgba(22, 26, 35, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1.25rem;
+    padding: 1.25rem;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    transition: all 0.25s ease;
+  }
+
+  .light-theme .chainblock-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    color: #0f172a;
+    box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.06);
+  }
+
+  .chainblock-card:hover {
+    border-color: rgba(52, 211, 153, 0.4);
+  }
+
+  .light-theme .chainblock-card:hover {
+    border-color: rgba(37, 99, 235, 0.4);
+    box-shadow: 0 15px 35px -10px rgba(37, 99, 235, 0.12);
+  }
+
+  .chainblock-subcard {
+    background: rgba(27, 32, 44, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 1rem;
+    padding: 1rem;
+    transition: all 0.2s ease;
+  }
+
+  .light-theme .chainblock-subcard {
+    background: rgba(248, 250, 252, 0.9);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+  }
+
+  /* Emerald / Sapphire Buttons */
+  .chainblock-btn-emerald {
+    height: 2.75rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    border-radius: 0.875rem;
+    font-size: 0.875rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: #34d399;
+    color: #04060a;
+    box-shadow: 0 4px 20px rgba(52, 211, 153, 0.35);
+    transition: all 0.2s ease;
+  }
+
+  .light-theme .chainblock-btn-emerald {
+    background: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.35);
+  }
+
+  .chainblock-btn-emerald:hover {
+    background: #6ee7b7;
+    box-shadow: 0 6px 25px rgba(52, 211, 153, 0.5);
+    transform: translateY(-1px);
+  }
+
+  .light-theme .chainblock-btn-emerald:hover {
+    background: #1d4ed8;
+    box-shadow: 0 6px 25px rgba(37, 99, 235, 0.5);
+  }
+
+  /* Sidebar Active Navigation Pill */
+  .chainblock-nav-active {
+    background: #1b2a24;
+    color: #34d399;
+    border-left: 3px solid #34d399;
+    font-weight: 700;
+  }
+
+  .light-theme .chainblock-nav-active {
+    background: #eff6ff;
+    color: #2563eb;
+    border-left: 3px solid #2563eb;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #34d399;
+}
