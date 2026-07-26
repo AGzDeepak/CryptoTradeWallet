@@ -6,10 +6,10 @@ import { Box, Eye, EyeOff, Lock, Mail, ShieldCheck, Zap, ArrowRight, KeyRound, G
 export const AuthScreen = () => {
   const { login } = useCrypto();
   const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('jeff@chainblock.io');
+  const [email, setEmail] = useState('deepak@chainblock.io');
   const [password, setPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
-  const [fullName, setFullName] = useState('Jeff Steward');
+  const [fullName, setFullName] = useState('Deepak Kumar');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -29,16 +29,14 @@ export const AuthScreen = () => {
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
           login(userCredential.user.email, password, fullName);
         } catch (err) {
-          // Fallback to local simulation if Firebase keys are demo keys
           login(email, password, fullName);
         }
       } else {
         try {
           const userCredential = await signInWithEmailAndPassword(auth, email, password);
-          login(userCredential.user.email, password, userCredential.user.displayName || 'Jeff Steward');
+          login(userCredential.user.email, password, userCredential.user.displayName || 'Deepak Kumar');
         } catch (err) {
-          // Fallback to local simulation if Firebase keys are demo keys
-          login(email, password, 'Jeff Steward');
+          login(email, password, 'Deepak Kumar');
         }
       }
     } catch (err) {
@@ -55,18 +53,17 @@ export const AuthScreen = () => {
     try {
       const result = await signInWithPopup(auth, githubProvider);
       const user = result.user;
-      login(user.email || 'github.user@chainblock.io', 'oauth', user.displayName || 'GitHub Trader');
+      login(user.email || 'github.user@chainblock.io', 'oauth', user.displayName || 'Deepak Kumar (GitHub)');
     } catch (err) {
       console.log('GitHub Popup Fallback Notice:', err);
-      // Seamless demo fallback for GitHub OAuth
-      login('jeff.github@chainblock.io', 'oauth', 'Jeff Steward (GitHub)');
+      login('deepak.github@chainblock.io', 'oauth', 'Deepak Kumar (GitHub)');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDemoAccess = () => {
-    login('jeff@chainblock.io', 'demo123', 'Jeff Steward');
+    login('deepak@chainblock.io', 'demo123', 'Deepak Kumar');
   };
 
   return (
@@ -144,7 +141,7 @@ export const AuthScreen = () => {
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Jeff Steward"
+                  placeholder="Deepak Kumar"
                   className="w-full bg-[#161a23] border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-white outline-none focus:border-[#34d399] transition"
                 />
                 <KeyRound className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
@@ -159,7 +156,7 @@ export const AuthScreen = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="jeff@chainblock.io"
+                placeholder="deepak@chainblock.io"
                 className="w-full bg-[#161a23] border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-white outline-none focus:border-[#34d399] transition"
               />
               <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
@@ -206,7 +203,7 @@ export const AuthScreen = () => {
           className="w-full py-2.5 rounded-xl bg-[#161a23] hover:bg-slate-800 border border-slate-800 text-[#34d399] font-mono text-xs font-bold flex items-center justify-center space-x-2 transition"
         >
           <Zap className="w-4 h-4 text-[#34d399] animate-bounce" />
-          <span>INSTANT DEMO ACCESS (Jeff Steward)</span>
+          <span>INSTANT DEMO ACCESS (Deepak Kumar)</span>
         </button>
 
         {/* Security Footer */}

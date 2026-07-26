@@ -16,11 +16,11 @@ const EXCHANGES = ['Binance', 'Bybit', 'OKX', 'Coinbase'];
 
 export const CryptoProvider = ({ children }) => {
   // Authentication State
-  const [isAuthenticated, setIsAuthenticated] = useState(true); // default true for immediate load, fully toggleable
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [user, setUser] = useState({
-    name: 'Jeff Steward',
-    email: 'jeff@chainblock.io',
-    avatar: 'J',
+    name: 'Deepak Kumar',
+    email: 'deepak@chainblock.io',
+    avatar: 'D',
     role: 'Institutional Quant Trader'
   });
 
@@ -116,7 +116,7 @@ export const CryptoProvider = ({ children }) => {
   const lastAutoTradeTimeRef = useRef(0);
 
   // Authentication Handlers
-  const login = (email, password, name = 'Jeff Steward') => {
+  const login = (email, password, name = 'Deepak Kumar') => {
     setUser({
       name,
       email,
