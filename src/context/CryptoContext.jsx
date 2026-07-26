@@ -15,6 +15,17 @@ const INITIAL_COINS = [
 
 const EXCHANGES = ['Binance', 'Bybit', 'OKX', 'Coinbase'];
 
+// Default Fresh New User Wallet State ($100,000.00 USDT)
+const NEW_USER_WALLET = {
+  virtualBalance: 100000.00,
+  totalEquity: 100000.00,
+  todayProfit: 0.00,
+  roiPct: 0.00,
+  address: '0x00D3...C43D',
+  network: 'Arbitrum One',
+  currency: 'USD'
+};
+
 export const CryptoProvider = ({ children }) => {
   // Authentication & Security State
   const [isAuthenticated, setIsAuthenticated] = useState(true);
@@ -46,67 +57,17 @@ export const CryptoProvider = ({ children }) => {
   const [autoTradingEnabled, setAutoTradingEnabled] = useState(true);
   const [tradingMode, setTradingMode] = useState('Balanced');
   const [minProfitThreshold, setMinProfitThreshold] = useState(0.25);
-  const [autoTradeLogs, setAutoTradeLogs] = useState([
-    { id: 1, text: 'Auto-Trading AI initialized. Scanning 4 major exchanges...', time: new Date().toLocaleTimeString(), type: 'info' }
-  ]);
-  const [totalBotProfit, setTotalBotProfit] = useState(1482.50);
-  const [autoTradeCount, setAutoTradeCount] = useState(34);
+  const [autoTradeLogs, setAutoTradeLogs] = useState([]);
+  const [totalBotProfit, setTotalBotProfit] = useState(0.00);
+  const [autoTradeCount, setAutoTradeCount] = useState(0);
 
   // Paper Wallet State
-  const [wallet, setWallet] = useState({
-    virtualBalance: 98520.00,
-    totalEquity: 104820.50,
-    todayProfit: 1482.50,
-    roiPct: 4.82,
-    address: '0x00D3...C43D',
-    network: 'Arbitrum One',
-    currency: 'USD'
-  });
+  const [wallet, setWallet] = useState(NEW_USER_WALLET);
 
   // Open Positions & History
-  const [openPositions, setOpenPositions] = useState([
-    {
-      id: 'POS-8921',
-      symbol: 'BTCUSDT',
-      type: 'BUY',
-      buyExchange: 'Binance',
-      sellExchange: 'Bybit',
-      entryBuyPrice: 67820.00,
-      entrySellPrice: 68140.00,
-      currentBuyPrice: 67830.00,
-      currentSellPrice: 68190.00,
-      spreadPct: 0.47,
-      amount: 0.5,
-      invested: 33910.00,
-      unrealizedPnL: 185.00,
-      duration: '42s',
-      timestamp: new Date().toISOString(),
-      status: 'ACTIVE'
-    }
-  ]);
-
-  const [tradeHistory, setTradeHistory] = useState([
-    {
-      id: 'TRD-701',
-      time: '18:42:15',
-      symbol: 'SOLUSDT',
-      strategy: 'Cross Exchange Arbitrage',
-      buyExchange: 'Bybit',
-      sellExchange: 'Binance',
-      entryPrice: 183.50,
-      exitPrice: 185.10,
-      amount: 50,
-      fees: 7.34,
-      netProfit: 72.66,
-      result: 'PROFIT'
-    }
-  ]);
-
-  // Notifications State
-  const [notifications, setNotifications] = useState([
-    { id: 1, message: 'Auto-Trader Bot launched successfully', type: 'success', time: new Date().toLocaleTimeString() },
-    { id: 2, message: 'WebSocket Feeders online (Binance, Bybit, OKX, Coinbase)', type: 'info', time: new Date().toLocaleTimeString() }
-  ]);
+  const [openPositions, setOpenPositions] = useState([]);
+  const [tradeHistory, setTradeHistory] = useState([]);
+  const [notifications, setNotifications] = useState([]);
 
   // Exchange Health
   const [exchangeHealth] = useState({
@@ -118,10 +79,23 @@ export const CryptoProvider = ({ children }) => {
 
   const lastAutoTradeTimeRef = useRef(0);
 
-  // Secure Authentication Login Handler with Firebase Firestore Record
+  // Storage Key Helper per User Email
+  const getStorageKey = (email) => `chainblock_user_${(email || 'default').toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+
+  // Save User State to Local Storage
+  const persistUserData = (email, data) => {
+    try {
+      localStorage.setItem(getStorageKey(email), JSON.stringify(data));
+    } catch (e) {
+      console.warn('LocalStorage save notice:', e);
+    }
+  };
+
+  // Secure Authentication Login Handler with Isolated New User Workspace
   const login = async (email, password, name = 'Deepak Kumar', provider = 'firebase_email') => {
     const cleanEmail = sanitizeInput(email);
     const cleanName = sanitizeInput(name);
+    const storageKey = getStorageKey(cleanEmail);
 
     setUser({
       name: cleanName,
@@ -132,19 +106,76 @@ export const CryptoProvider = ({ children }) => {
     });
     setIsAuthenticated(true);
 
-    // Save Login Metadata to Firebase Firestore
+    // Check if previous state exists for this specific user
+    const existingRaw = localStorage.getItem(storageKey);
+
+    if (existingRaw) {
+      // Existing User: Restore their isolated portfolio and trading history
+      try {
+        const saved = JSON.parse(existingRaw);
+        setWallet(saved.wallet || NEW_USER_WALLET);
+        setOpenPositions(saved.openPositions || []);
+        setTradeHistory(saved.tradeHistory || []);
+        setTotalBotProfit(saved.totalBotProfit || 0.00);
+        setAutoTradeCount(saved.autoTradeCount || 0);
+        setNotifications(saved.notifications || []);
+        addNotification(`Welcome back, ${cleanName}! Your saved workspace has been loaded.`, 'success');
+      } catch (e) {
+        initializeFreshUser(cleanEmail, cleanName);
+      }
+    } else {
+      // NEW USER: Start completely fresh from $100,000.00 USDT
+      initializeFreshUser(cleanEmail, cleanName);
+    }
+
+    // Save Login Metadata to Firebase Firestore Database
     const token = await recordFirebaseLoginLog({ email: cleanEmail, name: cleanName }, provider);
     setSessionToken(token);
 
     audioFx.playTradeSuccess();
-    addNotification(`Welcome back, ${cleanName}! Login stored securely in Firebase database.`, 'success');
   };
+
+  const initializeFreshUser = (email, name) => {
+    setWallet(NEW_USER_WALLET);
+    setOpenPositions([]);
+    setTradeHistory([]);
+    setTotalBotProfit(0.00);
+    setAutoTradeCount(0);
+    
+    const freshNotifs = [
+      { id: 1, message: `Welcome ${name}! Your fresh paper trading account is active with $100,000.00 USDT.`, type: 'success', time: new Date().toLocaleTimeString() },
+      { id: 2, message: 'Auto-Trader Bot standby mode enabled.', type: 'info', time: new Date().toLocaleTimeString() }
+    ];
+    setNotifications(freshNotifs);
+
+    persistUserData(email, {
+      wallet: NEW_USER_WALLET,
+      openPositions: [],
+      tradeHistory: [],
+      totalBotProfit: 0.00,
+      autoTradeCount: 0,
+      notifications: freshNotifs
+    });
+  };
+
+  // Sync State Updates to Local User Storage
+  useEffect(() => {
+    if (user && user.email) {
+      persistUserData(user.email, {
+        wallet,
+        openPositions,
+        tradeHistory,
+        totalBotProfit,
+        autoTradeCount,
+        notifications
+      });
+    }
+  }, [wallet, openPositions, tradeHistory, totalBotProfit, autoTradeCount, notifications, user]);
 
   const logout = () => {
     setIsAuthenticated(false);
     setSessionToken(null);
     audioFx.playAlertChime();
-    addNotification('Session terminated safely.', 'info');
   };
 
   // Live High Frequency Tick Simulation
@@ -418,15 +449,10 @@ export const CryptoProvider = ({ children }) => {
   };
 
   const resetWallet = () => {
-    setWallet(w => ({
-      ...w,
-      virtualBalance: 100000.00,
-      totalEquity: 100000.00,
-      todayProfit: 0.00,
-      roiPct: 0.00
-    }));
+    setWallet(NEW_USER_WALLET);
     setOpenPositions([]);
-    setTotalBotProfit(0);
+    setTradeHistory([]);
+    setTotalBotProfit(0.00);
     setAutoTradeCount(0);
     addNotification('Paper wallet reset to $100,000.00 USDT', 'warning');
   };
