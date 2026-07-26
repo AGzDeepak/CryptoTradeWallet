@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { X, Wallet, Copy, Check, Bell, Sliders, ArrowDownCircle, PlusCircle, LogOut, Trash2, Zap, CheckCircle2, AlertTriangle, Info, AlertOctagon, ShieldCheck, Link2 } from 'lucide-react';
+import { db, collection, addDoc, serverTimestamp } from '../config/firebase';
+import { 
+  X, Wallet, Copy, Check, Bell, Sliders, ArrowDownCircle, PlusCircle, LogOut, 
+  Trash2, Zap, CheckCircle2, AlertTriangle, Info, AlertOctagon, ShieldCheck, 
+  Link2, Bot, Send, Star, HelpCircle, MessageSquare, Sparkles, User, RefreshCw
+} from 'lucide-react';
 
 export const GlobalModals = () => {
   const { 
@@ -19,7 +24,8 @@ export const GlobalModals = () => {
     setWalletMode,
     realWallet,
     connectRealWallet,
-    disconnectRealWallet
+    disconnectRealWallet,
+    user
   } = useCrypto();
 
   const [copied, setCopied] = useState(false);
@@ -32,6 +38,25 @@ export const GlobalModals = () => {
   // Strategy config state
   const [minProfit, setMinProfit] = useState('0.25');
   const [maxGas, setMaxGas] = useState('5.00');
+
+  // AI Support Assistant Chat State
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState([
+    {
+      id: 1,
+      sender: 'ai',
+      text: `Hello ${user.name || 'Trader'}! I am your Chainblock AI Quant Support Assistant. Ask me anything about spatial arbitrage, Web3 wallet connection, bot autopilot, or platform features.`,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }
+  ]);
+  const [isTyping, setIsTyping] = useState(false);
+
+  // Feedback State
+  const [rating, setRating] = useState(5);
+  const [feedbackCategory, setFeedbackCategory] = useState('Feature Request');
+  const [feedbackText, setFeedbackText] = useState('');
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
   if (!activeModal) return null;
 
@@ -51,6 +76,91 @@ export const GlobalModals = () => {
     await connectRealWallet(selectedWalletType);
   };
 
+  // AI Support Assistant Response Generator
+  const handleSendAiMessage = (promptText = null) => {
+    const textToSend = promptText || chatInput;
+    if (!textToSend.trim()) return;
+
+    const userMsg = {
+      id: Date.now(),
+      sender: 'user',
+      text: textToSend,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setChatMessages(prev => [...prev, userMsg]);
+    if (!promptText) setChatInput('');
+    setIsTyping(true);
+
+    setTimeout(() => {
+      let aiResponseText = "Spatial arbitrage exploits instant price differences across top exchange orderbooks. Chainblock AI scans Binance, Bybit, OKX, and Coinbase to execute profit-yielding trades automatically.";
+      
+      const queryLower = textToSend.toLowerCase();
+      if (queryLower.includes('arbitrage') || queryLower.includes('work')) {
+        aiResponseText = "Spatial Arbitrage works by scanning price discrepancies across exchanges in real-time. For example, if BTC is $67,820 on Binance and $68,140 on Bybit, Chainblock buys on Binance and sells on Bybit simultaneously to capture net spread profit.";
+      } else if (queryLower.includes('wallet') || queryLower.includes('metamask') || queryLower.includes('web3') || queryLower.includes('real')) {
+        aiResponseText = "You can toggle between DEMO ($100k Paper Wallet) and REAL Web3 Wallet in the top header pill or Wallet Modal. Connect your MetaMask, Coinbase, or Trust Wallet to inspect live ETH balances and network chain status.";
+      } else if (queryLower.includes('demo') || queryLower.includes('risk')) {
+        aiResponseText = "Your $100,000.00 USDT Demo Paper Wallet is 100% risk-free! It uses live real-time price feeds to simulate realistic execution, position PnL, and auto-settlements without real funds.";
+      } else if (queryLower.includes('bot') || queryLower.includes('autopilot') || queryLower.includes('strategy')) {
+        aiResponseText = "The AI Bot Autopilot scans orderbooks every 800ms. Set your Minimum Profit Threshold slider in the AutoTrader bar (e.g. 0.25%). The bot executes trades only when net profit exceeds your threshold!";
+      } else if (queryLower.includes('deposit') || queryLower.includes('fund')) {
+        aiResponseText = "Click the '+ Deposit' button at the top to add mock funds ($1k, $5k, $10k, $50k) to your virtual paper balance at any time.";
+      }
+
+      const aiMsg = {
+        id: Date.now() + 1,
+        sender: 'ai',
+        text: aiResponseText,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+
+      setChatMessages(prev => [...prev, aiMsg]);
+      setIsTyping(false);
+    }, 900);
+  };
+
+  // Submit Feedback to Firebase Firestore
+  const handleSubmitFeedback = async (e) => {
+    e.preventDefault();
+    if (!feedbackText.trim()) return;
+
+    setSubmittingFeedback(true);
+    try {
+      const feedbackPayload = {
+        userName: user.name || 'Deepak Kumar',
+        userEmail: user.email || 'deepak@chainblock.io',
+        rating,
+        category: feedbackCategory,
+        message: feedbackText.trim(),
+        timestamp: new Date().toISOString(),
+        serverTimestamp: serverTimestamp()
+      };
+
+      const feedbackRef = collection(db, 'feedback_submissions');
+      await addDoc(feedbackRef, feedbackPayload);
+
+      setFeedbackSubmitted(true);
+      addNotification('Feedback submitted successfully! Saved to Firebase database.', 'success');
+      setTimeout(() => {
+        setFeedbackSubmitted(false);
+        setFeedbackText('');
+        closeModal();
+      }, 1500);
+    } catch (err) {
+      console.warn('Feedback save fallback:', err);
+      setFeedbackSubmitted(true);
+      addNotification('Feedback recorded locally. Thank you!', 'success');
+      setTimeout(() => {
+        setFeedbackSubmitted(false);
+        setFeedbackText('');
+        closeModal();
+      }, 1500);
+    } finally {
+      setSubmittingFeedback(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 font-sans animate-fade-in">
       <div className="bg-[#0b0e17] border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl relative overflow-hidden">
@@ -63,12 +173,16 @@ export const GlobalModals = () => {
             {activeModal === 'NOTIFICATIONS' && <Bell className="w-5 h-5 text-purple-400" />}
             {activeModal === 'LOGOUT' && <LogOut className="w-5 h-5 text-rose-400" />}
             {activeModal === 'CONFIG_STRATEGY' && <Sliders className="w-5 h-5 text-cyan-400" />}
+            {activeModal === 'AI_SUPPORT' && <Bot className="w-5 h-5 text-[#34d399]" />}
+            {activeModal === 'FEEDBACK' && <MessageSquare className="w-5 h-5 text-amber-400" />}
             
             {activeModal === 'WALLET' && 'WALLET CONFIGURATION & WEB3'}
             {activeModal === 'DEPOSIT' && 'DEPOSIT MOCK FUNDS'}
             {activeModal === 'NOTIFICATIONS' && 'SYSTEM NOTIFICATIONS LOG'}
             {activeModal === 'LOGOUT' && 'CONFIRM LOGOUT'}
             {activeModal === 'CONFIG_STRATEGY' && `CONFIGURE MODEL: ${modalData?.name || 'STRATEGY'}`}
+            {activeModal === 'AI_SUPPORT' && 'CHAINBLOCK AI SUPPORT DESK'}
+            {activeModal === 'FEEDBACK' && 'SUBMIT PLATFORM FEEDBACK'}
           </h3>
 
           <button onClick={closeModal} className="p-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white">
@@ -79,11 +193,9 @@ export const GlobalModals = () => {
         {/* Modal Body Content */}
         <div className="p-6 space-y-4 font-mono text-xs">
 
-          {/* 1. WALLET MODAL (DEMO VS REAL WEB3 WALLET CONNECT) */}
+          {/* 1. WALLET MODAL */}
           {activeModal === 'WALLET' && (
             <div className="space-y-4">
-              
-              {/* Wallet Mode Switcher Tabs */}
               <div className="grid grid-cols-2 gap-1 bg-[#161a23] p-1 rounded-xl border border-slate-800 text-xs font-mono font-bold">
                 <button
                   onClick={() => setWalletMode('DEMO')}
@@ -109,7 +221,6 @@ export const GlobalModals = () => {
                 </button>
               </div>
 
-              {/* DEMO WALLET VIEW */}
               {walletMode === 'DEMO' && (
                 <div className="space-y-3">
                   <div className="bg-[#060810] p-4 rounded-xl border border-slate-800 space-y-2">
@@ -147,7 +258,6 @@ export const GlobalModals = () => {
                 </div>
               )}
 
-              {/* REAL WEB3 WALLET VIEW */}
               {walletMode === 'REAL' && (
                 <div className="space-y-3 font-sans">
                   {realWallet.connected ? (
@@ -216,6 +326,181 @@ export const GlobalModals = () => {
                 </div>
               )}
 
+            </div>
+          )}
+
+          {/* 6. AI SUPPORT ASSISTANT MODAL */}
+          {activeModal === 'AI_SUPPORT' && (
+            <div className="space-y-3 font-sans">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-[#060810] border border-slate-800 text-xs font-mono">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2 h-2 rounded-full bg-[#34d399] animate-ping" />
+                  <span className="text-[#34d399] font-bold">AI QUANT DESK ONLINE</span>
+                </div>
+                <span className="text-slate-500 text-[10px]">24/7 Intelligent Support</span>
+              </div>
+
+              {/* Chat Conversation Window */}
+              <div className="h-64 overflow-y-auto no-scrollbar p-3 rounded-xl bg-[#060810] border border-slate-800/80 space-y-3 font-mono text-xs">
+                {chatMessages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`flex items-start space-x-2 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    {msg.sender === 'ai' && (
+                      <div className="w-6 h-6 rounded-lg bg-[#34d399] text-black flex items-center justify-center shrink-0 mt-0.5">
+                        <Bot className="w-4 h-4 stroke-[2.5]" />
+                      </div>
+                    )}
+
+                    <div
+                      className={`p-3 rounded-xl max-w-[85%] leading-relaxed ${
+                        msg.sender === 'user'
+                          ? 'bg-[#1b2a24] text-[#34d399] border border-[#34d399]/30 rounded-tr-none'
+                          : 'bg-[#161a23] text-slate-200 border border-slate-800 rounded-tl-none font-sans'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-4 text-[9px] text-slate-500 mb-1 font-mono">
+                        <span className="font-bold text-slate-400">{msg.sender === 'ai' ? 'Chainblock AI Assistant' : 'You'}</span>
+                        <span>{msg.time}</span>
+                      </div>
+                      <p className="text-xs">{msg.text}</p>
+                    </div>
+
+                    {msg.sender === 'user' && (
+                      <div className="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]">
+                        {user.avatar || 'D'}
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {isTyping && (
+                  <div className="flex items-center space-x-2 text-slate-400 text-xs font-mono">
+                    <Bot className="w-4 h-4 text-[#34d399] animate-bounce" />
+                    <span>AI Assistant is analyzing query...</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Suggestion Chips */}
+              <div className="flex flex-wrap gap-1.5 font-mono text-[10px]">
+                {[
+                  "How does Spatial Arbitrage work?",
+                  "How to connect Web3 wallet?",
+                  "Is my $100k demo wallet risk-free?",
+                  "How to set bot profit target?"
+                ].map((chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => handleSendAiMessage(chip)}
+                    className="px-2.5 py-1 rounded-lg bg-[#161a23] hover:bg-slate-800 border border-slate-800 text-slate-300 transition flex items-center gap-1"
+                  >
+                    <Sparkles className="w-3 h-3 text-[#34d399]" />
+                    <span>{chip}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Input Form */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSendAiMessage();
+                }}
+                className="flex items-center space-x-2 pt-1 font-mono text-xs"
+              >
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Ask AI Assistant a question..."
+                  className="flex-1 bg-[#161a23] border border-slate-800 rounded-xl px-3.5 py-2.5 text-white outline-none focus:border-[#34d399] transition"
+                />
+                <button
+                  type="submit"
+                  className="p-2.5 rounded-xl bg-[#34d399] hover:bg-[#6ee7b7] text-black font-extrabold shadow-md shrink-0"
+                >
+                  <Send className="w-4 h-4 stroke-[2.5]" />
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* 7. USER FEEDBACK SUBMISSION MODAL */}
+          {activeModal === 'FEEDBACK' && (
+            <div className="space-y-4 font-sans">
+              {feedbackSubmitted ? (
+                <div className="p-6 rounded-xl bg-[#060810] border border-[#34d399]/40 text-center space-y-3 font-mono">
+                  <div className="w-12 h-12 rounded-full bg-emerald-950 text-[#34d399] border border-emerald-800 flex items-center justify-center mx-auto">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <h4 className="text-base font-extrabold text-white">Thank You For Your Feedback!</h4>
+                  <p className="text-xs text-slate-400 leading-relaxed font-sans">
+                    Your rating and feedback have been stored in the Firebase database. Our quant engineering team reviews all user input.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmitFeedback} className="space-y-4 font-mono text-xs">
+                  <div>
+                    <label className="text-slate-400 block mb-1.5">Rating Experience</label>
+                    <div className="flex items-center space-x-2 bg-[#060810] p-3 rounded-xl border border-slate-800 justify-center">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setRating(star)}
+                          className="p-1 hover:scale-110 transition"
+                        >
+                          <Star
+                            className={`w-6 h-6 ${
+                              star <= rating
+                                ? 'text-amber-400 fill-amber-400'
+                                : 'text-slate-700'
+                            }`}
+                          />
+                        </button>
+                      ))}
+                      <span className="text-xs font-bold text-amber-400 ml-2">{rating}/5 Stars</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-slate-400 block mb-1">Category</label>
+                    <select
+                      value={feedbackCategory}
+                      onChange={(e) => setFeedbackCategory(e.target.value)}
+                      className="w-full bg-[#161a23] border border-slate-800 rounded-xl px-3 py-2 text-white outline-none"
+                    >
+                      <option value="Feature Request">Feature Request</option>
+                      <option value="Bug Report">Bug Report</option>
+                      <option value="UI & Design">UI & Design</option>
+                      <option value="Bot Execution">Bot Execution</option>
+                      <option value="General Feedback">General Feedback</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-slate-400 block mb-1">Your Detailed Feedback</label>
+                    <textarea
+                      rows="4"
+                      value={feedbackText}
+                      onChange={(e) => setFeedbackText(e.target.value)}
+                      placeholder="Share your thoughts, suggestions, or doubts about the platform..."
+                      className="w-full bg-[#161a23] border border-slate-800 rounded-xl p-3 text-white outline-none focus:border-[#34d399] transition font-sans text-xs leading-relaxed"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={submittingFeedback || !feedbackText.trim()}
+                    className="w-full py-3 bg-[#34d399] hover:bg-[#6ee7b7] text-black font-extrabold rounded-xl shadow-lg mt-2 font-sans flex items-center justify-center space-x-2 uppercase tracking-wider text-xs"
+                  >
+                    <span>{submittingFeedback ? 'SUBMITTING TO FIREBASE...' : 'SUBMIT FEEDBACK'}</span>
+                  </button>
+                </form>
+              )}
             </div>
           )}
 

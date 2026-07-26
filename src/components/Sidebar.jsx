@@ -11,7 +11,8 @@ import {
   Settings, 
   HelpCircle, 
   MessageSquare,
-  Box
+  Box,
+  Bot
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -108,19 +109,19 @@ export const Sidebar = () => {
 
       </div>
 
-      {/* Bottom Section: Support & Feedback */}
+      {/* Bottom Section: AI Support & Feedback */}
       <div className="space-y-2 pt-4 border-t border-slate-800/80">
         <button
-          onClick={() => openModal('NEWS_ARTICLE', { title: 'Chainblock Support', content: 'Support desk is online 24/7.' })}
-          className="w-full flex items-center space-x-3 px-3.5 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-semibold"
+          onClick={() => openModal('AI_SUPPORT')}
+          className="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-emerald-950/40 hover:bg-emerald-950/80 border border-emerald-500/40 text-[#34d399] text-xs font-bold transition shadow-sm"
         >
-          <HelpCircle className="w-4 h-4 text-slate-500" />
-          <span>Get Support</span>
+          <Bot className="w-4 h-4 text-[#34d399]" />
+          <span>AI Support Desk</span>
         </button>
 
         <button
-          onClick={() => openModal('NEWS_ARTICLE', { title: 'Feedback', content: 'Submit platform feedback.' })}
-          className="w-full flex items-center space-x-3 px-3.5 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-semibold"
+          onClick={() => openModal('FEEDBACK')}
+          className="w-full flex items-center space-x-3 px-3.5 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-semibold hover:bg-slate-800/50 transition"
         >
           <MessageSquare className="w-4 h-4 text-slate-500" />
           <span>Add Feedback</span>
