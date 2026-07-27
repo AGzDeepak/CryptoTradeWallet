@@ -4,7 +4,7 @@ import { db, collection, addDoc, serverTimestamp } from '../config/firebase';
 import { 
   X, Wallet, Copy, Check, Bell, Sliders, ArrowDownCircle, ArrowUpRight, PlusCircle, LogOut, 
   Trash2, Zap, CheckCircle2, AlertTriangle, Info, AlertOctagon, ShieldCheck, 
-  Link2, Bot, Send, Star, HelpCircle, MessageSquare, Sparkles, User, RefreshCw
+  Link2, Bot, Send, Star, HelpCircle, MessageSquare, Sparkles, User, RefreshCw, Clock
 } from 'lucide-react';
 
 export const GlobalModals = () => {
@@ -15,6 +15,7 @@ export const GlobalModals = () => {
     wallet, 
     depositFunds, 
     withdrawFunds,
+    withdrawalHistory,
     resetWallet, 
     openModal,
     notifications,
@@ -37,6 +38,7 @@ export const GlobalModals = () => {
   const [depositCurrency, setDepositCurrency] = useState('USDT');
 
   // Withdraw state
+  const [withdrawTab, setWithdrawTab] = useState('form'); // 'form' or 'history'
   const [withdrawAmount, setWithdrawAmount] = useState('5000');
   const [withdrawCurrency, setWithdrawCurrency] = useState('USDT');
   const [withdrawAddress, setWithdrawAddress] = useState('0x71C765b28F3D140a831C28190d7B41');
@@ -82,7 +84,7 @@ export const GlobalModals = () => {
 
   const handleConfirmWithdrawal = async (e) => {
     e.preventDefault();
-    const success = await withdrawFunds(withdrawAmount, withdrawAddress, withdrawCurrency);
+    const success = await withdrawFunds(withdrawAmount, withdrawAddress, withdrawCurrency, withdrawNetwork);
     if (success) {
       setWithdrawSuccess(true);
       setTimeout(() => {
@@ -404,111 +406,178 @@ export const GlobalModals = () => {
             </form>
           )}
 
-          {/* 3. WITHDRAW MODAL (NEW & FULLY INTERACTIVE) */}
+          {/* 3. WITHDRAW MODAL (WITH FIRESTORE LOGGING & HISTORY TAB) */}
           {activeModal === 'WITHDRAW' && (
             <div className="space-y-4 font-sans">
-              {withdrawSuccess ? (
-                <div className="p-6 rounded-xl bg-[#060810] border border-[#34d399]/40 text-center space-y-3 font-mono">
-                  <div className="w-12 h-12 rounded-full bg-emerald-950 text-[#34d399] border border-emerald-800 flex items-center justify-center mx-auto">
-                    <CheckCircle2 className="w-6 h-6" />
-                  </div>
-                  <h4 className="text-base font-extrabold text-white">Withdrawal Dispatched!</h4>
-                  <p className="text-xs text-slate-400 font-sans">
-                    Transfer of <strong className="text-[#34d399]">${parseFloat(withdrawAmount).toLocaleString()} {withdrawCurrency}</strong> to <code className="text-cyan-400">{withdrawAddress.substring(0, 10)}...</code> is processing on {withdrawNetwork}.
-                  </p>
-                </div>
-              ) : (
-                <form onSubmit={handleConfirmWithdrawal} className="space-y-4 font-mono text-xs">
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-[#060810] border border-slate-800">
-                    <span className="text-slate-400">Available Balance:</span>
-                    <span className="text-sm font-bold text-[#34d399]">
-                      ${wallet.virtualBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT
-                    </span>
-                  </div>
+              
+              {/* Tab Selector: FORM vs HISTORY */}
+              <div className="grid grid-cols-2 gap-1 bg-[#161a23] p-1 rounded-xl border border-slate-800 text-xs font-mono font-bold">
+                <button
+                  onClick={() => setWithdrawTab('form')}
+                  className={`py-2 rounded-lg flex items-center justify-center space-x-1.5 transition ${
+                    withdrawTab === 'form'
+                      ? 'bg-rose-950/80 text-rose-300 border border-rose-800 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  <ArrowUpRight className="w-3.5 h-3.5 text-rose-400" />
+                  <span>DISPATCH WITHDRAWAL</span>
+                </button>
+                <button
+                  onClick={() => setWithdrawTab('history')}
+                  className={`py-2 rounded-lg flex items-center justify-center space-x-1.5 transition ${
+                    withdrawTab === 'history'
+                      ? 'bg-slate-800 text-white border border-slate-700 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>FIRESTORE HISTORY ({withdrawalHistory.length})</span>
+                </button>
+              </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-slate-400 block mb-1">Asset Currency</label>
-                      <select
-                        value={withdrawCurrency}
-                        onChange={(e) => setWithdrawCurrency(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none"
-                      >
-                        <option value="USDT">USDT (Tether)</option>
-                        <option value="USDC">USDC (USD Coin)</option>
-                        <option value="ETH">ETH (Ethereum)</option>
-                        <option value="BTC">BTC (Bitcoin)</option>
-                        <option value="SOL">SOL (Solana)</option>
-                      </select>
+              {withdrawTab === 'form' && (
+                <>
+                  {withdrawSuccess ? (
+                    <div className="p-6 rounded-xl bg-[#060810] border border-[#34d399]/40 text-center space-y-3 font-mono">
+                      <div className="w-12 h-12 rounded-full bg-emerald-950 text-[#34d399] border border-emerald-800 flex items-center justify-center mx-auto">
+                        <CheckCircle2 className="w-6 h-6" />
+                      </div>
+                      <h4 className="text-base font-extrabold text-white">Withdrawal Recorded & Dispatched!</h4>
+                      <p className="text-xs text-slate-400 font-sans">
+                        Transfer of <strong className="text-[#34d399]">${parseFloat(withdrawAmount).toLocaleString('en-US', { minimumFractionDigits: 2 })} {withdrawCurrency}</strong> to <code className="text-cyan-400">{withdrawAddress.substring(0, 10)}...</code> has been saved to Firebase Firestore on {withdrawNetwork}.
+                      </p>
                     </div>
+                  ) : (
+                    <form onSubmit={handleConfirmWithdrawal} className="space-y-4 font-mono text-xs">
+                      <div className="flex items-center justify-between p-3 rounded-xl bg-[#060810] border border-slate-800">
+                        <span className="text-slate-400">Available Balance:</span>
+                        <span className="text-sm font-bold text-[#34d399]">
+                          ${wallet.virtualBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT
+                        </span>
+                      </div>
 
-                    <div>
-                      <label className="text-slate-400 block mb-1">Network Chain</label>
-                      <select
-                        value={withdrawNetwork}
-                        onChange={(e) => setWithdrawNetwork(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-[#34d399] font-bold outline-none"
-                      >
-                        <option value="Arbitrum One">Arbitrum One</option>
-                        <option value="Ethereum Mainnet">Ethereum Mainnet</option>
-                        <option value="Polygon">Polygon</option>
-                        <option value="Solana Mainnet">Solana Mainnet</option>
-                      </select>
-                    </div>
-                  </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-slate-400 block mb-1">Asset Currency</label>
+                          <select
+                            value={withdrawCurrency}
+                            onChange={(e) => setWithdrawCurrency(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none"
+                          >
+                            <option value="USDT">USDT (Tether)</option>
+                            <option value="USDC">USDC (USD Coin)</option>
+                            <option value="ETH">ETH (Ethereum)</option>
+                            <option value="BTC">BTC (Bitcoin)</option>
+                            <option value="SOL">SOL (Solana)</option>
+                          </select>
+                        </div>
 
-                  <div>
-                    <label className="text-slate-400 block mb-1">Destination Web3 Address</label>
-                    <input
-                      type="text"
-                      value={withdrawAddress}
-                      onChange={(e) => setWithdrawAddress(e.target.value)}
-                      placeholder="0x71C765b28F3D140a831C28190d7B41"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-cyan-400 font-mono text-xs outline-none"
-                    />
-                  </div>
+                        <div>
+                          <label className="text-slate-400 block mb-1">Network Chain</label>
+                          <select
+                            value={withdrawNetwork}
+                            onChange={(e) => setWithdrawNetwork(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-[#34d399] font-bold outline-none"
+                          >
+                            <option value="Arbitrum One">Arbitrum One</option>
+                            <option value="Ethereum Mainnet">Ethereum Mainnet</option>
+                            <option value="Polygon">Polygon</option>
+                            <option value="Solana Mainnet">Solana Mainnet</option>
+                          </select>
+                        </div>
+                      </div>
 
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="text-slate-400">Withdraw Amount ($)</label>
-                      <span className="text-slate-500 text-[10px]">Fee: $0.85 (0.0002 ETH)</span>
-                    </div>
-                    <input
-                      type="number"
-                      step="100"
-                      value={withdrawAmount}
-                      onChange={(e) => setWithdrawAmount(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-rose-400 font-bold text-sm outline-none"
-                    />
-                  </div>
+                      <div>
+                        <label className="text-slate-400 block mb-1">Destination Web3 Address</label>
+                        <input
+                          type="text"
+                          value={withdrawAddress}
+                          onChange={(e) => setWithdrawAddress(e.target.value)}
+                          placeholder="0x71C765b28F3D140a831C28190d7B41"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-cyan-400 font-mono text-xs outline-none"
+                        />
+                      </div>
 
-                  <div className="flex space-x-2 pt-0.5">
-                    {[
-                      { label: '25%', val: (wallet.virtualBalance * 0.25).toFixed(0) },
-                      { label: '50%', val: (wallet.virtualBalance * 0.50).toFixed(0) },
-                      { label: '75%', val: (wallet.virtualBalance * 0.75).toFixed(0) },
-                      { label: 'MAX', val: wallet.virtualBalance.toFixed(0) }
-                    ].map((btn) => (
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <label className="text-slate-400">Withdraw Amount ($)</label>
+                          <span className="text-slate-500 text-[10px]">Est. Fee: $0.85 (0.0002 ETH)</span>
+                        </div>
+                        <input
+                          type="number"
+                          step="100"
+                          value={withdrawAmount}
+                          onChange={(e) => setWithdrawAmount(e.target.value)}
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-rose-400 font-bold text-sm outline-none"
+                        />
+                      </div>
+
+                      <div className="flex space-x-2 pt-0.5">
+                        {[
+                          { label: '25%', val: (wallet.virtualBalance * 0.25).toFixed(0) },
+                          { label: '50%', val: (wallet.virtualBalance * 0.50).toFixed(0) },
+                          { label: '75%', val: (wallet.virtualBalance * 0.75).toFixed(0) },
+                          { label: 'MAX', val: wallet.virtualBalance.toFixed(0) }
+                        ].map((btn) => (
+                          <button
+                            key={btn.label}
+                            type="button"
+                            onClick={() => setWithdrawAmount(btn.val)}
+                            className="flex-1 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-[11px]"
+                          >
+                            {btn.label}
+                          </button>
+                        ))}
+                      </div>
+
                       <button
-                        key={btn.label}
-                        type="button"
-                        onClick={() => setWithdrawAmount(btn.val)}
-                        className="flex-1 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-[11px]"
+                        type="submit"
+                        className="w-full py-3 bg-rose-600 hover:bg-rose-500 text-white font-extrabold rounded-xl shadow-lg mt-2 font-sans flex items-center justify-center space-x-2 uppercase tracking-wider text-xs"
                       >
-                        {btn.label}
+                        <ArrowUpRight className="w-4 h-4" />
+                        <span>CONFIRM & RECORD WITHDRAWAL</span>
                       </button>
-                    ))}
+                    </form>
+                  )}
+                </>
+              )}
+
+              {withdrawTab === 'history' && (
+                <div className="space-y-3 font-mono">
+                  <div className="flex justify-between items-center text-slate-400 text-[11px] pb-2 border-b border-slate-800">
+                    <span>Firestore Database Records</span>
+                    <span className="text-[#34d399] font-bold">LIVE SYNCED</span>
                   </div>
 
-                  <button
-                    type="submit"
-                    className="w-full py-3 bg-rose-600 hover:bg-rose-500 text-white font-extrabold rounded-xl shadow-lg mt-2 font-sans flex items-center justify-center space-x-2 uppercase tracking-wider text-xs"
-                  >
-                    <ArrowUpRight className="w-4 h-4" />
-                    <span>CONFIRM WITHDRAWAL</span>
-                  </button>
-                </form>
+                  <div className="max-h-64 overflow-y-auto no-scrollbar space-y-2 text-xs">
+                    {withdrawalHistory.length === 0 ? (
+                      <div className="text-center text-slate-500 py-8 font-mono">
+                        No previous withdrawals recorded.
+                      </div>
+                    ) : (
+                      withdrawalHistory.map((item) => (
+                        <div
+                          key={item.id}
+                          className="p-3 bg-[#060810] rounded-xl border border-slate-800 flex justify-between items-center"
+                        >
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-rose-400 font-bold">-${item.amount.toLocaleString()} {item.currency}</span>
+                              <span className="px-1.5 py-0.5 rounded bg-emerald-950 text-[#34d399] border border-emerald-800 text-[9px] font-bold">{item.status}</span>
+                            </div>
+                            <span className="text-[10px] text-slate-500 block mt-0.5">
+                              To: {item.address.substring(0, 10)}... | {item.networkChain}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-slate-500">{item.time}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               )}
+
             </div>
           )}
 

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { audioFx } from '../utils/audio';
-import { recordFirebaseLoginLog, sanitizeInput } from '../services/securityService';
+import { recordFirebaseLoginLog, recordFirebaseWithdrawal, sanitizeInput } from '../services/securityService';
 import { connectRealWeb3Wallet, sendRealWeb3Transaction, isWeb3Available } from '../services/web3Service';
 
 const CryptoContext = createContext();
@@ -76,9 +76,10 @@ export const CryptoProvider = ({ children }) => {
   // Paper Wallet State
   const [wallet, setWallet] = useState(NEW_USER_WALLET);
 
-  // Open Positions & History
+  // Open Positions, History & Withdrawal Logs
   const [openPositions, setOpenPositions] = useState([]);
   const [tradeHistory, setTradeHistory] = useState([]);
+  const [withdrawalHistory, setWithdrawalHistory] = useState([]);
   const [notifications, setNotifications] = useState([]);
 
   // Exchange Health
@@ -171,6 +172,7 @@ export const CryptoProvider = ({ children }) => {
         setWallet(saved.wallet || NEW_USER_WALLET);
         setOpenPositions(saved.openPositions || []);
         setTradeHistory(saved.tradeHistory || []);
+        setWithdrawalHistory(saved.withdrawalHistory || []);
         setTotalBotProfit(saved.totalBotProfit || 0.00);
         setAutoTradeCount(saved.autoTradeCount || 0);
         setNotifications(saved.notifications || []);
@@ -191,6 +193,7 @@ export const CryptoProvider = ({ children }) => {
     setWallet(NEW_USER_WALLET);
     setOpenPositions([]);
     setTradeHistory([]);
+    setWithdrawalHistory([]);
     setTotalBotProfit(0.00);
     setAutoTradeCount(0);
     
@@ -204,6 +207,7 @@ export const CryptoProvider = ({ children }) => {
       wallet: NEW_USER_WALLET,
       openPositions: [],
       tradeHistory: [],
+      withdrawalHistory: [],
       totalBotProfit: 0.00,
       autoTradeCount: 0,
       notifications: freshNotifs
@@ -217,12 +221,13 @@ export const CryptoProvider = ({ children }) => {
         wallet,
         openPositions,
         tradeHistory,
+        withdrawalHistory,
         totalBotProfit,
         autoTradeCount,
         notifications
       });
     }
-  }, [wallet, openPositions, tradeHistory, totalBotProfit, autoTradeCount, notifications, user]);
+  }, [wallet, openPositions, tradeHistory, withdrawalHistory, totalBotProfit, autoTradeCount, notifications, user]);
 
   const logout = () => {
     setIsAuthenticated(false);
@@ -349,8 +354,8 @@ export const CryptoProvider = ({ children }) => {
     addNotification(`Mock Deposit Successful: +$${num.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${currency}`, 'success');
   };
 
-  // Robust Async Withdraw Funds Handler (Supports Web3 Real & Paper Modes)
-  const withdrawFunds = async (amount, address = '0x71C7...d7B41', currency = 'USDT') => {
+  // Robust Async Withdraw Funds Handler (Firestore Database + Web3 + Paper Wallet)
+  const withdrawFunds = async (amount, address = '0x71C7...d7B41', currency = 'USDT', networkChain = 'Arbitrum One') => {
     const cleanAmountStr = String(amount || '').replace(/[^0-9.]/g, '');
     const num = parseFloat(cleanAmountStr);
 
@@ -360,39 +365,62 @@ export const CryptoProvider = ({ children }) => {
       return false;
     }
 
+    let txHash = `0x${Math.random().toString(16).substring(2)}${Date.now()}`;
+
     // REAL Web3 Wallet Mode Withdrawal
     if (walletMode === 'REAL' && realWallet.connected) {
       try {
         const ethEquivalent = (num / 3540.20).toFixed(4);
-        const txHash = await sendRealWeb3Transaction(realWallet.address, address, ethEquivalent);
-        audioFx.playTradeSuccess();
-        const shortAddr = address.length > 10 ? `${address.substring(0, 6)}...${address.substring(address.length - 4)}` : address;
-        addNotification(`Web3 Real Withdrawal Sent! Tx: ${txHash.substring(0, 10)}... -> ${shortAddr}`, 'success');
-        return true;
+        txHash = await sendRealWeb3Transaction(realWallet.address, address, ethEquivalent);
       } catch (err) {
         addNotification(`Web3 Withdrawal Error: ${err.message}`, 'warning');
         audioFx.playAlertChime();
         return false;
       }
+    } else {
+      // DEMO Paper Wallet Mode Withdrawal
+      if (num > wallet.virtualBalance) {
+        addNotification(`Withdrawal Failed: Amount ($${num.toLocaleString('en-US', { minimumFractionDigits: 2 })}) exceeds available cash ($${wallet.virtualBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })})!`, 'danger');
+        audioFx.playAlertChime();
+        return false;
+      }
+
+      setWallet(w => ({
+        ...w,
+        virtualBalance: parseFloat((w.virtualBalance - num).toFixed(2)),
+        totalEquity: parseFloat((w.totalEquity - num).toFixed(2))
+      }));
     }
 
-    // DEMO Paper Wallet Mode Withdrawal
-    if (num > wallet.virtualBalance) {
-      addNotification(`Withdrawal Failed: Amount ($${num.toLocaleString('en-US', { minimumFractionDigits: 2 })}) exceeds available cash ($${wallet.virtualBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })})!`, 'danger');
-      audioFx.playAlertChime();
-      return false;
-    }
+    // Record Withdrawal in Firebase Firestore Database (withdrawals collection)
+    await recordFirebaseWithdrawal({
+      amount: num,
+      currency,
+      destinationAddress: address,
+      networkChain,
+      walletMode,
+      txHash,
+      email: user.email,
+      name: user.name
+    });
 
-    setWallet(w => ({
-      ...w,
-      virtualBalance: parseFloat((w.virtualBalance - num).toFixed(2)),
-      totalEquity: parseFloat((w.totalEquity - num).toFixed(2))
-    }));
+    const withdrawalRecord = {
+      id: `WTH-${Math.floor(1000 + Math.random() * 9000)}`,
+      amount: num,
+      currency,
+      address,
+      networkChain,
+      walletMode,
+      txHash,
+      time: new Date().toLocaleTimeString(),
+      status: 'COMPLETED'
+    };
+
+    setWithdrawalHistory(prev => [withdrawalRecord, ...prev]);
 
     const shortAddr = address.length > 10 ? `${address.substring(0, 6)}...${address.substring(address.length - 4)}` : address;
-
     audioFx.playTradeSuccess();
-    addNotification(`Withdrawal Dispatched: -$${num.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${currency} transferred to ${shortAddr}`, 'success');
+    addNotification(`Withdrawal Dispatched & Recorded in Firestore: -$${num.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${currency} to ${shortAddr}`, 'success');
     return true;
   };
 
@@ -553,6 +581,7 @@ export const CryptoProvider = ({ children }) => {
     setWallet(NEW_USER_WALLET);
     setOpenPositions([]);
     setTradeHistory([]);
+    setWithdrawalHistory([]);
     setTotalBotProfit(0.00);
     setAutoTradeCount(0);
     addNotification('Paper wallet reset to $100,000.00 USDT', 'warning');
@@ -622,6 +651,7 @@ export const CryptoProvider = ({ children }) => {
         wallet,
         depositFunds,
         withdrawFunds,
+        withdrawalHistory,
         executeOrder,
         openPositions,
         closePosition,

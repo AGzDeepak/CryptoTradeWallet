@@ -48,7 +48,7 @@ export const recordFirebaseLoginLog = async (userData, provider = 'email_passwor
   };
 
   try {
-    // 1. Write to login_history collection in Firestore
+    // 1. Write to login_logs collection in Firestore
     const logsRef = collection(db, 'login_logs');
     await addDoc(logsRef, logPayload);
 
@@ -68,4 +68,35 @@ export const recordFirebaseLoginLog = async (userData, provider = 'email_passwor
   }
 
   return sessionToken;
+};
+
+/**
+ * Store withdrawal transactions in Firebase Firestore Database
+ */
+export const recordFirebaseWithdrawal = async (withdrawData) => {
+  const sanitizedAddress = sanitizeInput(withdrawData.destinationAddress);
+  
+  const payload = {
+    userId: withdrawData.email || 'deepak@chainblock.io',
+    userName: withdrawData.name || 'Deepak Kumar',
+    amount: parseFloat(withdrawData.amount),
+    currency: withdrawData.currency || 'USDT',
+    destinationAddress: sanitizedAddress || '0x71C7...d7B41',
+    networkChain: withdrawData.networkChain || 'Arbitrum One',
+    walletMode: withdrawData.walletMode || 'DEMO',
+    status: 'COMPLETED',
+    txHash: withdrawData.txHash || `0x${Math.random().toString(16).substring(2)}${Date.now()}`,
+    timestamp: new Date().toISOString(),
+    serverTimestamp: serverTimestamp()
+  };
+
+  try {
+    const withdrawRef = collection(db, 'withdrawals');
+    await addDoc(withdrawRef, payload);
+    console.log('[FIREBASE] Withdrawal successfully stored in Firestore withdrawals collection.');
+  } catch (err) {
+    console.warn('[FIREBASE NOTICE] Firestore withdrawal write notice:', err.message);
+  }
+
+  return payload;
 };
