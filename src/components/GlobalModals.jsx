@@ -7,6 +7,7 @@ import {
   Link2, Bot, Send, Star, HelpCircle, MessageSquare, Sparkles, User, RefreshCw, Clock
 } from 'lucide-react';
 import { EditAccountModal } from './EditAccountModal';
+import { AddApiKeyModal } from './AddApiKeyModal';
 
 export const GlobalModals = () => {
   const { 
@@ -70,6 +71,7 @@ export const GlobalModals = () => {
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
   if (!activeModal) return null;
+  if (activeModal === 'ADD_API_KEY' || activeModal === 'SETTINGS') return <AddApiKeyModal />;
 
   const copyAddress = (addr) => {
     navigator.clipboard.writeText(addr || '0x00D3f92A8c14B9204c3D');

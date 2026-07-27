@@ -1,14 +1,22 @@
 import React, { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import { User, ShieldCheck, Key, Lock, Bell, Sliders, Server, Cpu, Copy, Check, Download, LogOut, CheckCircle2, ShieldAlert, Zap, Globe, Smartphone } from 'lucide-react';
+import { AddApiKeyModal } from './AddApiKeyModal';
 
 export const AccountSection = () => {
-  const { user, openModal, addNotification, soundEnabled, setSoundEnabled, logout } = useCrypto();
+  const { user, openModal, activeModal, addNotification, soundEnabled, setSoundEnabled, logout } = useCrypto();
   const [copiedId, setCopiedId] = useState(false);
   const [twoFactor, setTwoFactor] = useState(true);
   const [ipWhitelist, setIpWhitelist] = useState(true);
   const [riskProfile, setRiskProfile] = useState('BALANCED');
   const [rebalanceFreq, setRebalanceFreq] = useState('1h');
+
+  const [apiConnections, setApiConnections] = useState([
+    { exchange: 'Binance Pro', status: 'CONNECTED', permissions: 'Read & Trade', ip: '192.168.1.1', color: 'text-[#facc15]', border: 'border-[#facc15]/30' },
+    { exchange: 'Bybit Quant', status: 'CONNECTED', permissions: 'Full Arbitrage', ip: '192.168.1.1', color: 'text-[#2dd4bf]', border: 'border-[#2dd4bf]/30' },
+    { exchange: 'OKX Institutional', status: 'CONNECTED', permissions: 'Read & Trade', ip: '192.168.1.1', color: 'text-purple-400', border: 'border-purple-500/30' },
+    { exchange: 'Coinbase Pro', status: 'CONNECTED', permissions: 'Read & Trade', ip: '192.168.1.1', color: 'text-sky-400', border: 'border-sky-500/30' }
+  ]);
 
   const copyId = () => {
     navigator.clipboard.writeText('9482-QUANT-PRO');
@@ -17,12 +25,9 @@ export const AccountSection = () => {
     setTimeout(() => setCopiedId(false), 2000);
   };
 
-  const apiConnections = [
-    { exchange: 'Binance Pro', status: 'CONNECTED', permissions: 'Read & Trade', ip: '192.168.1.1', color: 'text-[#facc15]', border: 'border-[#facc15]/30' },
-    { exchange: 'Bybit Quant', status: 'CONNECTED', permissions: 'Full Arbitrage', ip: '192.168.1.1', color: 'text-[#2dd4bf]', border: 'border-[#2dd4bf]/30' },
-    { exchange: 'OKX Institutional', status: 'CONNECTED', permissions: 'Read & Trade', ip: '192.168.1.1', color: 'text-purple-400', border: 'border-purple-500/30' },
-    { exchange: 'Coinbase Pro', status: 'CONNECTED', permissions: 'Read & Trade', ip: '192.168.1.1', color: 'text-sky-400', border: 'border-sky-500/30' }
-  ];
+  const handleAddNewKey = (newKey) => {
+    setApiConnections(prev => [newKey, ...prev]);
+  };
 
   return (
     <div className="space-y-6 font-sans">
@@ -79,16 +84,16 @@ export const AccountSection = () => {
               <h3 className="text-sm font-extrabold text-white font-mono tracking-tight">MULTI-EXCHANGE QUANT API KEYS</h3>
             </div>
             <button
-              onClick={() => openModal('SETTINGS')}
-              className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-[#facc15] font-mono text-xs font-bold hover:bg-slate-800"
+              onClick={() => openModal('ADD_API_KEY')}
+              className="px-4 py-2 rounded-xl bg-[#facc15] text-slate-950 font-mono text-xs font-extrabold hover:brightness-110 shadow-md transition"
             >
               + ADD NEW API KEY
             </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-mono text-xs">
-            {apiConnections.map((api) => (
-              <div key={api.exchange} className={`p-4 rounded-2xl bg-[#0b0c10] border ${api.border} space-y-2`}>
+            {apiConnections.map((api, idx) => (
+              <div key={idx} className={`p-4 rounded-2xl bg-[#0b0c10] border ${api.border} space-y-2`}>
                 <div className="flex items-center justify-between">
                   <h4 className="font-extrabold text-white text-xs">{api.exchange}</h4>
                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold bg-slate-900 ${api.color} border border-slate-800`}>
@@ -104,6 +109,12 @@ export const AccountSection = () => {
                     <span>IP Lock:</span>
                     <span className="text-[#2dd4bf] font-bold">{api.ip}</span>
                   </div>
+                  {api.apiKeyMasked && (
+                    <div className="flex justify-between">
+                      <span>API Key:</span>
+                      <span className="text-[#facc15] font-bold">{api.apiKeyMasked}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -218,6 +229,10 @@ export const AccountSection = () => {
           </div>
         </div>
       </div>
+
+      {activeModal === 'ADD_API_KEY' && (
+        <AddApiKeyModal onAddKey={handleAddNewKey} />
+      )}
 
     </div>
   );
