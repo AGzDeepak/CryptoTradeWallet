@@ -1,22 +1,123 @@
 import React, { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import { 
-  History, Download, Filter, Search, FileSpreadsheet, FileText, CheckCircle2, 
-  ShieldCheck, ArrowUpRight, Lock, CheckCircle, RefreshCw
+  History, Download, Search, FileSpreadsheet, FileText, 
+  ShieldCheck, ArrowUpRight, ArrowDownLeft, CheckCircle, ChevronDown, ChevronUp, Zap, Info
 } from 'lucide-react';
 
 const INITIAL_TRADE_SETTLEMENTS = [
-  { id: 'TRD-8492', time: '10:42:15', symbol: 'BTCUSDT', strategy: 'Cross Exchange Arbitrage', buyExchange: 'Binance', sellExchange: 'Bybit', entryPrice: 67820.50, exitPrice: 68140.00, amount: 0.5, fees: 13.56, netProfit: 146.19, result: 'PROFIT' },
-  { id: 'TRD-8491', time: '10:35:40', symbol: 'ETHUSDT', strategy: 'Orderbook Imbalance', buyExchange: 'OKX', sellExchange: 'Coinbase', entryPrice: 3520.10, exitPrice: 3548.80, amount: 4.0, fees: 5.63, netProfit: 109.17, result: 'PROFIT' },
-  { id: 'TRD-8490', time: '10:28:12', symbol: 'SOLUSDT', strategy: 'Spatial Yield Spread', buyExchange: 'Bybit', sellExchange: 'Binance', entryPrice: 182.40, exitPrice: 185.90, amount: 50.0, fees: 3.68, netProfit: 171.32, result: 'PROFIT' },
-  { id: 'TRD-8489', time: '10:14:05', symbol: 'AVAXUSDT', strategy: 'Cross Exchange Arbitrage', buyExchange: 'Coinbase', sellExchange: 'OKX', entryPrice: 37.80, exitPrice: 38.65, amount: 100.0, fees: 1.53, netProfit: 83.47, result: 'PROFIT' },
-  { id: 'TRD-8488', time: '09:55:22', symbol: 'BTCUSDT', strategy: 'Autopilot Bot Alpha', buyExchange: 'Binance', sellExchange: 'OKX', entryPrice: 67650.00, exitPrice: 67980.00, amount: 0.5, fees: 13.53, netProfit: 151.47, result: 'PROFIT' }
+  { 
+    id: 'TRD-8492', 
+    time: '10:42:15', 
+    symbol: 'BTCUSDT', 
+    strategy: 'Cross Exchange Arbitrage', 
+    buyExchange: 'Binance', 
+    sellExchange: 'Bybit', 
+    buyPrice: 67820.50, 
+    sellPrice: 68140.00, 
+    amount: 0.5, 
+    buyTotal: 33910.25,
+    sellTotal: 34070.00,
+    grossProfit: 159.75,
+    fees: 13.56, 
+    netProfit: 146.19, 
+    spreadPct: 0.47,
+    buyTxHash: '0x8f2a...39b1',
+    sellTxHash: '0x1c4e...82d9',
+    latency: '14.2ms',
+    result: 'PROFIT' 
+  },
+  { 
+    id: 'TRD-8491', 
+    time: '10:35:40', 
+    symbol: 'ETHUSDT', 
+    strategy: 'Orderbook Imbalance', 
+    buyExchange: 'OKX', 
+    sellExchange: 'Coinbase', 
+    buyPrice: 3520.10, 
+    sellPrice: 3548.80, 
+    amount: 4.0, 
+    buyTotal: 14080.40,
+    sellTotal: 14195.20,
+    grossProfit: 114.80,
+    fees: 5.63, 
+    netProfit: 109.17, 
+    spreadPct: 0.82,
+    buyTxHash: '0x3d91...92a4',
+    sellTxHash: '0x7e12...41c8',
+    latency: '18.6ms',
+    result: 'PROFIT' 
+  },
+  { 
+    id: 'TRD-8490', 
+    time: '10:28:12', 
+    symbol: 'SOLUSDT', 
+    strategy: 'Spatial Yield Spread', 
+    buyExchange: 'Bybit', 
+    sellExchange: 'Binance', 
+    buyPrice: 182.40, 
+    sellPrice: 185.90, 
+    amount: 50.0, 
+    buyTotal: 9120.00,
+    sellTotal: 9295.00,
+    grossProfit: 175.00,
+    fees: 3.68, 
+    netProfit: 171.32, 
+    spreadPct: 1.92,
+    buyTxHash: '0x5b2c...10f3',
+    sellTxHash: '0x9d4a...66e2',
+    latency: '12.8ms',
+    result: 'PROFIT' 
+  },
+  { 
+    id: 'TRD-8489', 
+    time: '10:14:05', 
+    symbol: 'AVAXUSDT', 
+    strategy: 'Cross Exchange Arbitrage', 
+    buyExchange: 'Coinbase', 
+    sellExchange: 'OKX', 
+    buyPrice: 37.80, 
+    sellPrice: 38.65, 
+    amount: 100.0, 
+    buyTotal: 3780.00,
+    sellTotal: 3865.00,
+    grossProfit: 85.00,
+    fees: 1.53, 
+    netProfit: 83.47, 
+    spreadPct: 2.25,
+    buyTxHash: '0x2a84...77d1',
+    sellTxHash: '0x6f3e...55c9',
+    latency: '22.1ms',
+    result: 'PROFIT' 
+  },
+  { 
+    id: 'TRD-8488', 
+    time: '09:55:22', 
+    symbol: 'BTCUSDT', 
+    strategy: 'Autopilot Bot Alpha', 
+    buyExchange: 'Binance', 
+    sellExchange: 'OKX', 
+    buyPrice: 67650.00, 
+    sellPrice: 67980.00, 
+    amount: 0.5, 
+    buyTotal: 33825.00,
+    sellTotal: 33990.00,
+    grossProfit: 165.00,
+    fees: 13.53, 
+    netProfit: 151.47, 
+    spreadPct: 0.49,
+    buyTxHash: '0x4c11...29a0',
+    sellTxHash: '0x8d33...14f2',
+    latency: '14.0ms',
+    result: 'PROFIT' 
+  }
 ];
 
 export const TradeHistory = () => {
   const { tradeHistory, addNotification } = useCrypto();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCoin, setSelectedCoin] = useState('ALL');
+  const [expandedRowId, setExpandedRowId] = useState(null);
 
   const combinedHistory = tradeHistory && tradeHistory.length > 0 
     ? tradeHistory 
@@ -33,27 +134,29 @@ export const TradeHistory = () => {
 
   const totalNetProfit = filteredHistory.reduce((sum, item) => sum + (parseFloat(item.netProfit) || 0), 0);
 
+  const toggleRowExpansion = (id) => {
+    setExpandedRowId(expandedRowId === id ? null : id);
+  };
+
   const exportCSV = () => {
-    const headers = ['ID,Time,Symbol,Strategy,BuyExchange,SellExchange,EntryPrice,ExitPrice,Fees,NetProfit,Result'];
-    const rows = filteredHistory.map(h => 
-      `${h.id},${h.time},${h.symbol},${h.strategy || 'Spatial Arbitrage'},${h.buyExchange},${h.sellExchange},${h.entryPrice},${h.exitPrice},${h.fees},${h.netProfit},${h.result}`
-    );
+    const headers = ['ID,Time,Symbol,Strategy,BuyExchange,BuyPrice,BuyAmount,BuyTotal,SellExchange,SellPrice,SellAmount,SellTotal,Fees,NetProfit,Result'];
+    const rows = filteredHistory.map(h => {
+      const bPrice = h.buyPrice || h.entryPrice;
+      const sPrice = h.sellPrice || h.exitPrice;
+      const amt = h.amount || 1;
+      const bTotal = h.buyTotal || (bPrice * amt);
+      const sTotal = h.sellTotal || (sPrice * amt);
+
+      return `${h.id},${h.time},${h.symbol},${h.strategy || 'Spatial Arbitrage'},${h.buyExchange},${bPrice},${amt},${bTotal},${h.sellExchange},${sPrice},${amt},${sTotal},${h.fees},${h.netProfit},${h.result}`;
+    });
+
     const blob = new Blob([[headers, ...rows].join('\n')], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `QUANT_TRADE_AUDIT_LOG_${Date.now()}.csv`;
+    a.download = `FULL_BUY_SELL_AUDIT_LOG_${Date.now()}.csv`;
     a.click();
-    addNotification('Quantitative Trade Audit Log exported to CSV successfully.', 'success');
-  };
-
-  const exportExcel = () => {
-    exportCSV();
-  };
-
-  const exportPDF = () => {
-    window.print();
-    addNotification('Generating printable Quantitative Trade Audit Ledger PDF...', 'info');
+    addNotification('Full Buy & Sell Trade Audit Log exported to CSV.', 'success');
   };
 
   return (
@@ -68,14 +171,14 @@ export const TradeHistory = () => {
           <div>
             <div className="flex items-center space-x-2">
               <h3 className="text-base font-extrabold text-white tracking-wide font-mono">
-                QUANTITATIVE TRADE AUDIT LOG
+                QUANTITATIVE TRADE AUDIT LOG — BUY & SELL LEDGER
               </h3>
               <span className="px-2 py-0.5 rounded bg-emerald-950 text-[#34d399] border border-emerald-800 text-[10px] font-mono font-bold flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3" /> VERIFIED LEDGER
+                <ShieldCheck className="w-3 h-3" /> VERIFIED ORDERBOOK
               </span>
             </div>
             <p className="text-xs text-slate-400 font-mono mt-0.5">
-              Immutable cross-exchange settlement & orderbook arbitrage audit trail
+              Full leg breakdown: Buy Entry vs Sell Exit price, total traded volume, fees, & net profit
             </p>
           </div>
         </div>
@@ -87,21 +190,21 @@ export const TradeHistory = () => {
             className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-700/60 text-cyan-300 text-xs font-mono font-semibold transition"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Export CSV</span>
+            <span>Export Full CSV</span>
           </button>
           <button
-            onClick={exportExcel}
+            onClick={exportCSV}
             className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-mono font-semibold transition"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-[#34d399]" />
             <span>Excel</span>
           </button>
           <button
-            onClick={exportPDF}
+            onClick={() => window.print()}
             className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-mono font-semibold transition"
           >
             <FileText className="w-3.5 h-3.5 text-rose-400" />
-            <span>PDF Ledger</span>
+            <span>Print PDF</span>
           </button>
         </div>
       </div>
@@ -110,7 +213,7 @@ export const TradeHistory = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 font-mono">
         <div className="bg-[#060810] p-3 rounded-xl border border-slate-800">
           <span className="text-slate-400 text-[10px] block">TOTAL SETTLEMENTS</span>
-          <span className="text-base font-bold text-white block">{filteredHistory.length} Trades</span>
+          <span className="text-base font-bold text-white block">{filteredHistory.length} Executed Logs</span>
         </div>
         <div className="bg-[#060810] p-3 rounded-xl border border-slate-800">
           <span className="text-slate-400 text-[10px] block">CUMULATIVE NET PROFIT</span>
@@ -121,18 +224,18 @@ export const TradeHistory = () => {
           <span className="text-base font-bold text-cyan-400 block">14.2ms</span>
         </div>
         <div className="bg-[#060810] p-3 rounded-xl border border-slate-800">
-          <span className="text-slate-400 text-[10px] block">ENCRYPTION LEVEL</span>
-          <span className="text-base font-bold text-purple-400 block">256-BIT AES</span>
+          <span className="text-slate-400 text-[10px] block">AUDIT SECURITY</span>
+          <span className="text-base font-bold text-purple-400 block">IMMUTABLE 256-BIT</span>
         </div>
       </div>
 
       {/* Search & Filter Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4 font-mono text-xs">
-        <div className="relative w-full sm:w-72">
+        <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-500" />
           <input
             type="text"
-            placeholder="Search symbol, exchange, or route..."
+            placeholder="Search coin, exchange, or order hash..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-slate-200 focus:border-[#34d399] outline-none"
@@ -146,7 +249,7 @@ export const TradeHistory = () => {
             onChange={(e) => setSelectedCoin(e.target.value)}
             className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 font-mono outline-none"
           >
-            <option value="ALL">All Pairs (BTC, ETH, SOL, AVAX)</option>
+            <option value="ALL">All Asset Pairs</option>
             <option value="BTCUSDT">BTCUSDT (Bitcoin)</option>
             <option value="ETHUSDT">ETHUSDT (Ethereum)</option>
             <option value="SOLUSDT">SOLUSDT (Solana)</option>
@@ -155,22 +258,22 @@ export const TradeHistory = () => {
         </div>
       </div>
 
-      {/* Audit Log Table */}
+      {/* Audit Log Table with Detailed Buy and Sell Leg Columns */}
       <div className="overflow-x-auto no-scrollbar rounded-xl border border-slate-800/80 bg-[#060810]">
         <table className="w-full text-left border-collapse font-mono text-xs">
           <thead>
             <tr className="border-b border-slate-800 uppercase text-[10px] text-slate-400 bg-slate-900/60">
               <th className="py-3 px-3">Audit ID</th>
               <th className="py-3 px-3">Time</th>
-              <th className="py-3 px-3">Symbol</th>
-              <th className="py-3 px-3">Strategy</th>
-              <th className="py-3 px-3">Buy Leg</th>
-              <th className="py-3 px-3">Sell Leg</th>
-              <th className="py-3 px-3">Entry Price</th>
-              <th className="py-3 px-3">Exit Price</th>
+              <th className="py-3 px-3">Asset</th>
+              <th className="py-3 px-3">Buy Leg (Exchange & Price)</th>
+              <th className="py-3 px-3">Sell Leg (Exchange & Price)</th>
+              <th className="py-3 px-3">Volume / Amount</th>
+              <th className="py-3 px-3">Buy Value</th>
+              <th className="py-3 px-3">Sell Value</th>
               <th className="py-3 px-3">Fees</th>
               <th className="py-3 px-3">Net Profit</th>
-              <th className="py-3 px-3 text-right">Result Status</th>
+              <th className="py-3 px-3 text-right">Details</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60">
@@ -181,27 +284,137 @@ export const TradeHistory = () => {
                 </td>
               </tr>
             ) : (
-              filteredHistory.map((item) => (
-                <tr key={item.id} className="hover:bg-slate-800/40 transition">
-                  <td className="py-3 px-3 text-slate-400 font-bold">{item.id}</td>
-                  <td className="py-3 px-3 text-slate-500">{item.time}</td>
-                  <td className="py-3 px-3 font-bold text-cyan-400">{item.symbol}</td>
-                  <td className="py-3 px-3 text-slate-300 text-[11px]">{item.strategy || 'Cross Exchange Arbitrage'}</td>
-                  <td className="py-3 px-3 text-[#34d399] font-semibold">{item.buyExchange}</td>
-                  <td className="py-3 px-3 text-purple-400 font-semibold">{item.sellExchange}</td>
-                  <td className="py-3 px-3 text-slate-300">${typeof item.entryPrice === 'number' ? item.entryPrice.toLocaleString() : item.entryPrice}</td>
-                  <td className="py-3 px-3 text-slate-300">${typeof item.exitPrice === 'number' ? item.exitPrice.toLocaleString() : item.exitPrice}</td>
-                  <td className="py-3 px-3 text-slate-500">-${item.fees}</td>
-                  <td className="py-3 px-3 font-extrabold text-[#34d399]">
-                    +${typeof item.netProfit === 'number' ? item.netProfit.toLocaleString('en-US', { minimumFractionDigits: 2 }) : item.netProfit}
-                  </td>
-                  <td className="py-3 px-3 text-right">
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-950 text-[#34d399] border border-emerald-800 font-bold inline-flex items-center gap-1">
-                      <CheckCircle className="w-3 h-3" /> SETTLED
-                    </span>
-                  </td>
-                </tr>
-              ))
+              filteredHistory.map((item) => {
+                const bPrice = item.buyPrice || item.entryPrice;
+                const sPrice = item.sellPrice || item.exitPrice;
+                const amt = item.amount || 1;
+                const bTotal = item.buyTotal || (bPrice * amt);
+                const sTotal = item.sellTotal || (sPrice * amt);
+                const isExpanded = expandedRowId === item.id;
+
+                return (
+                  <React.Fragment key={item.id}>
+                    <tr 
+                      onClick={() => toggleRowExpansion(item.id)}
+                      className="hover:bg-slate-800/50 transition cursor-pointer"
+                    >
+                      <td className="py-3 px-3 text-slate-400 font-bold flex items-center space-x-1">
+                        <span>{item.id}</span>
+                      </td>
+                      <td className="py-3 px-3 text-slate-500">{item.time}</td>
+                      <td className="py-3 px-3 font-bold text-cyan-400">{item.symbol}</td>
+                      
+                      {/* BUY LEG INFO */}
+                      <td className="py-3 px-3">
+                        <div className="flex flex-col">
+                          <span className="text-[#34d399] font-bold flex items-center gap-1">
+                            <ArrowDownLeft className="w-3 h-3 text-[#34d399]" /> {item.buyExchange}
+                          </span>
+                          <span className="text-slate-300 text-[11px]">${typeof bPrice === 'number' ? bPrice.toLocaleString() : bPrice}</span>
+                        </div>
+                      </td>
+
+                      {/* SELL LEG INFO */}
+                      <td className="py-3 px-3">
+                        <div className="flex flex-col">
+                          <span className="text-purple-400 font-bold flex items-center gap-1">
+                            <ArrowUpRight className="w-3 h-3 text-purple-400" /> {item.sellExchange}
+                          </span>
+                          <span className="text-slate-300 text-[11px]">${typeof sPrice === 'number' ? sPrice.toLocaleString() : sPrice}</span>
+                        </div>
+                      </td>
+
+                      <td className="py-3 px-3 text-white font-bold">{amt} {item.symbol.replace('USDT', '')}</td>
+                      <td className="py-3 px-3 text-slate-300">${typeof bTotal === 'number' ? bTotal.toLocaleString('en-US', { minimumFractionDigits: 2 }) : bTotal}</td>
+                      <td className="py-3 px-3 text-slate-300">${typeof sTotal === 'number' ? sTotal.toLocaleString('en-US', { minimumFractionDigits: 2 }) : sTotal}</td>
+                      <td className="py-3 px-3 text-slate-500">-${item.fees}</td>
+                      <td className="py-3 px-3 font-extrabold text-[#34d399]">
+                        +${typeof item.netProfit === 'number' ? item.netProfit.toLocaleString('en-US', { minimumFractionDigits: 2 }) : item.netProfit}
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        <button className="p-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400">
+                          {isExpanded ? <ChevronUp className="w-4 h-4 text-[#34d399]" /> : <ChevronDown className="w-4 h-4" />}
+                        </button>
+                      </td>
+                    </tr>
+
+                    {/* EXPANDABLE ORDERBOOK AUDIT DETAILS DRAWER */}
+                    {isExpanded && (
+                      <tr className="bg-[#0b0e17] border-b border-slate-800">
+                        <td colSpan="11" className="p-4 font-mono">
+                          <div className="p-4 rounded-xl bg-[#060810] border border-slate-800 space-y-3">
+                            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                              <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                                <Zap className="w-4 h-4 text-cyan-400" /> SPATIAL ORDERBOOK EXECUTION DETAILS ({item.id})
+                              </span>
+                              <span className="text-[10px] text-slate-500">Latency: {item.latency || '14.2ms'}</span>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                              {/* BUY LEG CARD */}
+                              <div className="p-3 rounded-lg bg-emerald-950/20 border border-emerald-500/30 space-y-1">
+                                <span className="text-emerald-400 font-bold block uppercase">LEG 1: BUY EXECUTION</span>
+                                <div className="flex justify-between text-slate-300">
+                                  <span>Exchange Gateway:</span>
+                                  <strong className="text-white">{item.buyExchange}</strong>
+                                </div>
+                                <div className="flex justify-between text-slate-300">
+                                  <span>Execution Price:</span>
+                                  <strong className="text-emerald-400">${typeof bPrice === 'number' ? bPrice.toLocaleString() : bPrice}</strong>
+                                </div>
+                                <div className="flex justify-between text-slate-300">
+                                  <span>Quantity Traded:</span>
+                                  <strong>{amt} {item.symbol.replace('USDT', '')}</strong>
+                                </div>
+                                <div className="flex justify-between text-slate-300">
+                                  <span>Total Capital Outflow:</span>
+                                  <strong className="text-white">${typeof bTotal === 'number' ? bTotal.toLocaleString('en-US', { minimumFractionDigits: 2 }) : bTotal}</strong>
+                                </div>
+                                <div className="flex justify-between text-slate-500 text-[10px] pt-1 border-t border-emerald-900/60">
+                                  <span>Tx Hash:</span>
+                                  <code className="text-cyan-400">{item.buyTxHash || '0x8f2a...39b1'}</code>
+                                </div>
+                              </div>
+
+                              {/* SELL LEG CARD */}
+                              <div className="p-3 rounded-lg bg-purple-950/20 border border-purple-500/30 space-y-1">
+                                <span className="text-purple-400 font-bold block uppercase">LEG 2: SELL EXECUTION</span>
+                                <div className="flex justify-between text-slate-300">
+                                  <span>Exchange Gateway:</span>
+                                  <strong className="text-white">{item.sellExchange}</strong>
+                                </div>
+                                <div className="flex justify-between text-slate-300">
+                                  <span>Execution Price:</span>
+                                  <strong className="text-purple-400">${typeof sPrice === 'number' ? sPrice.toLocaleString() : sPrice}</strong>
+                                </div>
+                                <div className="flex justify-between text-slate-300">
+                                  <span>Quantity Traded:</span>
+                                  <strong>{amt} {item.symbol.replace('USDT', '')}</strong>
+                                </div>
+                                <div className="flex justify-between text-slate-300">
+                                  <span>Total Capital Inflow:</span>
+                                  <strong className="text-white">${typeof sTotal === 'number' ? sTotal.toLocaleString('en-US', { minimumFractionDigits: 2 }) : sTotal}</strong>
+                                </div>
+                                <div className="flex justify-between text-slate-500 text-[10px] pt-1 border-t border-purple-900/60">
+                                  <span>Tx Hash:</span>
+                                  <code className="text-cyan-400">{item.sellTxHash || '0x1c4e...82d9'}</code>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-xs">
+                              <span className="text-slate-400">Net Realized Spatial Profit:</span>
+                              <span className="text-sm font-extrabold text-[#34d399]">
+                                +${typeof item.netProfit === 'number' ? item.netProfit.toLocaleString('en-US', { minimumFractionDigits: 2 }) : item.netProfit} USDT
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })
             )}
           </tbody>
         </table>
