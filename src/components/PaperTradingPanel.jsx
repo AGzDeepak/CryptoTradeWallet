@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { Wallet, RefreshCw, ShoppingBag, ShieldAlert, ArrowUpRight, PlusCircle, Bot, TrendingUp, Sliders, Play, XCircle } from 'lucide-react';
+import { Wallet, RefreshCw, ShoppingBag, ArrowUpRight, PlusCircle, Bot } from 'lucide-react';
 
 export const PaperTradingPanel = () => {
   const { 
     wallet, 
     resetWallet, 
     openPositions, 
-    closePosition,
     tradeHistory, 
     executeOrder, 
     openModal, 
@@ -15,11 +14,10 @@ export const PaperTradingPanel = () => {
     marketData 
   } = useCrypto();
 
-  const [side, setSide] = useState('BUY'); // 'BUY' or 'SELL'
+  const [side, setSide] = useState('BUY');
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [exchange, setExchange] = useState('Binance');
   const [amount, setAmount] = useState('0.5');
-  const [orderType, setOrderType] = useState('MARKET');
 
   const selectedCoin = marketData.find(c => c.symbol === symbol) || marketData[0] || { basePrice: 67840.50 };
 
@@ -40,9 +38,7 @@ export const PaperTradingPanel = () => {
       <div className="card-header-baseline">
         <div className="flex items-center space-x-2">
           <Wallet className="w-5 h-5 text-[#facc15]" />
-          <div>
-            <h3 className="text-base font-extrabold text-white font-mono tracking-tight">MOCK PAPER TRADING TERMINAL</h3>
-          </div>
+          <h3 className="text-sm font-extrabold text-white font-mono tracking-tight">MOCK PAPER TRADING TERMINAL</h3>
         </div>
 
         <div className="flex items-center space-x-2">
@@ -79,7 +75,7 @@ export const PaperTradingPanel = () => {
           <span className="text-xl font-extrabold font-mono text-white">
             ${(wallet.virtualBalance || 100000).toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </span>
-          <span className="text-[10px] text-slate-500 font-mono block mt-1">USDT Available</span>
+          <span className="text-[10px] text-slate-400 font-mono block mt-1">USDT Available</span>
         </div>
 
         <div className="chainblock-subcard">
@@ -112,7 +108,7 @@ export const PaperTradingPanel = () => {
       </div>
 
       {/* Manual Buy / Sell Order Terminal Form */}
-      <div className="bg-[#0b0c10] p-4 sm:p-5 rounded-2xl border border-slate-800 space-y-4 font-mono text-xs">
+      <div className="bg-[#0b0c10] p-5 rounded-2xl border border-slate-800 space-y-4 font-mono text-xs">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
           <h4 className="text-xs font-mono uppercase text-[#facc15] font-bold flex items-center gap-1.5">
             <ShoppingBag className="w-4 h-4" /> EXECUTE MOCK PAPER ORDER
@@ -142,9 +138,9 @@ export const PaperTradingPanel = () => {
         </div>
 
         <form onSubmit={handleManualExecute} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="text-slate-400 block mb-1 text-[11px]">Crypto Pair</label>
+              <label className="text-slate-400 block mb-1.5 text-[11px]">Crypto Pair</label>
               <select
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
@@ -158,7 +154,7 @@ export const PaperTradingPanel = () => {
             </div>
 
             <div>
-              <label className="text-slate-400 block mb-1 text-[11px]">Target Exchange</label>
+              <label className="text-slate-400 block mb-1.5 text-[11px]">Target Exchange</label>
               <select
                 value={exchange}
                 onChange={(e) => setExchange(e.target.value)}
@@ -172,7 +168,7 @@ export const PaperTradingPanel = () => {
             </div>
 
             <div>
-              <label className="text-slate-400 block mb-1 text-[11px]">Order Quantity</label>
+              <label className="text-slate-400 block mb-1.5 text-[11px]">Order Quantity</label>
               <input
                 type="number"
                 step="0.01"
@@ -185,14 +181,14 @@ export const PaperTradingPanel = () => {
 
           {/* Position Percentage Quick Sliders */}
           <div className="flex items-center justify-between text-[11px] pt-1">
-            <span className="text-slate-400">Quick Size:</span>
+            <span className="text-slate-400">Quick Size Percentage:</span>
             <div className="flex space-x-2">
               {[0.25, 0.50, 0.75, 1.0].map((pct) => (
                 <button
                   key={pct}
                   type="button"
                   onClick={() => handleQuickPercent(pct)}
-                  className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 font-bold"
+                  className="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 font-bold"
                 >
                   {pct * 100}%
                 </button>
@@ -202,7 +198,7 @@ export const PaperTradingPanel = () => {
 
           <button
             type="submit"
-            className={`w-full py-3 rounded-xl font-extrabold font-sans text-xs transition shadow-lg ${
+            className={`w-full py-3.5 rounded-xl font-extrabold font-sans text-xs transition shadow-lg ${
               side === 'BUY'
                 ? 'bg-[#2dd4bf] text-slate-950 hover:brightness-110'
                 : 'bg-rose-500 text-white hover:brightness-110'
