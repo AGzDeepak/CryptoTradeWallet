@@ -65,13 +65,6 @@ export const AccountSection = () => {
             {copiedId ? <Check className="w-4 h-4 text-[#2dd4bf]" /> : <Copy className="w-4 h-4" />}
             <span>{copiedId ? 'COPIED ID' : 'COPY ACCOUNT ID'}</span>
           </button>
-          <button
-            onClick={() => openModal('EDIT_ACCOUNT')}
-            className="px-4 py-2.5 rounded-xl bg-[#facc15] text-slate-950 text-xs font-mono font-extrabold hover:brightness-110 shadow-md flex items-center gap-1.5"
-          >
-            <Sliders className="w-4 h-4 stroke-[2.5]" />
-            <span>EDIT ACCOUNT</span>
-          </button>
         </div>
       </div>
 
