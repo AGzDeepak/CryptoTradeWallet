@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { CryptoProvider, useCrypto } from './context/CryptoContext';
 import { BackgroundParticles } from './components/BackgroundParticles';
 import { AuthScreen } from './components/AuthScreen';
@@ -26,54 +26,55 @@ const DashboardContent = () => {
   const { activeTab } = useCrypto();
 
   return (
-    <main className="flex-1 overflow-y-auto p-5 space-y-6 no-scrollbar smooth-scroll-container bg-[#07090e]">
-      <div className="max-w-[1850px] mx-auto space-y-6">
+    <main className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar smooth-scroll-container bg-[#07090e]">
+      <div className="max-w-[1750px] mx-auto space-y-6">
         
-        {/* Master Bot Autopilot & Stimulation Command Deck */}
+        {/* Row 1: Master Bot Autopilot & Stimulation Command Deck (Full Width) */}
         <AutoTraderBar />
 
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
             
-            {/* Main Institutional 3-Column Professional Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              
-              {/* COLUMN 1: LEFT WATCHLIST & DEPTH (25% Width / 3 Cols) */}
-              <div className="lg:col-span-3 space-y-6">
-                <WatchlistPanel />
-                <PaperTradingPanel />
-              </div>
-
-              {/* COLUMN 2: CENTER CHART & ARBITRAGE MATRIX (50% Width / 6 Cols) */}
-              <div className="lg:col-span-6 space-y-6">
-                <LiveChart />
-                <ArbitragePanel />
-                <LivePositions />
-              </div>
-
-              {/* COLUMN 3: RIGHT EXECUTION & WALLET EQUITY (25% Width / 3 Cols) */}
-              <div className="lg:col-span-3 space-y-6">
-                <TotalAssetsHero />
-                <OperationSwapTool />
-                <AiStrategyPanel />
-                <ExchangeStatus />
-              </div>
-
+            {/* Row 2: Live Candlestick Chart (Left 50%) & Total Assets Hero (Right 50%) */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch">
+              <LiveChart />
+              <TotalAssetsHero />
             </div>
 
-            {/* Bottom Section: Quantitative Trade Audit Log Ledger */}
+            {/* Row 3: Spatial Arbitrage Matrix (Left 50%) & Manual Swap Terminal (Right 50%) */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch">
+              <ArbitragePanel />
+              <OperationSwapTool />
+            </div>
+
+            {/* Row 4: Watchlist & Depth (Left 50%) & AI Bot Strategies (Right 50%) */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch">
+              <WatchlistPanel />
+              <AiStrategyPanel />
+            </div>
+
+            {/* Row 5: Live Open Positions (Left 50%) & Paper Trading / Exchange Status (Right 50%) */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+              <LivePositions />
+              <div className="space-y-6">
+                <PaperTradingPanel />
+                <ExchangeStatus />
+              </div>
+            </div>
+
+            {/* Row 6: Quantitative Trade Audit Log Ledger (Full Width) */}
             <TradeHistory />
 
           </div>
         )}
 
         {activeTab === 'markets' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            <div className="lg:col-span-7 space-y-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+            <div className="space-y-6">
               <LiveChart />
               <ArbitragePanel />
             </div>
-            <div className="lg:col-span-5 space-y-6">
+            <div className="space-y-6">
               <TotalAssetsHero />
               <OperationSwapTool />
             </div>
@@ -88,12 +89,12 @@ const DashboardContent = () => {
         )}
 
         {activeTab === 'portfolio' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            <div className="lg:col-span-7 space-y-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+            <div className="space-y-6">
               <TotalAssetsHero />
               <LivePositions />
             </div>
-            <div className="lg:col-span-5 space-y-6">
+            <div className="space-y-6">
               <PaperTradingPanel />
             </div>
           </div>
@@ -107,11 +108,11 @@ const DashboardContent = () => {
         )}
 
         {activeTab === 'strategies' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div className="space-y-6">
               <AiStrategyPanel />
             </div>
-            <div className="lg:col-span-6">
+            <div className="space-y-6">
               <OperationSwapTool />
             </div>
           </div>
