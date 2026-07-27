@@ -4,6 +4,8 @@ import { BackgroundParticles } from './components/BackgroundParticles';
 import { AuthScreen } from './components/AuthScreen';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
+import { GlobalTickerBar } from './components/GlobalTickerBar';
+import { WatchlistPanel } from './components/WatchlistPanel';
 import { AutoTraderBar } from './components/AutoTraderBar';
 import { TotalAssetsHero } from './components/TotalAssetsHero';
 import { OperationSwapTool } from './components/OperationSwapTool';
@@ -19,109 +21,48 @@ import { ExchangeStatus } from './components/ExchangeStatus';
 import { AnalyticsSection } from './components/AnalyticsSection';
 import { SettingsModal } from './components/SettingsModal';
 import { GlobalModals } from './components/GlobalModals';
-import { LineChart, Briefcase, Cpu, SlidersHorizontal, ShieldCheck } from 'lucide-react';
 
 const DashboardContent = () => {
   const { activeTab } = useCrypto();
-  const [workstationMode, setWorkstationMode] = useState('terminal'); // 'terminal' | 'portfolio' | 'bot_ai'
 
   return (
-    <main className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar smooth-scroll-container bg-[#0b1120]">
-      <div className="max-w-[1750px] mx-auto space-y-6">
+    <main className="flex-1 overflow-y-auto p-5 space-y-6 no-scrollbar smooth-scroll-container bg-[#07090e]">
+      <div className="max-w-[1850px] mx-auto space-y-6">
         
-        {/* Master Bot & Stimulation Control Command Deck */}
+        {/* Master Bot Autopilot & Stimulation Command Deck */}
         <AutoTraderBar />
 
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
             
-            {/* Desktop Workstation Mode Switcher Pills (Zero Clutter Navigation) */}
-            <div className="flex items-center justify-between bg-slate-900/90 p-2 rounded-2xl border border-slate-800 font-mono text-xs shadow-xl">
-              <div className="flex items-center space-x-2">
-                <SlidersHorizontal className="w-4 h-4 text-teal-400 ml-2" />
-                <span className="text-slate-400 font-bold uppercase text-[11px] hidden sm:inline">DESKTOP WORKSTATION:</span>
+            {/* Main Institutional 3-Column Professional Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              
+              {/* COLUMN 1: LEFT WATCHLIST & DEPTH (25% Width / 3 Cols) */}
+              <div className="lg:col-span-3 space-y-6">
+                <WatchlistPanel />
+                <PaperTradingPanel />
               </div>
 
-              <div className="flex items-center space-x-1 sm:space-x-2">
-                <button
-                  onClick={() => setWorkstationMode('terminal')}
-                  className={`px-4 py-2 rounded-xl flex items-center space-x-2 transition font-bold ${
-                    workstationMode === 'terminal'
-                      ? 'bg-teal-400 text-slate-950 shadow-lg glow-mint'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                  }`}
-                >
-                  <LineChart className="w-3.5 h-3.5" />
-                  <span>QUANT ARBITRAGE TERMINAL</span>
-                </button>
-
-                <button
-                  onClick={() => setWorkstationMode('portfolio')}
-                  className={`px-4 py-2 rounded-xl flex items-center space-x-2 transition font-bold ${
-                    workstationMode === 'portfolio'
-                      ? 'bg-teal-400 text-slate-950 shadow-lg glow-mint'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                  }`}
-                >
-                  <Briefcase className="w-3.5 h-3.5" />
-                  <span>PORTFOLIO & AUDIT LEDGER</span>
-                </button>
-
-                <button
-                  onClick={() => setWorkstationMode('bot_ai')}
-                  className={`px-4 py-2 rounded-xl flex items-center space-x-2 transition font-bold ${
-                    workstationMode === 'bot_ai'
-                      ? 'bg-teal-400 text-slate-950 shadow-lg glow-mint'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                  }`}
-                >
-                  <Cpu className="w-3.5 h-3.5" />
-                  <span>AI BOT & TELEMETRY</span>
-                </button>
+              {/* COLUMN 2: CENTER CHART & ARBITRAGE MATRIX (50% Width / 6 Cols) */}
+              <div className="lg:col-span-6 space-y-6">
+                <LiveChart />
+                <ArbitragePanel />
+                <LivePositions />
               </div>
+
+              {/* COLUMN 3: RIGHT EXECUTION & WALLET EQUITY (25% Width / 3 Cols) */}
+              <div className="lg:col-span-3 space-y-6">
+                <TotalAssetsHero />
+                <OperationSwapTool />
+                <AiStrategyPanel />
+                <ExchangeStatus />
+              </div>
+
             </div>
 
-            {/* WORKSTATION 1: QUANT ARBITRAGE TERMINAL */}
-            {workstationMode === 'terminal' && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                <div className="lg:col-span-7 space-y-6">
-                  <LiveChart />
-                  <ArbitragePanel />
-                </div>
-                <div className="lg:col-span-5 space-y-6">
-                  <TotalAssetsHero />
-                  <OperationSwapTool />
-                  <LivePositions />
-                </div>
-              </div>
-            )}
-
-            {/* WORKSTATION 2: PORTFOLIO & AUDIT LEDGER */}
-            {workstationMode === 'portfolio' && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                <div className="lg:col-span-7 space-y-6">
-                  <TradeHistory />
-                </div>
-                <div className="lg:col-span-5 space-y-6">
-                  <TotalAssetsHero />
-                  <PaperTradingPanel />
-                  <LivePositions />
-                </div>
-              </div>
-            )}
-
-            {/* WORKSTATION 3: AI BOT & TELEMETRY */}
-            {workstationMode === 'bot_ai' && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                <div className="lg:col-span-6 space-y-6">
-                  <AiStrategyPanel />
-                </div>
-                <div className="lg:col-span-6 space-y-6">
-                  <ExchangeStatus />
-                  <TransactionsWidget />
-                </div>
-              </div>
-            )}
+            {/* Bottom Section: Quantitative Trade Audit Log Ledger */}
+            <TradeHistory />
 
           </div>
         )}
@@ -208,12 +149,15 @@ const MainLayout = () => {
   }
 
   return (
-    <div className="h-screen w-screen bg-[#0b1120] text-slate-100 flex overflow-hidden font-sans selection:bg-teal-400 selection:text-black relative">
+    <div className="h-screen w-screen bg-[#07090e] text-slate-100 flex flex-col overflow-hidden font-sans selection:bg-teal-400 selection:text-black relative">
       {/* Background Canvas */}
       <BackgroundParticles />
 
+      {/* Top Global Live Ticker Bar */}
+      <GlobalTickerBar />
+
       {/* Outer Shell Frame */}
-      <div className="w-full h-full flex overflow-hidden relative z-10">
+      <div className="flex-1 flex overflow-hidden relative z-10">
         {/* Left Sidebar */}
         <Sidebar />
 
