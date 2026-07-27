@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import { ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { Eye, EyeOff, Plus, ArrowUpRight, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, Plus, ArrowUpRight, Sparkles, Bot, TrendingUp } from 'lucide-react';
 
 export const TotalAssetsHero = () => {
-  const { wallet, openModal, marketData, arbitrageOpps, executeManualTrade } = useCrypto();
+  const { wallet, openModal, marketData, arbitrageOpps, executeManualTrade, totalBotProfit } = useCrypto();
   const [hideBalance, setHideBalance] = useState(false);
 
   // Get live prices from context
@@ -75,7 +75,7 @@ export const TotalAssetsHero = () => {
     <div className="space-y-4 font-sans">
       
       {/* Total Assets Value Banner */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2 text-xs text-slate-400 font-mono mb-1">
             <span>Total assets value in $</span>
@@ -84,9 +84,15 @@ export const TotalAssetsHero = () => {
             </button>
           </div>
 
-          <div className="flex items-baseline space-x-3">
+          <div className="flex flex-wrap items-baseline gap-3">
             <span className="text-3xl sm:text-4xl font-extrabold font-mono text-white tracking-tight">
               {hideBalance ? '••••••••' : `$${formatUsd(currentBalance)}`}
+            </span>
+
+            {/* BOT CUMULATIVE PROFIT BADGE IN WALLET */}
+            <span className="px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-[#34d399] font-mono text-xs font-bold inline-flex items-center gap-1.5 shadow-sm">
+              <Bot className="w-3.5 h-3.5 text-[#34d399]" />
+              <span>BOT CUMULATIVE PROFIT: +${formatUsd(totalBotProfit || 0.00)}</span>
             </span>
           </div>
           <span className="text-xs text-slate-500 font-mono block mt-1">~ {btcEquivalent} BTC</span>
@@ -196,7 +202,7 @@ export const TotalAssetsHero = () => {
         <div className="pt-2 border-t border-slate-800/60 space-y-1.5">
           <div className="flex justify-between text-[10px] text-slate-400">
             <span>Portfolio Allocation: Cash (68%) • BTC (16%) • ETH (10%) • SOL (6%)</span>
-            <span className="text-slate-[#34d399] font-bold">100% Allocated</span>
+            <span className="text-[#34d399] font-bold">100% Allocated</span>
           </div>
           <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden flex">
             <div style={{ width: '68%' }} className="h-full bg-[#34d399]" />

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { Wallet, RefreshCw, ShoppingBag, ShieldAlert, ArrowUpRight, PlusCircle } from 'lucide-react';
+import { Wallet, RefreshCw, ShoppingBag, ShieldAlert, ArrowUpRight, PlusCircle, Bot, TrendingUp } from 'lucide-react';
 
 export const PaperTradingPanel = () => {
-  const { wallet, resetWallet, openPositions, tradeHistory, executeOrder, openModal } = useCrypto();
+  const { wallet, resetWallet, openPositions, tradeHistory, executeOrder, openModal, totalBotProfit } = useCrypto();
 
   const [side, setSide] = useState('BUY'); // 'BUY' or 'SELL'
   const [symbol, setSymbol] = useState('BTCUSDT');
@@ -33,7 +33,7 @@ export const PaperTradingPanel = () => {
         <div className="flex items-center space-x-2">
           <button
             onClick={() => openModal('DEPOSIT')}
-            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-black text-xs font-bold transition hover:brightness-110 shadow-md"
+            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-black text-xs font-bold transition hover:brightness-110 shadow-md font-mono"
           >
             <PlusCircle className="w-4 h-4" />
             <span>Deposit</span>
@@ -57,8 +57,8 @@ export const PaperTradingPanel = () => {
         </div>
       </div>
 
-      {/* Wallet Metrics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Wallet Metrics Grid with Bot Cumulative Profit */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 font-mono">
         <div className="woofi-subcard">
           <span className="text-xs text-slate-400 font-mono uppercase block mb-1">Available Cash</span>
           <span className="text-xl font-extrabold font-mono text-white">
@@ -75,12 +75,17 @@ export const PaperTradingPanel = () => {
           <span className="text-[10px] text-cyan-500/80 font-mono block mt-1">Cash + Active Orders</span>
         </div>
 
-        <div className="woofi-subcard">
-          <span className="text-xs text-slate-400 font-mono uppercase block mb-1">Today's Profit</span>
-          <span className="text-xl font-extrabold font-mono text-emerald-400">
-            +${wallet.todayProfit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+        {/* DEDICATED BOT CUMULATIVE PROFIT CARD IN WALLET */}
+        <div className="woofi-subcard border-emerald-500/40 bg-emerald-950/20">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs text-[#34d399] font-mono font-bold uppercase flex items-center gap-1">
+              <Bot className="w-3.5 h-3.5" /> Bot Cum. Profit
+            </span>
+          </div>
+          <span className="text-xl font-extrabold font-mono text-[#34d399]">
+            +${(totalBotProfit || 0.00).toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </span>
-          <span className="text-[10px] text-emerald-500/80 font-mono block mt-1">ROI: +{wallet.roiPct}%</span>
+          <span className="text-[10px] text-emerald-400/80 font-mono block mt-1">AI Autopilot Yield</span>
         </div>
 
         <div className="woofi-subcard">
