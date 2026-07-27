@@ -6,6 +6,7 @@ import {
   Trash2, Zap, CheckCircle2, AlertTriangle, Info, AlertOctagon, ShieldCheck, 
   Link2, Bot, Send, Star, HelpCircle, MessageSquare, Sparkles, User, RefreshCw, Clock
 } from 'lucide-react';
+import { EditAccountModal } from './EditAccountModal';
 
 export const GlobalModals = () => {
   const { 
