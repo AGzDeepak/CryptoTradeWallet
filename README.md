@@ -10,6 +10,15 @@
 
 ---
 
+## 🚀 Recent Live Deployments & Enhancements
+
+- 💸 **Interactive Web3 & Demo Withdrawal System**: Complete withdrawal module supporting native Web3 transaction execution (`eth_sendTransaction`), target network chain selection (`Arbitrum One`, `Ethereum Mainnet`, `Polygon`), destination address validation, and instant paper balance deductions.
+- 🔥 **Firebase Auth & Firestore Integration**: Connected to project `tradebot-25d4f`. Real-time user account creation (`createUserWithEmailAndPassword`), session security audit logging (`login_logs`), user metadata tracking (`users`), and platform rating submissions (`feedback_submissions`).
+- 🤖 **24/7 AI Support Desk Assistant**: Built-in AI Quant Support Assistant (`AI_SUPPORT` modal) with smart suggestion chips to guide traders.
+- 👥 **Per-User Isolated Workspaces**: Each account receives its own isolated `$100,000.00 USDT` virtual balance, active trades list, and persistent state.
+
+---
+
 ## 🌟 Key Features
 
 ### 1. ⚡ High-Frequency Spatial Arbitrage Scanner
