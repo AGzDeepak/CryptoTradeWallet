@@ -39,7 +39,7 @@ export const connectRealWeb3Wallet = async (walletType = 'MetaMask') => {
       address,
       shortAddress: `${address.substring(0, 6)}...${address.substring(address.length - 4)}`,
       balanceEth,
-      balanceUsd: parseFloat((balanceEth * 3540.20).toFixed(2)), // Calculated at live ETH rate
+      balanceUsd: parseFloat((balanceEth * 3540.20).toFixed(2)),
       chainId,
       networkName,
       walletType,
@@ -48,5 +48,30 @@ export const connectRealWeb3Wallet = async (walletType = 'MetaMask') => {
   } catch (error) {
     console.error('Web3 connection error:', error);
     throw error;
+  }
+};
+
+export const sendRealWeb3Transaction = async (fromAddress, toAddress, amountEth = '0.01') => {
+  if (!isWeb3Available()) {
+    // Simulated Transaction Hash for Demo Web3 Mode
+    return `0x${Math.random().toString(16).substring(2)}${Math.random().toString(16).substring(2)}`;
+  }
+
+  try {
+    const valueWeiHex = '0x' + (Math.floor(parseFloat(amountEth) * 1e18)).toString(16);
+    const txHash = await window.ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [
+        {
+          from: fromAddress,
+          to: toAddress,
+          value: valueWeiHex
+        }
+      ]
+    });
+    return txHash;
+  } catch (err) {
+    console.error('Web3 Transaction Error:', err);
+    throw err;
   }
 };

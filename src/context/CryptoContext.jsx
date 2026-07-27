@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { audioFx } from '../utils/audio';
 import { recordFirebaseLoginLog, sanitizeInput } from '../services/securityService';
-import { connectRealWeb3Wallet, isWeb3Available } from '../services/web3Service';
+import { connectRealWeb3Wallet, sendRealWeb3Transaction, isWeb3Available } from '../services/web3Service';
 
 const CryptoContext = createContext();
 
@@ -334,7 +334,9 @@ export const CryptoProvider = ({ children }) => {
 
   // Deposit Funds Handler
   const depositFunds = (amount, currency = 'USDT') => {
-    const num = parseFloat(amount);
+    const cleanAmountStr = String(amount || '').replace(/[^0-9.]/g, '');
+    const num = parseFloat(cleanAmountStr);
+
     if (isNaN(num) || num <= 0) return;
 
     setWallet(w => ({
@@ -344,20 +346,39 @@ export const CryptoProvider = ({ children }) => {
     }));
 
     audioFx.playTradeSuccess();
-    addNotification(`Mock Deposit Successful: +$${num.toLocaleString()} ${currency}`, 'success');
+    addNotification(`Mock Deposit Successful: +$${num.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${currency}`, 'success');
   };
 
-  // Withdraw Funds Handler
-  const withdrawFunds = (amount, address = '0x71C7...d7B41', currency = 'USDT') => {
-    const num = parseFloat(amount);
+  // Robust Async Withdraw Funds Handler (Supports Web3 Real & Paper Modes)
+  const withdrawFunds = async (amount, address = '0x71C7...d7B41', currency = 'USDT') => {
+    const cleanAmountStr = String(amount || '').replace(/[^0-9.]/g, '');
+    const num = parseFloat(cleanAmountStr);
+
     if (isNaN(num) || num <= 0) {
-      addNotification('Invalid withdrawal amount.', 'warning');
+      addNotification('Invalid withdrawal amount. Please enter a valid number.', 'warning');
       audioFx.playAlertChime();
       return false;
     }
 
+    // REAL Web3 Wallet Mode Withdrawal
+    if (walletMode === 'REAL' && realWallet.connected) {
+      try {
+        const ethEquivalent = (num / 3540.20).toFixed(4);
+        const txHash = await sendRealWeb3Transaction(realWallet.address, address, ethEquivalent);
+        audioFx.playTradeSuccess();
+        const shortAddr = address.length > 10 ? `${address.substring(0, 6)}...${address.substring(address.length - 4)}` : address;
+        addNotification(`Web3 Real Withdrawal Sent! Tx: ${txHash.substring(0, 10)}... -> ${shortAddr}`, 'success');
+        return true;
+      } catch (err) {
+        addNotification(`Web3 Withdrawal Error: ${err.message}`, 'warning');
+        audioFx.playAlertChime();
+        return false;
+      }
+    }
+
+    // DEMO Paper Wallet Mode Withdrawal
     if (num > wallet.virtualBalance) {
-      addNotification(`Withdrawal Failed: Amount ($${num.toLocaleString()}) exceeds available balance ($${wallet.virtualBalance.toLocaleString()})!`, 'danger');
+      addNotification(`Withdrawal Failed: Amount ($${num.toLocaleString('en-US', { minimumFractionDigits: 2 })}) exceeds available cash ($${wallet.virtualBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })})!`, 'danger');
       audioFx.playAlertChime();
       return false;
     }
@@ -371,7 +392,7 @@ export const CryptoProvider = ({ children }) => {
     const shortAddr = address.length > 10 ? `${address.substring(0, 6)}...${address.substring(address.length - 4)}` : address;
 
     audioFx.playTradeSuccess();
-    addNotification(`Withdrawal Initiated: -$${num.toLocaleString()} ${currency} transferred to ${shortAddr}`, 'success');
+    addNotification(`Withdrawal Dispatched: -$${num.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${currency} transferred to ${shortAddr}`, 'success');
     return true;
   };
 

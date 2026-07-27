@@ -80,15 +80,15 @@ export const GlobalModals = () => {
     closeModal();
   };
 
-  const handleConfirmWithdrawal = (e) => {
+  const handleConfirmWithdrawal = async (e) => {
     e.preventDefault();
-    const success = withdrawFunds(parseFloat(withdrawAmount), withdrawAddress, withdrawCurrency);
+    const success = await withdrawFunds(withdrawAmount, withdrawAddress, withdrawCurrency);
     if (success) {
       setWithdrawSuccess(true);
       setTimeout(() => {
         setWithdrawSuccess(false);
         closeModal();
-      }, 1400);
+      }, 1500);
     }
   };
 
