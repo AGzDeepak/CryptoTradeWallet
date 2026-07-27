@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { Search, ChevronDown, Bot, Volume2, VolumeX, LogOut, Wallet, ShieldCheck, Zap } from 'lucide-react';
+import { Search, ChevronDown, Bot, Volume2, VolumeX, LogOut, Wallet, ShieldCheck, Zap, Activity } from 'lucide-react';
 
 export const Header = () => {
   const { 
@@ -17,26 +17,34 @@ export const Header = () => {
   } = useCrypto();
 
   return (
-    <header className="bg-[#11141b] border-b border-slate-800/80 px-6 h-16 flex items-center justify-between z-40 shrink-0 font-sans">
+    <header className="bg-[#0b0f19]/90 backdrop-blur-xl border-b border-slate-800/80 px-6 h-16 flex items-center justify-between z-40 shrink-0 font-sans shadow-lg">
       
-      {/* Title */}
-      <h1 className="text-xl font-extrabold text-white tracking-tight">Dashboard</h1>
+      {/* Title & Live Status Indicator */}
+      <div className="flex items-center space-x-4">
+        <h1 className="text-xl font-extrabold text-white tracking-tight font-mono">
+          CryptoBot<span className="text-[#34d399]">.AI</span>
+        </h1>
+        <div className="hidden sm:flex items-center space-x-2 px-2.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-[10px] font-mono text-[#34d399] font-bold">
+          <Activity className="w-3 h-3 text-[#34d399] animate-pulse" />
+          <span>QUANT ENGINE ONLINE (14ms)</span>
+        </div>
+      </div>
 
       {/* Center Search Bar */}
-      <div className="relative hidden md:block w-72">
+      <div className="relative hidden md:block w-80">
         <input
           type="text"
-          placeholder="Search pair, symbol or exchange..."
-          className="w-full bg-[#161a23] border border-slate-800 rounded-xl pl-9 pr-4 py-1.5 text-xs text-slate-200 placeholder-slate-500 outline-none focus:border-[#34d399] transition font-mono"
+          placeholder="Search pair, order hash or exchange..."
+          className="w-full bg-[#121827] border border-slate-800 rounded-xl pl-9 pr-4 py-1.5 text-xs text-slate-200 placeholder-slate-500 outline-none focus:border-[#34d399] transition font-mono shadow-inner"
         />
         <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-500" />
       </div>
 
-      {/* Right Controls: Dual Wallet Mode Toggle + Currency Pill + Profile Badge + Logout */}
+      {/* Right Controls */}
       <div className="flex items-center space-x-3">
         
         {/* Dual Wallet Mode Switcher (DEMO vs REAL WEB3) */}
-        <div className="flex items-center bg-[#161a23] p-1 rounded-xl border border-slate-800 text-xs font-mono">
+        <div className="flex items-center bg-[#121827] p-1 rounded-xl border border-slate-800 text-xs font-mono">
           <button
             onClick={() => setWalletMode('DEMO')}
             className={`px-3 py-1 rounded-lg flex items-center space-x-1.5 transition font-bold ${
@@ -46,7 +54,7 @@ export const Header = () => {
             }`}
           >
             <Zap className="w-3 h-3 text-amber-400" />
-            <span className="hidden lg:inline">DEMO</span>
+            <span className="hidden lg:inline">DEMO ($100k)</span>
           </button>
 
           <button
@@ -71,20 +79,20 @@ export const Header = () => {
         {/* Master Bot Autopilot Toggle */}
         <button
           onClick={() => setAutoTradingEnabled(!autoTradingEnabled)}
-          className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition ${
+          className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl text-xs font-semibold font-mono border transition ${
             autoTradingEnabled
-              ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/50 shadow-[0_0_12px_rgba(16,185,129,0.3)] animate-pulse'
-              : 'bg-slate-900 text-slate-400 border-slate-700'
+              ? 'bg-emerald-950/80 text-[#34d399] border-emerald-500/50 shadow-[0_0_15px_rgba(52,211,153,0.3)] animate-pulse'
+              : 'bg-slate-900 text-slate-400 border-slate-800'
           }`}
         >
-          <Bot className={`w-3.5 h-3.5 ${autoTradingEnabled ? 'text-emerald-400' : 'text-slate-500'}`} />
-          <span className="hidden xl:inline">BOT: {autoTradingEnabled ? 'AUTOPILOT ON' : 'PAUSED'}</span>
+          <Bot className={`w-3.5 h-3.5 ${autoTradingEnabled ? 'text-[#34d399]' : 'text-slate-500'}`} />
+          <span className="hidden xl:inline">AUTOPILOT: {autoTradingEnabled ? 'ON' : 'PAUSED'}</span>
         </button>
 
         {/* Audio Toggle */}
         <button
           onClick={() => setSoundEnabled(!soundEnabled)}
-          className="p-2 rounded-xl bg-[#161a23] border border-slate-800 text-slate-400 hover:text-white transition"
+          className="p-2 rounded-xl bg-[#121827] border border-slate-800 text-slate-400 hover:text-white transition"
         >
           {soundEnabled ? <Volume2 className="w-4 h-4 text-[#34d399]" /> : <VolumeX className="w-4 h-4" />}
         </button>
@@ -92,7 +100,7 @@ export const Header = () => {
         {/* USDT Currency Pill Dropdown */}
         <div
           onClick={() => openModal('DEPOSIT')}
-          className="flex items-center space-x-2 bg-[#161a23] border border-slate-800 px-3 py-1.5 rounded-xl text-xs font-mono font-bold cursor-pointer hover:border-slate-700 transition"
+          className="flex items-center space-x-2 bg-[#121827] border border-slate-800 px-3 py-1.5 rounded-xl text-xs font-mono font-bold cursor-pointer hover:border-slate-700 transition"
         >
           <span className="w-4 h-4 rounded-full bg-[#34d399] text-black font-bold flex items-center justify-center text-[10px]">T</span>
           <span className="text-white">USDT</span>
@@ -102,9 +110,9 @@ export const Header = () => {
         {/* User Profile Badge */}
         <div
           onClick={() => openModal('WALLET')}
-          className="flex items-center space-x-2 bg-[#161a23] border border-slate-800 px-2.5 py-1.5 rounded-xl cursor-pointer hover:border-slate-700 transition"
+          className="flex items-center space-x-2 bg-[#121827] border border-slate-800 px-2.5 py-1.5 rounded-xl cursor-pointer hover:border-slate-700 transition"
         >
-          <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center font-bold text-slate-950 text-xs font-mono">
+          <div className="w-6 h-6 rounded-full bg-[#34d399] flex items-center justify-center font-extrabold text-black text-xs font-mono">
             {user.avatar || 'D'}
           </div>
           <span className="text-xs font-bold text-slate-200 hidden sm:inline">{user.name}</span>
@@ -113,7 +121,7 @@ export const Header = () => {
         {/* Quick Logout Button */}
         <button
           onClick={logout}
-          className="p-2 rounded-xl bg-[#161a23] border border-slate-800 text-slate-400 hover:text-rose-400 hover:border-rose-800 transition"
+          className="p-2 rounded-xl bg-[#121827] border border-slate-800 text-slate-400 hover:text-rose-400 hover:border-rose-800 transition"
           title="Sign Out / Switch Account"
         >
           <LogOut className="w-4 h-4" />
