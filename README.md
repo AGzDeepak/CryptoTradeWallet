@@ -16,7 +16,7 @@
 ## 🚀 Live Production & Server Access
 
 - **🌐 Live Web Terminal**: [https://tradebot-25d4f.web.app](https://tradebot-25d4f.web.app)
-- **📦 GitHub Repository**: [https://github.com/AGzDeepak/cryptobot](https://github.com/AGzDeepak/cryptobot)
+- **📦 GitHub Repository**: [https://github.com/AGzDeepak/trading_cryptobot](https://github.com/AGzDeepak/trading_cryptobot)
 - **🐍 Local Python FastAPI API**: [http://localhost:8000](http://localhost:8000)
 - **📚 Interactive Swagger API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
 - **🔥 Firebase Console**: [https://console.firebase.google.com/project/tradebot-25d4f/overview](https://console.firebase.google.com/project/tradebot-25d4f/overview)
@@ -148,7 +148,7 @@ cryptobot/
 
 **Deepak Kumar**
 - **GitHub**: [@AGzDeepak](https://github.com/AGzDeepak)
-- **Repository**: [AGzDeepak/cryptobot](https://github.com/AGzDeepak/cryptobot)
+- **Repository**: [AGzDeepak/trading_cryptobot](https://github.com/AGzDeepak/trading_cryptobot)
 
 ---
 
