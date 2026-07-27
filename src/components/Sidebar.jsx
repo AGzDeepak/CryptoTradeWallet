@@ -24,8 +24,7 @@ export const Sidebar = () => {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
     { id: 'markets', label: 'Market Scanner', icon: LineChart },
     { id: 'portfolio', label: 'Portfolio', icon: Briefcase },
-    { id: 'trades', label: 'Audit Ledger', icon: ArrowLeftRight },
-    { id: 'news', label: 'Crypto News', icon: Newspaper }
+    { id: 'trades', label: 'Audit Ledger', icon: ArrowLeftRight }
   ];
 
   const accountItems = [
