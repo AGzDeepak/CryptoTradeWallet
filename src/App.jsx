@@ -24,69 +24,76 @@ const DashboardContent = () => {
   const { activeTab } = useCrypto();
 
   return (
-    <main className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 no-scrollbar smooth-scroll-container">
-      <div className="max-w-[1600px] mx-auto space-y-6">
+    <main className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 no-scrollbar smooth-scroll-container bg-[#0b1120]">
+      <div className="max-w-[1700px] mx-auto space-y-6">
         
-        {/* Master Bot Execution Header */}
+        {/* Master Bot & Stimulation Control Header Bar */}
         <AutoTraderBar />
 
         {activeTab === 'dashboard' && (
-          <>
-            {/* Upper Section: Total Assets Hero (Left) & Operation Swap Tool (Right) */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-              <div className="xl:col-span-2">
-                <TotalAssetsHero />
-              </div>
-              <div className="xl:col-span-1">
-                <OperationSwapTool />
-              </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            {/* COLUMN 1: LEFT WORKSPACE (35% Width - Account, Balance & Execution) */}
+            <div className="lg:col-span-4 space-y-6">
+              <TotalAssetsHero />
+              <OperationSwapTool />
+              <PaperTradingPanel />
             </div>
 
-            {/* Lower Section: Analytics Line Chart (Left) & Transactions List (Right) */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-              <div className="xl:col-span-2 space-y-6">
-                <LiveChart />
-                <ArbitragePanel />
-                <PaperTradingPanel />
-                <LivePositions />
-              </div>
-
-              <div className="xl:col-span-1 space-y-6">
-                <TransactionsWidget />
-                <AiStrategyPanel />
-                <ExchangeStatus />
-              </div>
+            {/* COLUMN 2: CENTER WORKSPACE (45% Width - Charts, Scanner & Positions) */}
+            <div className="lg:col-span-5 space-y-6">
+              <LiveChart />
+              <ArbitragePanel />
+              <LivePositions />
             </div>
-          </>
+
+            {/* COLUMN 3: RIGHT WORKSPACE (20% Width - Audit Ledger, Strategies & Health) */}
+            <div className="lg:col-span-3 space-y-6">
+              <AiStrategyPanel />
+              <TransactionsWidget />
+              <ExchangeStatus />
+            </div>
+
+          </div>
         )}
 
         {activeTab === 'markets' && (
-          <>
-            <TotalAssetsHero />
-            <LiveChart />
-            <ArbitragePanel />
-          </>
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+            <div className="xl:col-span-2 space-y-6">
+              <LiveChart />
+              <ArbitragePanel />
+            </div>
+            <div className="xl:col-span-1 space-y-6">
+              <TotalAssetsHero />
+              <OperationSwapTool />
+            </div>
+          </div>
         )}
 
         {activeTab === 'scanner' && (
-          <>
+          <div className="space-y-6">
             <MarketScanner />
             <ArbitragePanel />
-          </>
+          </div>
         )}
 
         {activeTab === 'portfolio' && (
-          <>
-            <PaperTradingPanel />
-            <LivePositions />
-          </>
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+            <div className="xl:col-span-2 space-y-6">
+              <TotalAssetsHero />
+              <LivePositions />
+            </div>
+            <div className="xl:col-span-1 space-y-6">
+              <PaperTradingPanel />
+            </div>
+          </div>
         )}
 
         {activeTab === 'trades' && (
-          <>
-            <TransactionsWidget />
+          <div className="space-y-6">
             <TradeHistory />
-          </>
+            <TransactionsWidget />
+          </div>
         )}
 
         {activeTab === 'strategies' && (
@@ -101,21 +108,22 @@ const DashboardContent = () => {
         )}
 
         {activeTab === 'analytics' && (
-          <>
+          <div className="space-y-6">
             <AnalyticsSection />
-          </>
+            <LiveChart />
+          </div>
         )}
 
         {activeTab === 'history' && (
-          <>
+          <div className="space-y-6">
             <TradeHistory />
-          </>
+          </div>
         )}
 
         {activeTab === 'settings' && (
-          <>
+          <div className="space-y-6">
             <SettingsModal />
-          </>
+          </div>
         )}
 
       </div>
@@ -131,11 +139,11 @@ const MainLayout = () => {
   }
 
   return (
-    <div className="h-screen w-screen bg-[#090b0e] text-slate-100 flex overflow-hidden font-sans selection:bg-[#34d399] selection:text-black relative">
+    <div className="h-screen w-screen bg-[#0b1120] text-slate-100 flex overflow-hidden font-sans selection:bg-[#2dd4bf] selection:text-black relative">
       {/* Background Canvas */}
       <BackgroundParticles />
 
-      {/* Outer Chainblock Container Frame */}
+      {/* Outer Shell Frame */}
       <div className="w-full h-full flex overflow-hidden relative z-10">
         {/* Left Sidebar */}
         <Sidebar />
