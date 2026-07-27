@@ -1,43 +1,51 @@
 import React from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { Search, Mail, Bell, Bot, Volume2, VolumeX, LogOut, Wallet, Zap, ShieldCheck } from 'lucide-react';
+import { Search, Mail, Bell, Bot, LogOut } from 'lucide-react';
 
 export const Header = () => {
   const { 
+    activeTab,
     autoTradingEnabled, 
     setAutoTradingEnabled, 
-    soundEnabled, 
-    setSoundEnabled,
-    openModal,
-    user,
+    openModal, 
     logout,
     walletMode,
     setWalletMode,
-    realWallet,
-    notifications
+    realWallet
   } = useCrypto();
+
+  const getTitle = () => {
+    switch (activeTab) {
+      case 'papertrading': return 'Paper Trading Terminal';
+      case 'account': return 'Account Management';
+      case 'wallet': return 'Institutional Wallet';
+      case 'news': return 'Live Crypto News & Intelligence';
+      case 'settings': return 'System Settings';
+      default: return 'Dashboard';
+    }
+  };
 
   return (
     <header className="bg-[#0b0c10] border-b border-slate-800/80 px-6 sm:px-8 h-20 flex items-center justify-between z-40 shrink-0 font-sans">
       
-      {/* Dashboard Title matching reference screenshot */}
+      {/* Dynamic Header Title matching active tab */}
       <div className="flex items-center space-x-3">
         <h1 className="text-2xl font-extrabold text-[#facc15] tracking-tight font-sans">
-          Dashboard
+          {getTitle()}
         </h1>
       </div>
 
-      {/* Center Search Bar matching reference screenshot */}
+      {/* Center Search Bar */}
       <div className="relative hidden md:block w-96">
         <input
           type="text"
-          placeholder="Search..."
+          placeholder="Search coins, transactions, orders..."
           className="w-full bg-[#181a20] border border-slate-800 rounded-2xl pl-10 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 outline-none focus:border-[#facc15] transition font-sans shadow-inner"
         />
         <Search className="w-4 h-4 absolute left-3.5 top-2.5 text-slate-500" />
       </div>
 
-      {/* Right Controls matching reference screenshot (Mail + Bell + Avatar + Bot Pill) */}
+      {/* Right Controls */}
       <div className="flex items-center space-x-4">
         
         {/* Master Bot Autopilot Pill */}
@@ -97,7 +105,7 @@ export const Header = () => {
           <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#facc15]"></span>
         </button>
 
-        {/* User Profile Avatar picture matching reference screenshot */}
+        {/* User Profile Avatar picture */}
         <div
           onClick={() => openModal('WALLET')}
           className="w-9 h-9 rounded-full bg-slate-800 border border-[#facc15]/50 overflow-hidden cursor-pointer hover:border-[#facc15] transition flex items-center justify-center font-bold text-[#facc15]"

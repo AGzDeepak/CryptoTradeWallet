@@ -48,7 +48,6 @@ const DashboardContent = () => {
               <div className="lg:col-span-4 space-y-6">
                 <YellowPortfolioCard />
                 <OperationSwapTool />
-                <PaperTradingPanel />
               </div>
 
               {/* Right Column (Gold Main SVG Chart & Spatial Arbitrage Matrix) */}
@@ -63,6 +62,15 @@ const DashboardContent = () => {
             {/* Full Width Trade Audit Log Ledger */}
             <TradeHistory />
 
+          </div>
+        )}
+
+        {/* Dedicated Standalone Paper Trading Section */}
+        {activeTab === 'papertrading' && (
+          <div className="space-y-6">
+            <PaperTradingPanel />
+            <LivePositions />
+            <TradeHistory />
           </div>
         )}
 

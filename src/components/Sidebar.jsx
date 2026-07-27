@@ -7,7 +7,8 @@ import {
   Wallet, 
   Newspaper, 
   Settings, 
-  LogOut
+  LogOut,
+  ShoppingBag
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -15,6 +16,7 @@ export const Sidebar = () => {
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
+    { id: 'papertrading', label: 'Paper Trading', icon: ShoppingBag },
     { id: 'account', label: 'Account', icon: User },
     { id: 'chart', label: 'Chart', icon: LineChart },
     { id: 'wallet', label: 'Wallet', icon: Wallet },
