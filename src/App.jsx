@@ -21,6 +21,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { GlobalModals } from './components/GlobalModals';
 import { WalletSection } from './components/WalletSection';
 import { AccountSection } from './components/AccountSection';
+import { LiveCryptoNews } from './components/LiveCryptoNews';
 
 const DashboardContent = () => {
   const { activeTab } = useCrypto();
@@ -80,6 +81,12 @@ const DashboardContent = () => {
         {activeTab === 'portfolio' && (
           <div className="space-y-6">
             <WalletSection />
+          </div>
+        )}
+
+        {activeTab === 'news' && (
+          <div className="space-y-6">
+            <LiveCryptoNews />
           </div>
         )}
 
