@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import { 
   History, Download, Search, FileSpreadsheet, FileText, 
-  ShieldCheck, ArrowUpRight, ArrowDownLeft, CheckCircle, ChevronDown, ChevronUp, Zap, Info
+  ShieldCheck, ArrowUpRight, ArrowDownLeft, CheckCircle, ChevronDown, ChevronUp, Zap, Bot, Sparkles
 } from 'lucide-react';
 
 const INITIAL_TRADE_SETTLEMENTS = [
@@ -10,7 +10,8 @@ const INITIAL_TRADE_SETTLEMENTS = [
     id: 'TRD-8492', 
     time: '10:42:15', 
     symbol: 'BTCUSDT', 
-    strategy: 'Cross Exchange Arbitrage', 
+    strategy: 'Autopilot Bot Alpha', 
+    isBot: true,
     buyExchange: 'Binance', 
     sellExchange: 'Bybit', 
     buyPrice: 67820.50, 
@@ -32,6 +33,7 @@ const INITIAL_TRADE_SETTLEMENTS = [
     time: '10:35:40', 
     symbol: 'ETHUSDT', 
     strategy: 'Orderbook Imbalance', 
+    isBot: false,
     buyExchange: 'OKX', 
     sellExchange: 'Coinbase', 
     buyPrice: 3520.10, 
@@ -52,7 +54,8 @@ const INITIAL_TRADE_SETTLEMENTS = [
     id: 'TRD-8490', 
     time: '10:28:12', 
     symbol: 'SOLUSDT', 
-    strategy: 'Spatial Yield Spread', 
+    strategy: 'Autopilot Bot Alpha', 
+    isBot: true,
     buyExchange: 'Bybit', 
     sellExchange: 'Binance', 
     buyPrice: 182.40, 
@@ -74,6 +77,7 @@ const INITIAL_TRADE_SETTLEMENTS = [
     time: '10:14:05', 
     symbol: 'AVAXUSDT', 
     strategy: 'Cross Exchange Arbitrage', 
+    isBot: false,
     buyExchange: 'Coinbase', 
     sellExchange: 'OKX', 
     buyPrice: 37.80, 
@@ -95,6 +99,7 @@ const INITIAL_TRADE_SETTLEMENTS = [
     time: '09:55:22', 
     symbol: 'BTCUSDT', 
     strategy: 'Autopilot Bot Alpha', 
+    isBot: true,
     buyExchange: 'Binance', 
     sellExchange: 'OKX', 
     buyPrice: 67650.00, 
@@ -114,9 +119,10 @@ const INITIAL_TRADE_SETTLEMENTS = [
 ];
 
 export const TradeHistory = () => {
-  const { tradeHistory, addNotification } = useCrypto();
+  const { tradeHistory, addNotification, totalBotProfit, autoTradeCount } = useCrypto();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCoin, setSelectedCoin] = useState('ALL');
+  const [filterBotOnly, setFilterBotOnly] = useState(false);
   const [expandedRowId, setExpandedRowId] = useState(null);
 
   const combinedHistory = tradeHistory && tradeHistory.length > 0 
@@ -129,7 +135,8 @@ export const TradeHistory = () => {
                           item.sellExchange.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (item.strategy && item.strategy.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCoin = selectedCoin === 'ALL' || item.symbol === selectedCoin;
-    return matchesSearch && matchesCoin;
+    const matchesBot = !filterBotOnly || item.isBot || (item.strategy && item.strategy.toLowerCase().includes('bot'));
+    return matchesSearch && matchesCoin && matchesBot;
   });
 
   const totalNetProfit = filteredHistory.reduce((sum, item) => sum + (parseFloat(item.netProfit) || 0), 0);
@@ -139,7 +146,7 @@ export const TradeHistory = () => {
   };
 
   const exportCSV = () => {
-    const headers = ['ID,Time,Symbol,Strategy,BuyExchange,BuyPrice,BuyAmount,BuyTotal,SellExchange,SellPrice,SellAmount,SellTotal,Fees,NetProfit,Result'];
+    const headers = ['ID,Time,Symbol,Strategy,IsBot,BuyExchange,BuyPrice,BuyAmount,BuyTotal,SellExchange,SellPrice,SellAmount,SellTotal,Fees,NetProfit,Result'];
     const rows = filteredHistory.map(h => {
       const bPrice = h.buyPrice || h.entryPrice;
       const sPrice = h.sellPrice || h.exitPrice;
@@ -147,16 +154,16 @@ export const TradeHistory = () => {
       const bTotal = h.buyTotal || (bPrice * amt);
       const sTotal = h.sellTotal || (sPrice * amt);
 
-      return `${h.id},${h.time},${h.symbol},${h.strategy || 'Spatial Arbitrage'},${h.buyExchange},${bPrice},${amt},${bTotal},${h.sellExchange},${sPrice},${amt},${sTotal},${h.fees},${h.netProfit},${h.result}`;
+      return `${h.id},${h.time},${h.symbol},${h.strategy || 'Spatial Arbitrage'},${h.isBot ? 'YES' : 'NO'},${h.buyExchange},${bPrice},${amt},${bTotal},${h.sellExchange},${sPrice},${amt},${sTotal},${h.fees},${h.netProfit},${h.result}`;
     });
 
     const blob = new Blob([[headers, ...rows].join('\n')], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `FULL_BUY_SELL_AUDIT_LOG_${Date.now()}.csv`;
+    a.download = `QUANT_BOT_AUDIT_LOG_${Date.now()}.csv`;
     a.click();
-    addNotification('Full Buy & Sell Trade Audit Log exported to CSV.', 'success');
+    addNotification('Trade Audit Log exported to CSV.', 'success');
   };
 
   return (
@@ -209,20 +216,28 @@ export const TradeHistory = () => {
         </div>
       </div>
 
-      {/* Live Audit Metrics Bar */}
+      {/* Live Audit Metrics Bar INCLUDING BOT CUMULATIVE PROFIT */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 font-mono">
         <div className="bg-[#060810] p-3 rounded-xl border border-slate-800">
           <span className="text-slate-400 text-[10px] block">TOTAL SETTLEMENTS</span>
           <span className="text-base font-bold text-white block">{filteredHistory.length} Executed Logs</span>
         </div>
-        <div className="bg-[#060810] p-3 rounded-xl border border-slate-800">
-          <span className="text-slate-400 text-[10px] block">CUMULATIVE NET PROFIT</span>
-          <span className="text-base font-bold text-[#34d399] block">+${totalNetProfit.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+        
+        {/* DEDICATED BOT CUMULATIVE PROFIT CARD IN AUDIT LOG */}
+        <div className="bg-emerald-950/30 p-3 rounded-xl border border-emerald-500/40">
+          <span className="text-[#34d399] text-[10px] font-bold block uppercase flex items-center gap-1">
+            <Bot className="w-3.5 h-3.5" /> AI BOT CUM. PROFIT
+          </span>
+          <span className="text-base font-extrabold text-[#34d399] block">
+            +${(totalBotProfit || 0.00).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+          </span>
         </div>
+
         <div className="bg-[#060810] p-3 rounded-xl border border-slate-800">
-          <span className="text-slate-400 text-[10px] block">AVG EXECUTION LATENCY</span>
-          <span className="text-base font-bold text-cyan-400 block">14.2ms</span>
+          <span className="text-slate-400 text-[10px] block">TOTAL CUMULATIVE PROFIT</span>
+          <span className="text-base font-bold text-cyan-400 block">+${totalNetProfit.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
         </div>
+
         <div className="bg-[#060810] p-3 rounded-xl border border-slate-800">
           <span className="text-slate-400 text-[10px] block">AUDIT SECURITY</span>
           <span className="text-base font-bold text-purple-400 block">IMMUTABLE 256-BIT</span>
@@ -242,8 +257,21 @@ export const TradeHistory = () => {
           />
         </div>
 
-        <div className="flex items-center space-x-2 w-full sm:w-auto">
-          <span className="text-slate-400">Filter Asset Pair:</span>
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          {/* Bot Only Filter Toggle */}
+          <button
+            onClick={() => setFilterBotOnly(!filterBotOnly)}
+            className={`px-3 py-2 rounded-xl text-xs font-mono font-bold transition flex items-center gap-1.5 border ${
+              filterBotOnly
+                ? 'bg-emerald-950 text-[#34d399] border-emerald-500 shadow-sm'
+                : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+            }`}
+          >
+            <Bot className="w-3.5 h-3.5" />
+            <span>{filterBotOnly ? 'SHOWING BOT TRADES ONLY' : 'FILTER BOT TRADES'}</span>
+          </button>
+
+          <span className="text-slate-400 hidden sm:inline">Filter Pair:</span>
           <select
             value={selectedCoin}
             onChange={(e) => setSelectedCoin(e.target.value)}
@@ -291,6 +319,7 @@ export const TradeHistory = () => {
                 const bTotal = item.buyTotal || (bPrice * amt);
                 const sTotal = item.sellTotal || (sPrice * amt);
                 const isExpanded = expandedRowId === item.id;
+                const isBotTrade = item.isBot || (item.strategy && item.strategy.toLowerCase().includes('bot'));
 
                 return (
                   <React.Fragment key={item.id}>
@@ -300,6 +329,11 @@ export const TradeHistory = () => {
                     >
                       <td className="py-3 px-3 text-slate-400 font-bold flex items-center space-x-1">
                         <span>{item.id}</span>
+                        {isBotTrade && (
+                          <span className="px-1.5 py-0.5 rounded bg-emerald-950 text-[#34d399] border border-emerald-800 text-[8px] font-bold ml-1">
+                            BOT
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-3 text-slate-500">{item.time}</td>
                       <td className="py-3 px-3 font-bold text-cyan-400">{item.symbol}</td>
@@ -347,7 +381,11 @@ export const TradeHistory = () => {
                               <span className="text-xs font-bold text-white flex items-center gap-1.5">
                                 <Zap className="w-4 h-4 text-cyan-400" /> SPATIAL ORDERBOOK EXECUTION DETAILS ({item.id})
                               </span>
-                              <span className="text-[10px] text-slate-500">Latency: {item.latency || '14.2ms'}</span>
+                              {isBotTrade && (
+                                <span className="px-2 py-0.5 rounded bg-emerald-950 text-[#34d399] border border-emerald-800 text-[10px] font-bold flex items-center gap-1">
+                                  <Bot className="w-3 h-3 text-[#34d399]" /> EXECUTED BY PYTHON AI BOT
+                                </span>
+                              )}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
