@@ -25,6 +25,17 @@ export const fetchPythonMarketPrices = async () => {
   }
 };
 
+export const fetchScrapedCryptoNews = async () => {
+  try {
+    const res = await fetch(`${PYTHON_API_BASE}/api/news/scrape`);
+    if (!res.ok) throw new Error('Python BeautifulSoup Scraper Offline');
+    return await res.json();
+  } catch (err) {
+    console.warn('[BEAUTIFUL SOUP NOTICE] Scraper fallback active:', err.message);
+    return null;
+  }
+};
+
 export const requestPythonWithdrawal = async (withdrawPayload) => {
   try {
     const res = await fetch(`${PYTHON_API_BASE}/api/wallet/withdraw`, {

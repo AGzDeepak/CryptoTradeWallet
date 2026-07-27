@@ -1,7 +1,7 @@
 """
 CryptoBot AI — Institutional Python Quant Engine & FastAPI Backend Server
 Author: Deepak Kumar (@AGzDeepak)
-Stack: Python 3.14, FastAPI, Uvicorn, Pydantic, NumPy, Firebase Admin SDK
+Stack: Python 3.14, FastAPI, Uvicorn, Pydantic, NumPy, BeautifulSoup4, Firebase Admin SDK
 """
 
 import math
@@ -12,6 +12,8 @@ from datetime import datetime
 from typing import List, Dict, Optional
 from pydantic import BaseModel, Field
 
+from scraper import scrape_crypto_news
+
 try:
     from fastapi import FastAPI, HTTPException, Depends, Header
     from fastapi.middleware.cors import CORSMiddleware
@@ -20,7 +22,7 @@ except ImportError:
     import sys
     import subprocess
     print("Installing FastAPI and Uvicorn dependencies...")
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "fastapi", "uvicorn", "pydantic"])
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "fastapi", "uvicorn", "pydantic", "beautifulsoup4", "requests"])
     from fastapi import FastAPI, HTTPException, Depends, Header
     from fastapi.middleware.cors import CORSMiddleware
     import uvicorn
@@ -28,7 +30,7 @@ except ImportError:
 # Initialize FastAPI App
 app = FastAPI(
     title="CryptoBot AI — Python Quant Arbitrage Engine",
-    description="High-frequency Spatial Arbitrage API & Trading Engine powered by Python & FastAPI",
+    description="High-frequency Spatial Arbitrage API, BeautifulSoup Web Scraper & Trading Engine powered by Python & FastAPI",
     version="2.0.0"
 )
 
@@ -62,24 +64,24 @@ LOGIN_LOGS: List[Dict] = []
 # --- PYDANTIC MODELS ---
 
 class LoginRequest(BaseModel):
-    email: str = Field(..., example="deepak@chainblock.io")
-    name: str = Field(default="Deepak Kumar", example="Deepak Kumar")
-    provider: str = Field(default="python_fastapi", example="python_fastapi")
+    email: str = Field(default="deepak@chainblock.io")
+    name: str = Field(default="Deepak Kumar")
+    provider: str = Field(default="python_fastapi")
 
 class TradeOrderRequest(BaseModel):
-    symbol: str = Field(..., example="BTCUSDT")
-    side: str = Field(..., example="BUY")  # BUY or SELL
-    exchange: str = Field(..., example="Binance")
-    amount: float = Field(..., example=0.5)
+    symbol: str = Field(default="BTCUSDT")
+    side: str = Field(default="BUY")
+    exchange: str = Field(default="Binance")
+    amount: float = Field(default=0.5)
 
 class WithdrawRequest(BaseModel):
     email: str = Field(default="deepak@chainblock.io")
     name: str = Field(default="Deepak Kumar")
-    amount: float = Field(..., example=5000.0)
-    currency: str = Field(default="USDT", example="USDT")
-    destinationAddress: str = Field(..., example="0x71C765b28F3D140a831C28190d7B41")
-    networkChain: str = Field(default="Arbitrum One", example="Arbitrum One")
-    walletMode: str = Field(default="DEMO", example="DEMO")
+    amount: float = Field(default=5000.0)
+    currency: str = Field(default="USDT")
+    destinationAddress: str = Field(default="0x71C765b28F3D140a831C28190d7B41")
+    networkChain: str = Field(default="Arbitrum One")
+    walletMode: str = Field(default="DEMO")
 
 # --- PYTHON QUANT UTILITY FUNCTIONS ---
 
@@ -107,10 +109,6 @@ def get_or_create_user(email: str, name: str) -> Dict:
     return USER_WORKSPACES[clean_email]
 
 def compute_spatial_arbitrage() -> List[Dict]:
-    """
-    Python High-Frequency Quantitative Arbitrage Calculator
-    Computes real-time cross-exchange spreads, gas fees, and net yield.
-    """
     opps = []
     t = time.time()
     
@@ -162,7 +160,7 @@ def compute_spatial_arbitrage() -> List[Dict]:
 def root():
     return {
         "status": "ONLINE",
-        "engine": "Python 3.14 FastAPI Quant Server",
+        "engine": "Python 3.14 FastAPI Quant Server + BeautifulSoup4 Scraper",
         "quantTrader": "Deepak Kumar",
         "systemTime": datetime.now().isoformat(),
         "activeUsers": len(USER_WORKSPACES),
@@ -173,7 +171,7 @@ def root():
 def get_health():
     return {
         "status": "HEALTHY",
-        "engine": "Python FastAPI",
+        "engine": "Python FastAPI + BeautifulSoup4",
         "exchanges": {
             "Binance": {"ping": "14ms", "status": "ONLINE", "latency": 14},
             "Bybit": {"ping": "22ms", "status": "ONLINE", "latency": 22},
@@ -190,6 +188,20 @@ def get_market_prices():
         "coins": INITIAL_COINS,
         "arbitrageOpportunities": arbitrage_opps,
         "totalOpportunities": len(arbitrage_opps)
+    }
+
+@app.get("/api/news/scrape")
+def get_scraped_news():
+    """
+    Scrapes live crypto news & sentiment using BeautifulSoup4 (bs4)
+    """
+    news_items = scrape_crypto_news()
+    return {
+        "status": "SUCCESS",
+        "scraperEngine": "BeautifulSoup4 (bs4)",
+        "timestamp": datetime.now().isoformat(),
+        "totalArticles": len(news_items),
+        "news": news_items
     }
 
 @app.post("/api/auth/login")
@@ -254,5 +266,5 @@ def process_withdrawal(req: WithdrawRequest):
     }
 
 if __name__ == "__main__":
-    print("Starting Python Quant FastAPI Server on http://localhost:8000 ...")
+    print("Starting Python Quant FastAPI Server with BeautifulSoup4 Scraper on http://localhost:8000 ...")
     uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)
