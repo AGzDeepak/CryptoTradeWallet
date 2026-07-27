@@ -2,77 +2,78 @@
 
 [![Python 3.14](https://img.shields.io/badge/Python-3.14-3776AB.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688.svg?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![BeautifulSoup4](https://img.shields.io/badge/BeautifulSoup4-bs4-4A154B.svg?style=for-the-badge)](https://www.crummy.com/software/BeautifulSoup/)
 [![React](https://img.shields.io/badge/React-18.2.0-blue.svg?style=for-the-badge&logo=react)](https://reactjs.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.4.21-646CFF.svg?style=for-the-badge&logo=vite)](https://vitejs.dev/)
 [![Firebase](https://img.shields.io/badge/Firebase-Firestore-FFCA28.svg?style=for-the-badge&logo=firebase)](https://firebase.google.com/)
 [![Web3](https://img.shields.io/badge/Web3-MetaMask-F6851B.svg?style=for-the-badge&logo=metamask)](https://metamask.io/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
-> **CryptoBot AI** is an institutional-grade cryptocurrency spatial arbitrage scanner, quantitative automated trading engine, and analytics terminal. Powered by a **Python 3.14 FastAPI backend**, **BeautifulSoup4 (bs4) web scraper**, **React 18 frontend**, **True Japanese Financial Market Candlesticks (OHLC)**, and real-time **Firebase Firestore** database logging.
+> **CryptoBot AI** is an institutional-grade cryptocurrency spatial arbitrage scanner, quantitative automated trading engine, and orderbook yield stimulation terminal. Built with a **Python 3.14 FastAPI backend**, **Monte Carlo Yield Simulator**, **React 18 frontend**, **True Financial Candlesticks (OHLC)**, and real-time **Firebase Firestore** persistence.
 
 ---
 
-## 🚀 Live Production & Server Access
+## 🌐 Live Production & Deployment Links
 
-- **🌐 Live Web Terminal**: [https://tradebot-25d4f.web.app](https://tradebot-25d4f.web.app)
-- **📦 GitHub Repository**: [https://github.com/AGzDeepak/trading_cryptobot](https://github.com/AGzDeepak/trading_cryptobot)
-- **🐍 Local Python FastAPI API**: [http://localhost:8000](http://localhost:8000)
+- **🚀 Live Firebase App**: [https://tradebot-25d4f.web.app](https://tradebot-25d4f.web.app)
+- **📦 GitHub Repository Primary**: [https://github.com/AGzDeepak/crypto_tradingbot](https://github.com/AGzDeepak/crypto_tradingbot)
+- **📦 GitHub Repository Secondary**: [https://github.com/AGzDeepak/trading_cryptobot](https://github.com/AGzDeepak/trading_cryptobot)
+- **🐍 Local Python FastAPI Server**: [http://localhost:8000](http://localhost:8000)
 - **📚 Interactive Swagger API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
 - **🔥 Firebase Console**: [https://console.firebase.google.com/project/tradebot-25d4f/overview](https://console.firebase.google.com/project/tradebot-25d4f/overview)
 
 ---
 
-## 🌟 Key Architecture & Recent Feature Additions
+## ✨ Complete Web Application Features & Architecture
 
-### 1. 🐍 Python 3.14 FastAPI Quant Engine & BeautifulSoup4 Scraper (`backend/`)
-- **FastAPI API Server (`backend/server.py`)**: High-frequency REST endpoints for live spatial prices, authentication, bot execution, and withdrawals.
-- **BeautifulSoup4 Scraper (`backend/scraper.py`)**: Scrapes real-time crypto headlines, market sentiment tags (*HIGH PROFIT*, *BULLISH*, *NEUTRAL*), and spatial arbitrage news feeds.
-- **Autonomous Bot Engine (`backend/bot.py`)**: NumPy vector math and spatial route evaluation engine.
-- **Firebase Admin SDK (`backend/firebase_config.py`)**: Python backend datastore persistence.
+### 1. ⚡ 300ms Orderbook Yield Stimulation Engine (`backend/bot.py` & `AutoTraderBar.jsx`)
+- **Ultra-High Frequency Pulses**: Runs micro-burst stimulation pulses every **300ms** to generate dynamic cross-exchange yield spreads (`+0.4%` - `+2.8%` net profit).
+- **Monte Carlo Stochastic Simulation**: Simulates bid/ask depth injections across Binance, Bybit, OKX, and Coinbase.
+- **Turbo Trigger**: High-speed **`[ ⚡ TURBO STIMULATION (300MS) ]`** button connected to Python FastAPI endpoint `POST /api/bot/stimulate`.
 
-### 2. 📊 Quantitative Trade Audit Log with Full Buy & Sell Leg Info (`TradeHistory.jsx`)
-- **Full Leg Breakdown**: Displays exact **Buy Leg** (exchange, entry price) vs **Sell Leg** (exchange, exit price), traded volume, capital outflow/inflow, and net realized profit.
-- **Expandable Orderbook Detail Drawer**: Click any trade row to open an inline orderbook breakdown comparing Leg 1 and Leg 2 side-by-side with transaction hashes (`0x8f2a...39b1`) and execution latency (`14.2ms`).
-- **Bot Cumulative Profit Metric Card**: Dedicated `[ 🤖 AI BOT CUM. PROFIT: +$1,248.50 ]` card and `[ 🤖 FILTER BOT TRADES ]` toggle button.
-- **Export Capabilities**: Working **CSV**, **Excel**, and **PDF Ledger** export features.
+### 2. 🛍️ Dedicated Standalone Paper Trading Section (`PaperTradingPanel.jsx`)
+- **Top-Level Navigation Item**: Accessible as a primary section from the left navigation sidebar.
+- **Virtual $100k Sandbox Execution**: BUY (LONG) and SELL (SHORT) order placement with target exchange selection (*Binance Pro, Bybit Quant, OKX, Coinbase Pro*).
+- **Quick Percentage Size Bar**: Select position size instantly (`25%`, `50%`, `75%`, `100% MAX`).
+- **Responsive Layout**: Spreads onto clean 2-column & 4-column cards on all screens with zero text truncation.
 
-### 3. 🤖 Bot Cumulative Profit Wallet Integration
-- **Prominent Wallet Badge**: Displayed in `TotalAssetsHero.jsx` (`[ 🤖 BOT CUMULATIVE PROFIT: +$1,248.50 ]`), `PaperTradingPanel.jsx`, and `GlobalModals.jsx`.
-- **Automatic Balance Growth**: Bot execution yields automatically credit to available cash and total equity.
+### 3. 🔑 Multi-Exchange Quant API Matrix (`AccountSection.jsx` & `AddApiKeyModal.jsx`)
+- **Add API Key Modal Form**: Dedicated form supporting *Binance Pro, Bybit Quant, OKX Institutional, Coinbase Pro, KuCoin, and Kraken*.
+- **Interactive Security Safeguards**: Public API key, masked secret input, IP whitelist restriction, 2FA toggle, and IP Auto-Lock Guard.
+- **Dynamic State Matrix**: Connected keys automatically update the active exchange connection matrix in real time.
 
-### 4. 🕯️ True Financial Japanese Market Candlesticks (OHLC) in Analytics (`LiveChart.jsx`)
-- **Custom SVG Candlestick Engine**: Renders true **Open, High, Low, Close (OHLC)** Japanese market candlesticks.
-- **Bullish Green Candles (`#34d399`)**: Rendered when `close >= open`.
-- **Bearish Red Candles (`#f43f5e`)**: Rendered when `close < open`.
-- **Ticker Metric Bar**: Displays live `OPEN`, `HIGH`, `LOW`, `CLOSE`, and `VOLUME` values for `BTC/USDT`, `ETH/USDT`, `SOL/USDT`, and `AVAX/USDT`.
+### 4. 📰 True Live Crypto News & AI Market Intelligence (`LiveCryptoNews.jsx`)
+- **Real-Time Streaming News**: Headlines with category pills (`QUANT ARBITRAGE`, `MACRO`, `ETFS & INSTITUTIONAL`, `LAYER 2 & DEFI`).
+- **Crypto Fear & Greed Index**: Displays real-time market sentiment (`84 / 100 EXTREME GREED`).
+- **AI Price Impact Badges**: Calculates predicted market movement (`+4.8% BTC/USDT`, `+7.8% SOL/USDT`).
 
-### 5. 🗄️ Firebase Firestore Real-Time Database Logging
-- **`login_logs` Collection**: 256-bit AES encrypted login audit trail with server timestamps.
-- **`users` Collection**: Manages user profiles and trader roles.
-- **`withdrawals` Collection**: Records withdrawal transactions with destination addresses, network chains, amounts, and hashes.
-- **`bot_trade_logs` Collection**: Stores AI Bot executions and cumulative profit milestones directly in Firestore.
+### 5. 💳 Institutional Wallet & Web3 Integration (`WalletSection.jsx`)
+- **Dual Wallet Mode**: Seamlessly toggle between **DEMO $100k Paper Wallet** and **REAL Web3 MetaMask Wallet**.
+- **Working Quick Withdraw Form**: Complete with destination crypto address input, network selector (*Arbitrum One, Ethereum Mainnet, Polygon*), and real-time Firestore database logging.
+- **Asset Balances Breakdown**: Live tracking for 6 major cryptocurrencies (USDT, BTC, ETH, SOL, AVAX, XRP).
+
+### 6. 🎨 Premium Obsidian Glassmorphic UI Aesthetic
+- Dark charcoal obsidian theme (`#0b0c10`) with yellow crescent brand emblem.
+- Bright yellow **My Portfolio Card** (`YellowPortfolioCard.jsx`) with percentage badges.
+- Glowing **Gold SVG Main Chart** (`LiveChart.jsx`) with time interval filters (`1h`, `3h`, `1d`, `1w`, `1m`).
 
 ---
 
-## 🛠️ Technology Stack Matrix
+## 🛠️ Technology Stack
 
-| Architecture Layer | Technology |
+| Layer | Technologies |
 | :--- | :--- |
 | **Python Backend Engine** | [Python 3.14](https://www.python.org/) + [FastAPI](https://fastapi.tiangolo.com/) + [Uvicorn](https://www.uvicorn.org/) |
 | **Web Scraper** | [BeautifulSoup4 (bs4)](https://www.crummy.com/software/BeautifulSoup/) + `requests` |
-| **Quant Vector Math** | [NumPy](https://numpy.org/) |
-| **Core Frontend** | [React 18.2](https://reactjs.org/) + [Vite 5.4](https://vitejs.dev/) |
-| **Styling System** | [TailwindCSS 3.4](https://tailwindcss.com/) + Obsidian Dark Glassmorphic Tokens |
+| **Stochastic Simulation** | NumPy + Monte Carlo Orderbook Yield Engine |
+| **Frontend Framework** | [React 18.2](https://reactjs.org/) + [Vite 5.4](https://vitejs.dev/) |
+| **Styling & Design** | [TailwindCSS 3.4](https://tailwindcss.com/) + Obsidian Dark Glassmorphism |
 | **Web3 & Blockchain** | EIP-1193 Provider + MetaMask Integration (`web3Service.js`) |
-| **Database & Auth** | [Firebase Auth](https://firebase.google.com/) & [Firestore Real-Time Database](https://firebase.google.com/docs/firestore) |
-| **Analytics & Candles** | Custom SVG Candlestick Engine + [Recharts](https://recharts.org/) |
-| **Audio Processing** | Web Audio API Synthesizer (`audio.js`) |
+| **Database & Auth** | [Firebase Auth](https://firebase.google.com/) & [Firestore Database](https://firebase.google.com/docs/firestore) |
 | **Deployments** | Firebase Hosting & GitHub Pages |
 
 ---
 
-## 🚀 Quick Start & Local Setup
+## 🚀 Local Installation & Setup
 
 ### Prerequisites
 - Node.js `v18.0.0` or higher
@@ -80,8 +81,8 @@
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/AGzDeepak/cryptobot.git
-cd cryptobot
+git clone https://github.com/AGzDeepak/crypto_tradingbot.git
+cd crypto_tradingbot
 ```
 
 ### 2. Install Frontend & Python Dependencies
@@ -90,56 +91,59 @@ npm install
 pip install -r backend/requirements.txt
 ```
 
-### 3. Run Local Servers
+### 3. Run Development Servers
 
-**Terminal 1 — Python FastAPI Backend Server**:
+**Terminal 1 — Python FastAPI Backend**:
 ```bash
 python backend/server.py
 ```
-*API running at http://localhost:8000*
+*Backend API running at http://localhost:8000*
 
-**Terminal 2 — React Frontend Dev Server**:
+**Terminal 2 — React Vite Frontend**:
 ```bash
 npm run dev
 ```
-*Web App running at http://localhost:3000*
+*Frontend Application running at http://localhost:3000*
 
 ---
 
-## 📂 Project Directory Map
+## 📂 Project Structure Map
 
 ```
-cryptobot/
+crypto_tradingbot/
 ├── backend/
-│   ├── bot.py                # Python Autonomous Quant Bot Engine
+│   ├── bot.py                # Python Autonomous Quant Bot & 300ms Stimulation Engine
 │   ├── firebase_config.py    # Python Firebase Admin SDK Integration
 │   ├── requirements.txt      # Python Package Manifest
 │   ├── scraper.py            # BeautifulSoup4 (bs4) Crypto News Scraper
 │   └── server.py             # FastAPI REST Server & Endpoints
 ├── src/
 │   ├── components/
+│   │   ├── AccountSection.jsx     # Professional Account Management & VIP Tier Badge
+│   │   ├── AddApiKeyModal.jsx     # Exchange API Key Connection Form Modal
 │   │   ├── AnalyticsSection.jsx   # Quant Performance & Win Rate Analytics
 │   │   ├── ArbitragePanel.jsx     # Spatial Arbitrage Scanner Matrix
-│   │   ├── AutoTraderBar.jsx      # Master Bot Autopilot Control
-│   │   ├── GlobalModals.jsx       # Wallet, Deposit, Withdraw & Firestore History
-│   │   ├── LiveChart.jsx          # True Market Candlesticks (OHLC) & Metric Bar
-│   │   ├── OperationSwapTool.jsx  # Manual Buy/Sell Swap Tool
-│   │   ├── PaperTradingPanel.jsx  # Paper Wallet Execution & Bot Profit Card
+│   │   ├── AutoTraderBar.jsx      # Master Bot Autopilot & Turbo Stimulation Deck
+│   │   ├── GlobalModals.jsx       # Modal Manager & Wallet Operations
+│   │   ├── Header.jsx             # Top Command Header & Dynamic Tab Title
+│   │   ├── LiveChart.jsx          # Gold SVG Financial Chart (OHLC Candlesticks)
+│   │   ├── LiveCryptoNews.jsx     # True Live Crypto News Feed & Fear/Greed Index
+│   │   ├── OperationSwapTool.jsx  # Manual Buy/Sell Swap Form
+│   │   ├── PaperTradingPanel.jsx  # Standalone Mock Paper Trading Terminal
+│   │   ├── Sidebar.jsx            # Top-Level Sidebar Navigation Items
 │   │   ├── TotalAssetsHero.jsx    # Hero Balance & Bot Cum. Profit Badge
-│   │   └── TradeHistory.jsx       # Quantitative Trade Audit Log (Buy & Sell Leg Info)
+│   │   ├── TradeHistory.jsx       # Quantitative Trade Audit Log Ledger
+│   │   ├── WalletSection.jsx      # Institutional Wallet & Quick Withdraw Form
+│   │   └── YellowPortfolioCard.jsx# Yellow Reference Portfolio Card
 │   ├── config/
 │   │   └── firebase.js            # Firebase App, Auth & Firestore Config
 │   ├── context/
 │   │   └── CryptoContext.jsx      # Master React Application Context
-│   ├── services/
-│   │   ├── pythonQuantService.js  # React Bridge to Python FastAPI & bs4 Scraper
-│   │   ├── securityService.js     # Firestore Audit & Withdrawal Log Helpers
-│   │   └── web3Service.js         # Real Web3 Wallet & MetaMask Integration
-│   ├── App.jsx                    # Root Shell Component
-│   ├── index.css                  # Obsidian Dark Glassmorphic CSS Engine
-│   └── main.jsx                   # React DOM Entry
-├── firebase.json                  # Firebase Hosting Config
-└── README.md                      # Institutional Project Documentation
+│   ├── App.jsx                    # Application Shell & Tab Routing
+│   ├── index.css                  # Obsidian Dark Theme Design Tokens & Utilities
+│   └── main.jsx                   # React Entry Point
+├── firebase.json                  # Firebase Hosting Deployment Configuration
+└── README.md                      # Comprehensive Project Documentation
 ```
 
 ---
@@ -148,10 +152,11 @@ cryptobot/
 
 **Deepak Kumar**
 - **GitHub**: [@AGzDeepak](https://github.com/AGzDeepak)
-- **Repository**: [AGzDeepak/trading_cryptobot](https://github.com/AGzDeepak/trading_cryptobot)
+- **Primary Repository**: [AGzDeepak/crypto_tradingbot](https://github.com/AGzDeepak/crypto_tradingbot)
+- **Secondary Repository**: [AGzDeepak/trading_cryptobot](https://github.com/AGzDeepak/trading_cryptobot)
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+This project is open-source and available under the [MIT License](LICENSE).
