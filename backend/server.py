@@ -31,9 +31,9 @@ except ImportError:
 
 # Initialize FastAPI App
 app = FastAPI(
-    title="CryptoBot AI — Python Quant Arbitrage Engine",
-    description="High-frequency Spatial Arbitrage API, BeautifulSoup Web Scraper & Autonomous Bot powered by Python 3.14 & FastAPI",
-    version="2.0.0"
+    title="CryptoBot AI — Python Quant Arbitrage & Stimulation Engine",
+    description="High-frequency Spatial Arbitrage API, Orderbook Stimulation Engine, BeautifulSoup Web Scraper & Autonomous Bot powered by Python 3.14 & FastAPI",
+    version="2.5.0"
 )
 
 # Enable CORS for React Frontend
@@ -69,12 +69,6 @@ class LoginRequest(BaseModel):
     name: str = Field(default="Deepak Kumar")
     provider: str = Field(default="python_fastapi")
 
-class TradeOrderRequest(BaseModel):
-    symbol: str = Field(default="BTCUSDT")
-    side: str = Field(default="BUY")
-    exchange: str = Field(default="Binance")
-    amount: float = Field(default=0.5)
-
 class WithdrawRequest(BaseModel):
     email: str = Field(default="deepak@chainblock.io")
     name: str = Field(default="Deepak Kumar")
@@ -83,6 +77,10 @@ class WithdrawRequest(BaseModel):
     destinationAddress: str = Field(default="0x71C765b28F3D140a831C28190d7B41")
     networkChain: str = Field(default="Arbitrum One")
     walletMode: str = Field(default="DEMO")
+
+class StimulateRequest(BaseModel):
+    mode: str = Field(default="Stochastic Liquidity Pulse")
+    intensity: str = Field(default="HIGH (800ms)")
 
 # --- PYTHON QUANT UTILITY FUNCTIONS ---
 
@@ -161,24 +159,23 @@ def compute_spatial_arbitrage() -> List[Dict]:
 def root():
     return {
         "status": "ONLINE",
-        "engine": "Python 3.14 FastAPI Quant Server + BeautifulSoup4 + Firebase Admin",
+        "engine": "Python 3.14 FastAPI Quant Server + Stimulation Technique Engine",
         "quantTrader": "Deepak Kumar",
         "systemTime": datetime.now().isoformat(),
-        "activeUsers": len(USER_WORKSPACES),
-        "totalWithdrawalsProcessed": len(WITHDRAWAL_LOGS),
-        "botProfit": python_quant_bot.total_bot_profit
+        "stimulationEnabled": python_quant_bot.stimulation_enabled,
+        "totalBotProfit": python_quant_bot.total_bot_profit
     }
 
 @app.get("/api/health")
 def get_health():
     return {
         "status": "HEALTHY",
-        "engine": "Python FastAPI + BeautifulSoup4 + Firebase Admin SDK",
+        "engine": "Python FastAPI + Orderbook Stimulation Technique",
         "exchanges": {
-            "Binance": {"ping": "14ms", "status": "ONLINE", "latency": 14},
-            "Bybit": {"ping": "22ms", "status": "ONLINE", "latency": 22},
-            "OKX": {"ping": "28ms", "status": "ONLINE", "latency": 28},
-            "Coinbase": {"ping": "36ms", "status": "ONLINE", "latency": 36}
+            "Binance": {"ping": "14ms", "status": "ONLINE"},
+            "Bybit": {"ping": "22ms", "status": "ONLINE"},
+            "OKX": {"ping": "28ms", "status": "ONLINE"},
+            "Coinbase": {"ping": "36ms", "status": "ONLINE"}
         }
     }
 
@@ -207,43 +204,32 @@ def get_scraped_news():
 def get_bot_status():
     return {
         "status": "ACTIVE" if python_quant_bot.is_running else "PAUSED",
+        "stimulationEnabled": python_quant_bot.stimulation_enabled,
+        "stimulationMode": python_quant_bot.stimulation_mode,
         "minProfitThreshold": python_quant_bot.min_profit_threshold,
         "totalBotProfit": python_quant_bot.total_bot_profit,
         "tradeCount": python_quant_bot.trade_count,
         "recentLogs": python_quant_bot.logs[:10]
     }
 
-@app.post("/api/bot/execute")
-def trigger_python_bot_loop():
+@app.post("/api/bot/stimulate")
+def trigger_stimulation_pulse(req: Optional[StimulateRequest] = None):
+    if req:
+        python_quant_bot.stimulation_mode = req.mode
+        python_quant_bot.stimulation_intensity = req.intensity
+
+    pulse = python_quant_bot.inject_stimulation_pulse()
+    
+    # Execute stimulated trade
     opps = compute_spatial_arbitrage()
     executed = python_quant_bot.evaluate_and_execute(opps)
+    
     return {
         "status": "SUCCESS",
+        "stimulationTechnique": "ORDERBOOK_LIQUIDITY_PULSE",
+        "pulse": pulse,
         "executedTrades": executed,
         "totalBotProfit": python_quant_bot.total_bot_profit
-    }
-
-@app.post("/api/auth/login")
-def login_user(req: LoginRequest):
-    token = generate_secure_token()
-    user_data = get_or_create_user(req.email, req.name)
-    
-    python_firebase.record_login(req.email, req.name, token)
-    
-    log_entry = {
-        "email": req.email,
-        "name": req.name,
-        "provider": req.provider,
-        "timestamp": datetime.now().isoformat(),
-        "sessionToken": token
-    }
-    LOGIN_LOGS.append(log_entry)
-    
-    return {
-        "status": "SUCCESS",
-        "message": f"Python backend authenticated user {req.name}",
-        "sessionToken": token,
-        "user": user_data
     }
 
 @app.post("/api/wallet/withdraw")

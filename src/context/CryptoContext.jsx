@@ -73,6 +73,14 @@ export const CryptoProvider = ({ children }) => {
   const [totalBotProfit, setTotalBotProfit] = useState(0.00);
   const [autoTradeCount, setAutoTradeCount] = useState(0);
 
+  // Stimulation Technique Engine State
+  const [stimulationEnabled, setStimulationEnabled] = useState(true);
+  const [stimulationMode, setStimulationMode] = useState('Stochastic Liquidity Pulse');
+  const [stimulationIntensity, setStimulationIntensity] = useState('HIGH (800ms)');
+  const [stimulationLogs, setStimulationLogs] = useState([
+    { id: 1, text: '[STIMULATION PULSE] Stochastic orderbook depth injected across Binance & Bybit (+18.4% Vol)', time: new Date().toLocaleTimeString() }
+  ]);
+
   // Paper Wallet State
   const [wallet, setWallet] = useState(NEW_USER_WALLET);
 
@@ -642,6 +650,50 @@ export const CryptoProvider = ({ children }) => {
     setModalData(null);
   };
 
+  const triggerManualPulse = () => {
+    const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'AVAXUSDT'];
+    const exchanges = ['Binance', 'Bybit', 'OKX', 'Coinbase'];
+    const sym = symbols[Math.floor(Math.random() * symbols.length)];
+    const buyEx = exchanges[Math.floor(Math.random() * exchanges.length)];
+    const sellEx = exchanges.filter(e => e !== buyEx)[Math.floor(Math.random() * 3)];
+    
+    const coin = marketData.find(c => c.symbol === sym) || marketData[0];
+    const buyP = parseFloat((coin.basePrice * (1 - 0.005)).toFixed(2));
+    const sellP = parseFloat((coin.basePrice * (1 + 0.006)).toFixed(2));
+    const diffUsd = parseFloat((sellP - buyP).toFixed(2));
+    const diffPct = parseFloat(((diffUsd / buyP) * 100).toFixed(2));
+    const unitSize = sym.startsWith('BTC') ? 0.5 : sym.startsWith('ETH') ? 4 : 50;
+    const netProfit = parseFloat(((diffUsd * unitSize) - 2.50).toFixed(2));
+
+    const opp = {
+      symbol: sym,
+      name: coin.name,
+      buyExchange: buyEx,
+      sellExchange: sellEx,
+      ex1Price: buyP,
+      ex2Price: sellP,
+      diffUsd,
+      diffPct,
+      estProfit: diffUsd * unitSize,
+      fees: 2.50,
+      netProfit,
+      isProfitable: true,
+      unitSize,
+      status: 'STIMULATED PROFIT'
+    };
+
+    const pulseLog = {
+      id: Date.now(),
+      text: `[STIMULATION PULSE FIRED] ${sym} Orderbook Pressure: Buy ${buyEx} @ $${buyP} -> Sell ${sellEx} @ $${sellP} (+${diffPct}%)`,
+      time: new Date().toLocaleTimeString()
+    };
+    setStimulationLogs(prev => [pulseLog, ...prev.slice(0, 10)]);
+
+    executeAutoTrade(opp);
+    audioFx.playTradeSuccess();
+    addNotification(`Manual Stimulation Pulse Fired: ${sym} Buy ${buyEx} ➔ Sell ${sellEx} (+$${netProfit})`, 'success');
+  };
+
   return (
     <CryptoContext.Provider
       value={{
@@ -680,6 +732,14 @@ export const CryptoProvider = ({ children }) => {
         autoTradeLogs,
         totalBotProfit,
         autoTradeCount,
+        stimulationEnabled,
+        setStimulationEnabled,
+        stimulationMode,
+        setStimulationMode,
+        stimulationIntensity,
+        setStimulationIntensity,
+        stimulationLogs,
+        triggerManualPulse,
         wallet,
         depositFunds,
         withdrawFunds,
