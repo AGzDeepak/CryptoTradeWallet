@@ -19,6 +19,7 @@ import { ExchangeStatus } from './components/ExchangeStatus';
 import { AnalyticsSection } from './components/AnalyticsSection';
 import { SettingsModal } from './components/SettingsModal';
 import { GlobalModals } from './components/GlobalModals';
+import { WalletSection } from './components/WalletSection';
 
 const DashboardContent = () => {
   const { activeTab } = useCrypto();
@@ -63,6 +64,18 @@ const DashboardContent = () => {
           </div>
         )}
 
+        {activeTab === 'wallet' && (
+          <div className="space-y-6">
+            <WalletSection />
+          </div>
+        )}
+
+        {activeTab === 'portfolio' && (
+          <div className="space-y-6">
+            <WalletSection />
+          </div>
+        )}
+
         {activeTab === 'markets' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <div className="lg:col-span-7 space-y-6">
@@ -80,19 +93,6 @@ const DashboardContent = () => {
           <div className="space-y-6">
             <MarketScanner />
             <ArbitragePanel />
-          </div>
-        )}
-
-        {activeTab === 'portfolio' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <div className="lg:col-span-5 space-y-6">
-              <YellowPortfolioCard />
-              <PaperTradingPanel />
-            </div>
-            <div className="lg:col-span-7 space-y-6">
-              <TotalAssetsHero />
-              <LivePositions />
-            </div>
           </div>
         )}
 
