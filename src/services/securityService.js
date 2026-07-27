@@ -100,3 +100,34 @@ export const recordFirebaseWithdrawal = async (withdrawData) => {
 
   return payload;
 };
+
+/**
+ * Store AI Bot execution and cumulative profit logs in Firebase Firestore Database
+ */
+export const recordFirebaseBotTradeLog = async (botTradeData) => {
+  const payload = {
+    tradeId: botTradeData.id || `TRD-BOT-${Date.now()}`,
+    symbol: botTradeData.symbol,
+    strategy: botTradeData.strategy || 'Autopilot Bot Alpha',
+    buyExchange: botTradeData.buyExchange,
+    sellExchange: botTradeData.sellExchange,
+    buyPrice: botTradeData.ex1Price || botTradeData.buyPrice,
+    sellPrice: botTradeData.ex2Price || botTradeData.sellPrice,
+    amount: botTradeData.unitSize || botTradeData.amount || 0.5,
+    netProfit: botTradeData.netProfit,
+    totalBotCumulativeProfit: botTradeData.totalBotProfit,
+    isBot: true,
+    timestamp: new Date().toISOString(),
+    serverTimestamp: serverTimestamp()
+  };
+
+  try {
+    const botLogsRef = collection(db, 'bot_trade_logs');
+    await addDoc(botLogsRef, payload);
+    console.log('[FIREBASE] Bot Trade Log & Cumulative Profit stored in Firestore bot_trade_logs collection.');
+  } catch (err) {
+    console.warn('[FIREBASE NOTICE] Firestore bot log write notice:', err.message);
+  }
+
+  return payload;
+};

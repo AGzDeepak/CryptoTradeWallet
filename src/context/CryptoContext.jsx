@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { audioFx } from '../utils/audio';
-import { recordFirebaseLoginLog, recordFirebaseWithdrawal, sanitizeInput } from '../services/securityService';
+import { recordFirebaseLoginLog, recordFirebaseWithdrawal, recordFirebaseBotTradeLog, sanitizeInput } from '../services/securityService';
 import { connectRealWeb3Wallet, sendRealWeb3Transaction, isWeb3Available } from '../services/web3Service';
 
 const CryptoContext = createContext();
@@ -487,21 +487,53 @@ export const CryptoProvider = ({ children }) => {
       status: 'ACTIVE'
     };
 
+    const nextBotProfit = parseFloat((totalBotProfit + opp.netProfit).toFixed(2));
+
     setOpenPositions(prev => [newPos, ...prev]);
-    setTotalBotProfit(prev => parseFloat((prev + opp.netProfit).toFixed(2)));
+    setTotalBotProfit(nextBotProfit);
     setAutoTradeCount(prev => prev + 1);
+
+    // Store in Trade Settlement Audit History Log
+    const botAuditRecord = {
+      id: `TRD-BOT-${Math.floor(1000 + Math.random() * 9000)}`,
+      time: new Date().toLocaleTimeString(),
+      symbol: opp.symbol,
+      strategy: 'Autopilot Bot Alpha',
+      isBot: true,
+      buyExchange: opp.buyExchange,
+      sellExchange: opp.sellExchange,
+      buyPrice: opp.ex1Price,
+      sellPrice: opp.ex2Price,
+      amount: opp.unitSize,
+      buyTotal: parseFloat((opp.ex1Price * opp.unitSize).toFixed(2)),
+      sellTotal: parseFloat((opp.ex2Price * opp.unitSize).toFixed(2)),
+      grossProfit: opp.estProfit || opp.netProfit,
+      fees: opp.fees || 2.50,
+      netProfit: opp.netProfit,
+      totalBotProfit: nextBotProfit,
+      spreadPct: opp.diffPct,
+      buyTxHash: `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 6)}`,
+      sellTxHash: `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 6)}`,
+      latency: '14.2ms',
+      result: 'PROFIT'
+    };
+
+    setTradeHistory(prev => [botAuditRecord, ...prev]);
+
+    // Record in Firebase Firestore Database
+    recordFirebaseBotTradeLog(botAuditRecord);
 
     audioFx.playTradeSuccess();
 
     const timeStr = new Date().toLocaleTimeString();
     const logMsg = {
       id: Date.now(),
-      text: `[AUTO-BOT] Arbitrage: ${opp.symbol} Buy ${opp.buyExchange} @ $${opp.ex1Price} -> Sell ${opp.sellExchange} @ $${opp.ex2Price} (+$${opp.netProfit})`,
+      text: `[AUTO-BOT] Arbitrage: ${opp.symbol} Buy ${opp.buyExchange} @ $${opp.ex1Price} -> Sell ${opp.sellExchange} @ $${opp.ex2Price} (+$${opp.netProfit}) | Cum. Profit: +$${nextBotProfit}`,
       time: timeStr,
       type: 'success'
     };
     setAutoTradeLogs(prev => [logMsg, ...prev.slice(0, 15)]);
-    addNotification(`Auto-Trader Executed: ${opp.symbol} +$${opp.netProfit}`, 'success');
+    addNotification(`Auto-Trader Executed & Logged: ${opp.symbol} +$${opp.netProfit} (Total: +$${nextBotProfit})`, 'success');
   };
 
   const updateOpenPositionsAndAutoSettle = (newExPrices) => {
