@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { Search, ChevronDown, Bot, Volume2, VolumeX, LogOut, Wallet, ShieldCheck, Zap, Activity } from 'lucide-react';
+import { Search, Mail, Bell, Bot, Volume2, VolumeX, LogOut, Wallet, Zap, ShieldCheck } from 'lucide-react';
 
 export const Header = () => {
   const { 
@@ -13,116 +13,107 @@ export const Header = () => {
     logout,
     walletMode,
     setWalletMode,
-    realWallet
+    realWallet,
+    notifications
   } = useCrypto();
 
   return (
-    <header className="bg-[#0b0f19]/90 backdrop-blur-xl border-b border-slate-800/80 px-6 h-16 flex items-center justify-between z-40 shrink-0 font-sans shadow-lg">
+    <header className="bg-[#0b0c10] border-b border-slate-800/80 px-6 sm:px-8 h-20 flex items-center justify-between z-40 shrink-0 font-sans">
       
-      {/* Title & Live Status Indicator */}
-      <div className="flex items-center space-x-4">
-        <h1 className="text-xl font-extrabold text-white tracking-tight font-mono">
-          CryptoBot<span className="text-[#34d399]">.AI</span>
+      {/* Dashboard Title matching reference screenshot */}
+      <div className="flex items-center space-x-3">
+        <h1 className="text-2xl font-extrabold text-[#facc15] tracking-tight font-sans">
+          Dashboard
         </h1>
-        <div className="hidden sm:flex items-center space-x-2 px-2.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-[10px] font-mono text-[#34d399] font-bold">
-          <Activity className="w-3 h-3 text-[#34d399] animate-pulse" />
-          <span>QUANT ENGINE ONLINE (14ms)</span>
-        </div>
       </div>
 
-      {/* Center Search Bar */}
-      <div className="relative hidden md:block w-80">
+      {/* Center Search Bar matching reference screenshot */}
+      <div className="relative hidden md:block w-96">
         <input
           type="text"
-          placeholder="Search pair, order hash or exchange..."
-          className="w-full bg-[#121827] border border-slate-800 rounded-xl pl-9 pr-4 py-1.5 text-xs text-slate-200 placeholder-slate-500 outline-none focus:border-[#34d399] transition font-mono shadow-inner"
+          placeholder="Search..."
+          className="w-full bg-[#181a20] border border-slate-800 rounded-2xl pl-10 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 outline-none focus:border-[#facc15] transition font-sans shadow-inner"
         />
-        <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-500" />
+        <Search className="w-4 h-4 absolute left-3.5 top-2.5 text-slate-500" />
       </div>
 
-      {/* Right Controls */}
-      <div className="flex items-center space-x-3">
+      {/* Right Controls matching reference screenshot (Mail + Bell + Avatar + Bot Pill) */}
+      <div className="flex items-center space-x-4">
         
-        {/* Dual Wallet Mode Switcher (DEMO vs REAL WEB3) */}
-        <div className="flex items-center bg-[#121827] p-1 rounded-xl border border-slate-800 text-xs font-mono">
-          <button
-            onClick={() => setWalletMode('DEMO')}
-            className={`px-3 py-1 rounded-lg flex items-center space-x-1.5 transition font-bold ${
-              walletMode === 'DEMO'
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
-                : 'text-slate-500 hover:text-slate-300'
-            }`}
-          >
-            <Zap className="w-3 h-3 text-amber-400" />
-            <span className="hidden lg:inline">DEMO ($100k)</span>
-          </button>
-
-          <button
-            onClick={() => {
-              if (realWallet.connected) {
-                setWalletMode('REAL');
-              } else {
-                openModal('WALLET');
-              }
-            }}
-            className={`px-3 py-1 rounded-lg flex items-center space-x-1.5 transition font-bold ${
-              walletMode === 'REAL'
-                ? 'bg-emerald-500/20 text-[#34d399] border border-[#34d399]/40 shadow-sm'
-                : 'text-slate-500 hover:text-slate-300'
-            }`}
-          >
-            <Wallet className="w-3 h-3 text-[#34d399]" />
-            <span className="hidden lg:inline">{realWallet.connected ? realWallet.shortAddress : 'REAL WEB3'}</span>
-          </button>
-        </div>
-
-        {/* Master Bot Autopilot Toggle */}
+        {/* Master Bot Autopilot Pill */}
         <button
           onClick={() => setAutoTradingEnabled(!autoTradingEnabled)}
-          className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl text-xs font-semibold font-mono border transition ${
+          className={`hidden xl:flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold font-mono border transition ${
             autoTradingEnabled
-              ? 'bg-emerald-950/80 text-[#34d399] border-emerald-500/50 shadow-[0_0_15px_rgba(52,211,153,0.3)] animate-pulse'
+              ? 'bg-amber-950/80 text-[#facc15] border-[#facc15]/50 glow-yellow'
               : 'bg-slate-900 text-slate-400 border-slate-800'
           }`}
         >
-          <Bot className={`w-3.5 h-3.5 ${autoTradingEnabled ? 'text-[#34d399]' : 'text-slate-500'}`} />
-          <span className="hidden xl:inline">AUTOPILOT: {autoTradingEnabled ? 'ON' : 'PAUSED'}</span>
+          <Bot className={`w-4 h-4 ${autoTradingEnabled ? 'text-[#facc15]' : 'text-slate-500'}`} />
+          <span>AUTOPILOT: {autoTradingEnabled ? 'ON' : 'PAUSED'}</span>
         </button>
 
-        {/* Audio Toggle */}
-        <button
-          onClick={() => setSoundEnabled(!soundEnabled)}
-          className="p-2 rounded-xl bg-[#121827] border border-slate-800 text-slate-400 hover:text-white transition"
-        >
-          {soundEnabled ? <Volume2 className="w-4 h-4 text-[#34d399]" /> : <VolumeX className="w-4 h-4" />}
-        </button>
-
-        {/* USDT Currency Pill Dropdown */}
-        <div
-          onClick={() => openModal('DEPOSIT')}
-          className="flex items-center space-x-2 bg-[#121827] border border-slate-800 px-3 py-1.5 rounded-xl text-xs font-mono font-bold cursor-pointer hover:border-slate-700 transition"
-        >
-          <span className="w-4 h-4 rounded-full bg-[#34d399] text-black font-bold flex items-center justify-center text-[10px]">T</span>
-          <span className="text-white">USDT</span>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+        {/* Dual Wallet Switcher */}
+        <div className="hidden sm:flex items-center bg-[#181a20] p-1 rounded-xl border border-slate-800 text-xs font-mono">
+          <button
+            onClick={() => setWalletMode('DEMO')}
+            className={`px-3 py-1 rounded-lg transition font-bold ${
+              walletMode === 'DEMO'
+                ? 'bg-[#facc15] text-slate-950 shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            DEMO
+          </button>
+          <button
+            onClick={() => {
+              if (realWallet.connected) setWalletMode('REAL');
+              else openModal('WALLET');
+            }}
+            className={`px-3 py-1 rounded-lg transition font-bold ${
+              walletMode === 'REAL'
+                ? 'bg-[#facc15] text-slate-950 shadow-sm'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            {realWallet.connected ? realWallet.shortAddress : 'REAL WEB3'}
+          </button>
         </div>
 
-        {/* User Profile Badge */}
+        {/* Mail Icon */}
+        <button 
+          onClick={() => openModal('AI_SUPPORT')}
+          className="p-2.5 rounded-xl bg-[#181a20] border border-slate-800 text-slate-300 hover:text-[#facc15] transition"
+        >
+          <Mail className="w-4 h-4" />
+        </button>
+
+        {/* Notification Bell with alert dot */}
+        <button
+          onClick={() => openModal('NOTIFICATIONS')}
+          className="relative p-2.5 rounded-xl bg-[#181a20] border border-slate-800 text-slate-300 hover:text-[#facc15] transition"
+        >
+          <Bell className="w-4 h-4" />
+          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#facc15]"></span>
+        </button>
+
+        {/* User Profile Avatar picture matching reference screenshot */}
         <div
           onClick={() => openModal('WALLET')}
-          className="flex items-center space-x-2 bg-[#121827] border border-slate-800 px-2.5 py-1.5 rounded-xl cursor-pointer hover:border-slate-700 transition"
+          className="w-9 h-9 rounded-full bg-slate-800 border border-[#facc15]/50 overflow-hidden cursor-pointer hover:border-[#facc15] transition flex items-center justify-center font-bold text-[#facc15]"
         >
-          <div className="w-6 h-6 rounded-full bg-[#34d399] flex items-center justify-center font-extrabold text-black text-xs font-mono">
-            {user.avatar || 'D'}
-          </div>
-          <span className="text-xs font-bold text-slate-200 hidden sm:inline">{user.name}</span>
+          <img
+            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
+            alt="Profile Avatar"
+            className="w-full h-full object-cover"
+          />
         </div>
 
-        {/* Quick Logout Button */}
+        {/* Logout */}
         <button
           onClick={logout}
-          className="p-2 rounded-xl bg-[#121827] border border-slate-800 text-slate-400 hover:text-rose-400 hover:border-rose-800 transition"
-          title="Sign Out / Switch Account"
+          className="p-2.5 rounded-xl bg-[#181a20] border border-slate-800 text-slate-400 hover:text-rose-400 transition"
+          title="Sign Out"
         >
           <LogOut className="w-4 h-4" />
         </button>

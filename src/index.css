@@ -4,7 +4,7 @@
 
 @layer base {
   html, body {
-    background-color: #07090e;
+    background-color: #0b0c10;
     color: #f8fafc;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     overflow-x: hidden;
@@ -14,78 +14,18 @@
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
-  body.light-theme {
-    background-color: #f8fafc;
-    color: #0f172a;
-  }
-
   .font-mono {
     font-family: 'JetBrains Mono', 'Fira Code', monospace;
   }
 }
 
-/* 60FPS Hardware-Accelerated Animations */
-@keyframes pulseGlow {
-  0%, 100% {
-    box-shadow: 0 0 15px rgba(45, 212, 191, 0.25);
-    border-color: rgba(45, 212, 191, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 30px rgba(45, 212, 191, 0.5);
-    border-color: rgba(45, 212, 191, 0.8);
-  }
+/* Yellow Accent Glows */
+.glow-yellow {
+  box-shadow: 0 0 25px rgba(250, 204, 21, 0.35);
 }
 
-@keyframes priceUpFlash {
-  0% { background-color: rgba(16, 185, 129, 0.35); }
-  100% { background-color: transparent; }
-}
-
-@keyframes priceDownFlash {
-  0% { background-color: rgba(244, 63, 94, 0.35); }
-  100% { background-color: transparent; }
-}
-
-@keyframes scanline {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(1000%); }
-}
-
-.animate-pulse-glow {
-  animation: pulseGlow 2.5s infinite ease-in-out;
-}
-
-.flash-up {
-  animation: priceUpFlash 0.8s ease-out;
-}
-
-.flash-down {
-  animation: priceDownFlash 0.8s ease-out;
-}
-
-/* Cyber Neon Glow Utilities */
 .glow-mint {
   box-shadow: 0 0 25px rgba(45, 212, 191, 0.25);
-}
-
-.glow-sky {
-  box-shadow: 0 0 25px rgba(56, 189, 248, 0.25);
-}
-
-.glow-purple {
-  box-shadow: 0 0 25px rgba(168, 85, 247, 0.25);
-}
-
-/* Liquid Glass Effect */
-.liquid-glass {
-  background: rgba(255, 255, 255, 0.02);
-  background-blend-mode: luminosity;
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
-  border: none;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15);
-  position: relative;
-  overflow: hidden;
 }
 
 /* Smooth Container Scrollbar */
@@ -98,84 +38,70 @@
 }
 
 @layer components {
-  /* Institutional Trading Shell */
+  /* Main Charcoal Frame Container */
   .chainblock-shell {
-    background: rgba(13, 17, 26, 0.92);
-    backdrop-filter: blur(28px);
-    -webkit-backdrop-filter: blur(28px);
-    border: 1px solid rgba(148, 163, 184, 0.12);
-    border-radius: 1.25rem;
-    box-shadow: 0 25px 70px -15px rgba(0, 0, 0, 0.7);
+    background: #14161d;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 2rem;
+    box-shadow: 0 25px 80px -15px rgba(0, 0, 0, 0.85);
     transition: all 0.25s ease;
   }
 
-  /* Professional Trading Card Component */
+  /* Dark Charcoal Card Component matching reference image */
   .chainblock-card {
-    background: rgba(20, 26, 38, 0.75);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(148, 163, 184, 0.12);
-    border-radius: 1rem;
-    padding: 1.25rem;
-    box-shadow: 0 12px 35px -10px rgba(0, 0, 0, 0.45);
+    background: #191b22;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .chainblock-card:hover {
-    border-color: rgba(45, 212, 191, 0.35);
-    box-shadow: 0 15px 40px -12px rgba(45, 212, 191, 0.15);
+    border-color: rgba(250, 204, 21, 0.4);
+    box-shadow: 0 15px 40px -12px rgba(250, 204, 21, 0.15);
   }
 
-  .chainblock-subcard {
-    background: rgba(11, 15, 25, 0.75);
-    border: 1px solid rgba(148, 163, 184, 0.1);
-    border-radius: 0.875rem;
-    padding: 1rem;
-    transition: all 0.2s ease;
+  /* Yellow Portfolio Card matching reference screenshot */
+  .yellow-portfolio-card {
+    background: #facc15;
+    color: #0f172a;
+    border-radius: 1.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 15px 40px -10px rgba(250, 204, 21, 0.25);
   }
 
-  /* Standardized Header Baseline */
-  .card-header-baseline {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-bottom: 0.875rem;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
-    margin-bottom: 1rem;
-    height: 2.5rem;
-  }
-
-  /* Mint Teal Buttons */
+  /* Yellow Accent Buttons */
   .chainblock-btn-emerald {
-    height: 2.625rem;
+    height: 2.75rem;
     padding-left: 1.25rem;
     padding-right: 1.25rem;
-    border-radius: 0.75rem;
+    border-radius: 0.875rem;
     font-size: 0.875rem;
     font-weight: 800;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    background: #2dd4bf;
-    color: #090d16;
-    box-shadow: 0 4px 20px rgba(45, 212, 191, 0.35);
+    background: #facc15;
+    color: #0f172a;
+    box-shadow: 0 4px 20px rgba(250, 204, 21, 0.35);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .chainblock-btn-emerald:hover {
-    background: #5eead4;
-    box-shadow: 0 6px 28px rgba(45, 212, 191, 0.55);
+    background: #fde047;
+    box-shadow: 0 6px 28px rgba(250, 204, 21, 0.55);
     transform: translateY(-1.5px);
   }
 
-  /* Sidebar Active Navigation Pill */
+  /* Sidebar Active Navigation Pill matching reference image */
   .chainblock-nav-active {
-    background: linear-gradient(90deg, rgba(45, 212, 191, 0.18) 0%, rgba(45, 212, 191, 0.04) 100%);
-    color: #2dd4bf;
-    border-left: 3px solid #2dd4bf;
+    background: #232630;
+    color: #ffffff;
     font-weight: 700;
-    box-shadow: inset 0 0 15px rgba(45, 212, 191, 0.12);
+    border-radius: 0.875rem;
+    box-shadow: inset 0 0 10px rgba(250, 204, 21, 0.1);
   }
 }
 
@@ -190,10 +116,10 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.25);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2dd4bf;
+  background: #facc15;
 }

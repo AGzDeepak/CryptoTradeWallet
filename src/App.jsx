@@ -4,14 +4,11 @@ import { BackgroundParticles } from './components/BackgroundParticles';
 import { AuthScreen } from './components/AuthScreen';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
-import { GlobalTickerBar } from './components/GlobalTickerBar';
-import { ExecutiveMetricsBar } from './components/ExecutiveMetricsBar';
-import { WatchlistPanel } from './components/WatchlistPanel';
 import { AutoTraderBar } from './components/AutoTraderBar';
 import { TotalAssetsHero } from './components/TotalAssetsHero';
+import { YellowPortfolioCard } from './components/YellowPortfolioCard';
 import { OperationSwapTool } from './components/OperationSwapTool';
 import { LiveChart } from './components/LiveChart';
-import { TransactionsWidget } from './components/TransactionsWidget';
 import { ArbitragePanel } from './components/ArbitragePanel';
 import { AiStrategyPanel } from './components/AiStrategyPanel';
 import { PaperTradingPanel } from './components/PaperTradingPanel';
@@ -27,53 +24,47 @@ const DashboardContent = () => {
   const { activeTab } = useCrypto();
 
   return (
-    <main className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar smooth-scroll-container bg-[#07090e]">
-      <div className="max-w-[1850px] mx-auto space-y-6">
+    <main className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 no-scrollbar smooth-scroll-container bg-[#0b0c10]">
+      
+      {/* Outer Shell Frame matching reference screenshot (Rounded Charcoal Shell) */}
+      <div className="chainblock-shell p-6 sm:p-8 space-y-8">
         
-        {/* Master Bot Autopilot Command Deck */}
+        {/* Master Bot & Stimulation Control Deck */}
         <AutoTraderBar />
 
-        {/* Executive Real-Time Key Performance Metrics Bar */}
-        <ExecutiveMetricsBar />
-
         {activeTab === 'dashboard' && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             
-            {/* Main 3-Column Wall-to-Wall Institutional Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Top Section: TOTAL BALANCE & 4 Asset Cards (Bitcoin, Litecoin, Ethereum, Solana) */}
+            <TotalAssetsHero />
+
+            {/* Bottom Split Section: Left Yellow Portfolio Card (30%) & Right Main Chart (70%) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               
-              {/* COLUMN 1: LEFT WATCHLIST & PAPER TRADING (3 Cols / 25% Width) */}
-              <div className="lg:col-span-3 space-y-6">
-                <WatchlistPanel />
+              {/* Left Column (Yellow My Portfolio Card & Buy/Sell Swap Tool) */}
+              <div className="lg:col-span-4 space-y-6">
+                <YellowPortfolioCard />
+                <OperationSwapTool />
                 <PaperTradingPanel />
-                <ExchangeStatus />
               </div>
 
-              {/* COLUMN 2: CENTER CANDLESTICK CHART, ARBITRAGE MATRIX & POSITIONS (6 Cols / 50% Width) */}
-              <div className="lg:col-span-6 space-y-6">
+              {/* Right Column (Gold Main SVG Chart & Spatial Arbitrage Matrix) */}
+              <div className="lg:col-span-8 space-y-6">
                 <LiveChart />
                 <ArbitragePanel />
                 <LivePositions />
-                <TransactionsWidget />
-              </div>
-
-              {/* COLUMN 3: RIGHT TOTAL ASSETS, SWAP TOOL & AI STRATEGIES (3 Cols / 25% Width) */}
-              <div className="lg:col-span-3 space-y-6">
-                <TotalAssetsHero />
-                <OperationSwapTool />
-                <AiStrategyPanel />
               </div>
 
             </div>
 
-            {/* Bottom Full-Width Section: Quantitative Trade Audit Log */}
+            {/* Full Width Trade Audit Log Ledger */}
             <TradeHistory />
 
           </div>
         )}
 
         {activeTab === 'markets' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <div className="lg:col-span-7 space-y-6">
               <LiveChart />
               <ArbitragePanel />
@@ -93,13 +84,14 @@ const DashboardContent = () => {
         )}
 
         {activeTab === 'portfolio' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-5 space-y-6">
+              <YellowPortfolioCard />
+              <PaperTradingPanel />
+            </div>
             <div className="lg:col-span-7 space-y-6">
               <TotalAssetsHero />
               <LivePositions />
-            </div>
-            <div className="lg:col-span-5 space-y-6">
-              <PaperTradingPanel />
             </div>
           </div>
         )}
@@ -107,12 +99,11 @@ const DashboardContent = () => {
         {activeTab === 'trades' && (
           <div className="space-y-6">
             <TradeHistory />
-            <TransactionsWidget />
           </div>
         )}
 
         {activeTab === 'strategies' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-6">
               <AiStrategyPanel />
             </div>
@@ -129,12 +120,6 @@ const DashboardContent = () => {
           </div>
         )}
 
-        {activeTab === 'history' && (
-          <div className="space-y-6">
-            <TradeHistory />
-          </div>
-        )}
-
         {activeTab === 'settings' && (
           <div className="space-y-6">
             <SettingsModal />
@@ -142,6 +127,7 @@ const DashboardContent = () => {
         )}
 
       </div>
+
     </main>
   );
 };
@@ -154,15 +140,12 @@ const MainLayout = () => {
   }
 
   return (
-    <div className="h-screen w-screen bg-[#07090e] text-slate-100 flex flex-col overflow-hidden font-sans selection:bg-teal-400 selection:text-black relative">
+    <div className="h-screen w-screen bg-[#0b0c10] text-slate-100 flex overflow-hidden font-sans selection:bg-[#facc15] selection:text-black relative">
       {/* Background Canvas */}
       <BackgroundParticles />
 
-      {/* Top Global Live Ticker Bar */}
-      <GlobalTickerBar />
-
       {/* Outer Shell Frame */}
-      <div className="flex-1 flex overflow-hidden relative z-10">
+      <div className="w-full h-full flex overflow-hidden relative z-10">
         {/* Left Sidebar */}
         <Sidebar />
 
