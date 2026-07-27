@@ -19,18 +19,9 @@ import { ExchangeStatus } from './components/ExchangeStatus';
 import { AnalyticsSection } from './components/AnalyticsSection';
 import { SettingsModal } from './components/SettingsModal';
 import { GlobalModals } from './components/GlobalModals';
-import { VibrantWellnessHero } from './components/VibrantWellnessHero';
 
 const DashboardContent = () => {
   const { activeTab } = useCrypto();
-
-  if (activeTab === 'vibrant_wellness') {
-    return (
-      <main className="flex-1 overflow-hidden">
-        <VibrantWellnessHero />
-      </main>
-    );
-  }
 
   return (
     <main className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 no-scrollbar smooth-scroll-container">
@@ -133,18 +124,10 @@ const DashboardContent = () => {
 };
 
 const MainLayout = () => {
-  const { isAuthenticated, activeTab } = useCrypto();
+  const { isAuthenticated } = useCrypto();
 
   if (!isAuthenticated) {
     return <AuthScreen />;
-  }
-
-  if (activeTab === 'vibrant_wellness') {
-    return (
-      <div className="h-screen w-screen bg-black text-slate-100 overflow-hidden font-sans relative">
-        <VibrantWellnessHero />
-      </div>
-    );
   }
 
   return (
