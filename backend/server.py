@@ -13,6 +13,8 @@ from typing import List, Dict, Optional
 from pydantic import BaseModel, Field
 
 from scraper import scrape_crypto_news
+from bot import python_quant_bot
+from firebase_config import python_firebase
 
 try:
     from fastapi import FastAPI, HTTPException, Depends, Header
@@ -30,7 +32,7 @@ except ImportError:
 # Initialize FastAPI App
 app = FastAPI(
     title="CryptoBot AI — Python Quant Arbitrage Engine",
-    description="High-frequency Spatial Arbitrage API, BeautifulSoup Web Scraper & Trading Engine powered by Python & FastAPI",
+    description="High-frequency Spatial Arbitrage API, BeautifulSoup Web Scraper & Autonomous Bot powered by Python 3.14 & FastAPI",
     version="2.0.0"
 )
 
@@ -56,7 +58,6 @@ INITIAL_COINS = [
 
 EXCHANGES = ["Binance", "Bybit", "OKX", "Coinbase"]
 
-# Per-User Isolated Storage in Python Memory & Firestore Sync
 USER_WORKSPACES: Dict[str, Dict] = {}
 WITHDRAWAL_LOGS: List[Dict] = []
 LOGIN_LOGS: List[Dict] = []
@@ -160,18 +161,19 @@ def compute_spatial_arbitrage() -> List[Dict]:
 def root():
     return {
         "status": "ONLINE",
-        "engine": "Python 3.14 FastAPI Quant Server + BeautifulSoup4 Scraper",
+        "engine": "Python 3.14 FastAPI Quant Server + BeautifulSoup4 + Firebase Admin",
         "quantTrader": "Deepak Kumar",
         "systemTime": datetime.now().isoformat(),
         "activeUsers": len(USER_WORKSPACES),
-        "totalWithdrawalsProcessed": len(WITHDRAWAL_LOGS)
+        "totalWithdrawalsProcessed": len(WITHDRAWAL_LOGS),
+        "botProfit": python_quant_bot.total_bot_profit
     }
 
 @app.get("/api/health")
 def get_health():
     return {
         "status": "HEALTHY",
-        "engine": "Python FastAPI + BeautifulSoup4",
+        "engine": "Python FastAPI + BeautifulSoup4 + Firebase Admin SDK",
         "exchanges": {
             "Binance": {"ping": "14ms", "status": "ONLINE", "latency": 14},
             "Bybit": {"ping": "22ms", "status": "ONLINE", "latency": 22},
@@ -192,9 +194,6 @@ def get_market_prices():
 
 @app.get("/api/news/scrape")
 def get_scraped_news():
-    """
-    Scrapes live crypto news & sentiment using BeautifulSoup4 (bs4)
-    """
     news_items = scrape_crypto_news()
     return {
         "status": "SUCCESS",
@@ -204,10 +203,32 @@ def get_scraped_news():
         "news": news_items
     }
 
+@app.get("/api/bot/status")
+def get_bot_status():
+    return {
+        "status": "ACTIVE" if python_quant_bot.is_running else "PAUSED",
+        "minProfitThreshold": python_quant_bot.min_profit_threshold,
+        "totalBotProfit": python_quant_bot.total_bot_profit,
+        "tradeCount": python_quant_bot.trade_count,
+        "recentLogs": python_quant_bot.logs[:10]
+    }
+
+@app.post("/api/bot/execute")
+def trigger_python_bot_loop():
+    opps = compute_spatial_arbitrage()
+    executed = python_quant_bot.evaluate_and_execute(opps)
+    return {
+        "status": "SUCCESS",
+        "executedTrades": executed,
+        "totalBotProfit": python_quant_bot.total_bot_profit
+    }
+
 @app.post("/api/auth/login")
 def login_user(req: LoginRequest):
     token = generate_secure_token()
     user_data = get_or_create_user(req.email, req.name)
+    
+    python_firebase.record_login(req.email, req.name, token)
     
     log_entry = {
         "email": req.email,
@@ -255,6 +276,8 @@ def process_withdrawal(req: WithdrawRequest):
         "timestamp": datetime.now().isoformat()
     }
     
+    python_firebase.record_withdrawal(withdraw_record)
+    
     WITHDRAWAL_LOGS.append(withdraw_record)
     user["withdrawals"].insert(0, withdraw_record)
     
@@ -266,5 +289,5 @@ def process_withdrawal(req: WithdrawRequest):
     }
 
 if __name__ == "__main__":
-    print("Starting Python Quant FastAPI Server with BeautifulSoup4 Scraper on http://localhost:8000 ...")
+    print("Starting Python Quant FastAPI Server on http://localhost:8000 ...")
     uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)
