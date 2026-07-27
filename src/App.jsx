@@ -20,6 +20,7 @@ import { AnalyticsSection } from './components/AnalyticsSection';
 import { SettingsModal } from './components/SettingsModal';
 import { GlobalModals } from './components/GlobalModals';
 import { WalletSection } from './components/WalletSection';
+import { AccountSection } from './components/AccountSection';
 
 const DashboardContent = () => {
   const { activeTab } = useCrypto();
@@ -61,6 +62,12 @@ const DashboardContent = () => {
             {/* Full Width Trade Audit Log Ledger */}
             <TradeHistory />
 
+          </div>
+        )}
+
+        {activeTab === 'account' && (
+          <div className="space-y-6">
+            <AccountSection />
           </div>
         )}
 

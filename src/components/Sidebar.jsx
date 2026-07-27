@@ -39,11 +39,11 @@ export const Sidebar = () => {
         <div className="space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeTab === item.id || (activeTab === 'dashboard' && item.id === 'dashboard');
+            const isActive = activeTab === item.id;
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id === 'account' ? 'dashboard' : item.id === 'chart' ? 'dashboard' : item.id === 'wallet' ? 'portfolio' : item.id)}
+                onClick={() => setActiveTab(item.id === 'chart' ? 'dashboard' : item.id)}
                 className={`w-full flex items-center space-x-3.5 px-4 py-3 rounded-2xl text-xs font-semibold transition ${
                   isActive
                     ? 'bg-[#1a1c23] text-white font-bold'
