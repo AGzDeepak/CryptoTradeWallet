@@ -12,7 +12,8 @@ import {
   HelpCircle, 
   MessageSquare,
   Box,
-  Bot
+  Bot,
+  Sparkles
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -20,6 +21,7 @@ export const Sidebar = () => {
 
   const overviewItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
+    { id: 'vibrant_wellness', label: 'Vibrant Wellness', icon: Sparkles, highlight: true },
     { id: 'markets', label: 'Market', icon: LineChart },
     { id: 'portfolio', label: 'Portfolio', icon: Briefcase },
     { id: 'trades', label: 'Transactions', icon: ArrowLeftRight },
@@ -62,10 +64,12 @@ export const Sidebar = () => {
                   className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition ${
                     isActive
                       ? 'chainblock-nav-active'
+                      : item.highlight
+                      ? 'bg-[#34d399]/10 text-[#34d399] border border-[#34d399]/30 hover:bg-[#34d399]/20 font-bold'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#34d399]' : 'text-slate-500'}`} />
+                  <Icon className={`w-4 h-4 ${isActive || item.highlight ? 'text-[#34d399]' : 'text-slate-500'}`} />
                   <span>{item.label}</span>
                 </button>
               );
