@@ -24,32 +24,28 @@ const DashboardContent = () => {
   const { activeTab } = useCrypto();
 
   return (
-    <main className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 no-scrollbar smooth-scroll-container bg-[#0b1120]">
-      <div className="max-w-[1700px] mx-auto space-y-6">
+    <main className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar smooth-scroll-container bg-[#0b1120]">
+      <div className="max-w-[1750px] mx-auto space-y-6">
         
-        {/* Master Bot & Stimulation Control Header Bar */}
+        {/* Master Bot & Stimulation Control Command Deck */}
         <AutoTraderBar />
 
         {activeTab === 'dashboard' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
             
-            {/* COLUMN 1: LEFT WORKSPACE (35% Width - Account, Balance & Execution) */}
-            <div className="lg:col-span-4 space-y-6">
+            {/* COLUMN 1: LEFT WORKSPACE (50% Width - Portfolio, Execution & Bot Control) */}
+            <div className="space-y-6">
               <TotalAssetsHero />
               <OperationSwapTool />
               <PaperTradingPanel />
+              <AiStrategyPanel />
             </div>
 
-            {/* COLUMN 2: CENTER WORKSPACE (45% Width - Charts, Scanner & Positions) */}
-            <div className="lg:col-span-5 space-y-6">
+            {/* COLUMN 2: RIGHT WORKSPACE (50% Width - Chart, Arbitrage Matrix & Audit Ledger) */}
+            <div className="space-y-6">
               <LiveChart />
               <ArbitragePanel />
               <LivePositions />
-            </div>
-
-            {/* COLUMN 3: RIGHT WORKSPACE (20% Width - Audit Ledger, Strategies & Health) */}
-            <div className="lg:col-span-3 space-y-6">
-              <AiStrategyPanel />
               <TransactionsWidget />
               <ExchangeStatus />
             </div>
@@ -58,12 +54,12 @@ const DashboardContent = () => {
         )}
 
         {activeTab === 'markets' && (
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-            <div className="xl:col-span-2 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            <div className="space-y-6">
               <LiveChart />
               <ArbitragePanel />
             </div>
-            <div className="xl:col-span-1 space-y-6">
+            <div className="space-y-6">
               <TotalAssetsHero />
               <OperationSwapTool />
             </div>
@@ -78,12 +74,12 @@ const DashboardContent = () => {
         )}
 
         {activeTab === 'portfolio' && (
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-            <div className="xl:col-span-2 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            <div className="space-y-6">
               <TotalAssetsHero />
               <LivePositions />
             </div>
-            <div className="xl:col-span-1 space-y-6">
+            <div className="space-y-6">
               <PaperTradingPanel />
             </div>
           </div>
@@ -97,11 +93,11 @@ const DashboardContent = () => {
         )}
 
         {activeTab === 'strategies' && (
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="xl:col-span-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-6">
               <AiStrategyPanel />
             </div>
-            <div className="xl:col-span-1">
+            <div className="space-y-6">
               <OperationSwapTool />
             </div>
           </div>
@@ -139,7 +135,7 @@ const MainLayout = () => {
   }
 
   return (
-    <div className="h-screen w-screen bg-[#0b1120] text-slate-100 flex overflow-hidden font-sans selection:bg-[#2dd4bf] selection:text-black relative">
+    <div className="h-screen w-screen bg-[#0b1120] text-slate-100 flex overflow-hidden font-sans selection:bg-teal-400 selection:text-black relative">
       {/* Background Canvas */}
       <BackgroundParticles />
 

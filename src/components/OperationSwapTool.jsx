@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { ArrowDownUp, ChevronDown } from 'lucide-react';
+import { ArrowDownUp, ChevronDown, ArrowRightLeft } from 'lucide-react';
 
 export const OperationSwapTool = () => {
   const { wallet, executeOrder, marketData } = useCrypto();
-  const [tab, setTab] = useState('Buy'); // 'Buy' | 'Sell' | 'Exchange'
+  const [tab, setTab] = useState('Buy');
   const [payCoin, setPayCoin] = useState('USD');
   const [getCoin, setGetCoin] = useState('ETH');
   const [payAmount, setPayAmount] = useState('1000');
   const [showCoinDropdown, setShowCoinDropdown] = useState(false);
 
-  // Get live price from market context
   const ethCoin = marketData.find(c => c.symbol === 'ETHUSDT') || { basePrice: 3540.20 };
   const btcCoin = marketData.find(c => c.symbol === 'BTCUSDT') || { basePrice: 67840.50 };
   const solCoin = marketData.find(c => c.symbol === 'SOLUSDT') || { basePrice: 184.75 };
@@ -36,18 +35,21 @@ export const OperationSwapTool = () => {
   return (
     <div className="chainblock-card space-y-4 font-sans relative">
       
-      {/* Header & Tabs */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-extrabold text-white">Operation</h3>
+      {/* Header & Baseline Alignment */}
+      <div className="card-header-baseline">
+        <div className="flex items-center space-x-2">
+          <ArrowRightLeft className="w-4 h-4 text-teal-400" />
+          <h3 className="text-sm font-extrabold text-white font-mono tracking-tight">MANUAL BUY & SELL TERMINAL</h3>
+        </div>
 
-        <div className="flex items-center space-x-1 bg-[#11141b] p-1 rounded-xl border border-slate-800 text-xs font-mono">
+        <div className="flex items-center space-x-1 bg-[#0b1120] p-1 rounded-xl border border-slate-800 text-xs font-mono">
           {['Buy', 'Sell', 'Exchange'].map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`px-3 py-1 rounded-lg transition font-semibold ${
                 tab === t
-                  ? 'bg-[#1b202c] text-white font-bold shadow-md border border-slate-700'
+                  ? 'bg-slate-800 text-teal-400 font-bold shadow-md border border-slate-700'
                   : 'text-slate-500 hover:text-slate-300'
               }`}
             >
@@ -58,12 +60,12 @@ export const OperationSwapTool = () => {
       </div>
 
       {/* YOU PAY INPUT CONTAINER */}
-      <div className="bg-[#11141b] p-3.5 rounded-xl border border-slate-800 space-y-1">
-        <div className="text-[11px] text-slate-500 font-mono">You pay</div>
+      <div className="bg-[#0b1120] p-4 rounded-xl border border-slate-800 space-y-1.5">
+        <div className="text-[11px] text-slate-400 font-mono">You Pay (USD)</div>
         
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-1.5 bg-[#161a23] border border-slate-800 px-2.5 py-1.5 rounded-lg text-xs text-white font-semibold">
-            <span className="w-4 h-4 rounded-full bg-emerald-500 text-black flex items-center justify-center text-[10px] font-bold">$</span>
+          <div className="flex items-center space-x-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg text-xs text-white font-semibold">
+            <span className="w-4 h-4 rounded-full bg-teal-400 text-slate-950 flex items-center justify-center text-[10px] font-bold">$</span>
             <span>{payCoin}</span>
           </div>
 
@@ -76,7 +78,7 @@ export const OperationSwapTool = () => {
             />
             <button
               onClick={() => setPayAmount(wallet.virtualBalance.toFixed(2))}
-              className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#1b2a24] text-[#34d399] border border-[#34d399]/40"
+              className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-teal-950 text-teal-400 border border-teal-500/40"
             >
               MAX
             </button>
@@ -84,26 +86,26 @@ export const OperationSwapTool = () => {
         </div>
       </div>
 
-      {/* SWAP CENTER ARROWS BUTTON */}
+      {/* SWAP ARROWS BUTTON */}
       <div className="flex justify-center -my-2 relative z-10">
         <button
           onClick={handleSwapPairs}
-          className="w-8 h-8 rounded-full bg-[#161a23] border border-slate-700 flex items-center justify-center text-[#34d399] shadow-lg hover:rotate-180 transition-transform duration-300"
+          className="w-8 h-8 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center text-teal-400 shadow-lg hover:rotate-180 transition-transform duration-300"
         >
           <ArrowDownUp className="w-4 h-4" />
         </button>
       </div>
 
-      {/* YOU GET INPUT CONTAINER WITH INTERACTIVE DROPDOWN */}
-      <div className="bg-[#11141b] p-3.5 rounded-xl border border-slate-800 space-y-1 relative">
-        <div className="text-[11px] text-slate-500 font-mono">You get</div>
+      {/* YOU GET INPUT CONTAINER */}
+      <div className="bg-[#0b1120] p-4 rounded-xl border border-slate-800 space-y-1.5 relative">
+        <div className="text-[11px] text-slate-400 font-mono">You Receive Asset</div>
         
         <div className="flex items-center justify-between">
           <div className="relative">
             <button
               type="button"
               onClick={() => setShowCoinDropdown(!showCoinDropdown)}
-              className="flex items-center space-x-1.5 bg-[#161a23] hover:bg-slate-800 border border-slate-700 px-2.5 py-1.5 rounded-lg text-xs text-white font-semibold transition"
+              className="flex items-center space-x-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg text-xs text-white font-semibold transition"
             >
               <span className="w-4 h-4 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-bold">
                 {getCoin.charAt(0)}
@@ -114,14 +116,14 @@ export const OperationSwapTool = () => {
 
             {/* Dropdown Menu */}
             {showCoinDropdown && (
-              <div className="absolute top-10 left-0 z-50 bg-[#161a23] border border-slate-700 rounded-xl p-1.5 shadow-2xl w-32 font-mono text-xs space-y-1">
+              <div className="absolute top-10 left-0 z-50 bg-slate-900 border border-slate-700 rounded-xl p-1.5 shadow-2xl w-32 font-mono text-xs space-y-1">
                 {['ETH', 'BTC', 'SOL'].map((coin) => (
                   <button
                     key={coin}
                     type="button"
                     onClick={() => { setGetCoin(coin); setShowCoinDropdown(false); }}
                     className={`w-full text-left px-2.5 py-1.5 rounded-lg transition ${
-                      getCoin === coin ? 'bg-[#34d399] text-black font-bold' : 'text-slate-300 hover:bg-slate-800'
+                      getCoin === coin ? 'bg-teal-400 text-slate-950 font-bold' : 'text-slate-300 hover:bg-slate-800'
                     }`}
                   >
                     {coin}
@@ -131,13 +133,13 @@ export const OperationSwapTool = () => {
             )}
           </div>
 
-          <span className="text-sm font-bold font-mono text-[#34d399]">
+          <span className="text-sm font-bold font-mono text-teal-400">
             {estimatedGet}
           </span>
         </div>
       </div>
 
-      {/* Real-time Dynamic Exchange Rate */}
+      {/* Dynamic Rate */}
       <div className="text-center text-[11px] font-mono text-slate-400 pt-1">
         1 {getCoin} = ${targetPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}
       </div>
@@ -147,7 +149,7 @@ export const OperationSwapTool = () => {
         onClick={handleSubmit}
         className="w-full chainblock-btn-emerald"
       >
-        {tab === 'Sell' ? `Sell ${getCoin}` : `Buy ${getCoin}`}
+        {tab === 'Sell' ? `SELL ${getCoin} NOW` : `BUY ${getCoin} NOW`}
       </button>
 
     </div>
