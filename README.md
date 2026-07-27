@@ -1,68 +1,74 @@
-# ⚡ Chainblock AI — Institutional Spatial Arbitrage & Quantitative Trading Terminal
+# ⚡ CryptoBot AI — Institutional Spatial Arbitrage & Quantitative Trading Terminal
 
 [![React](https://img.shields.io/badge/React-18.2.0-blue.svg?style=for-the-badge&logo=react)](https://reactjs.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.4.21-646CFF.svg?style=for-the-badge&logo=vite)](https://vitejs.dev/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4.1-38B2AC.svg?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
-[![Firebase](https://img.shields.io/badge/Firebase-Auth-FFCA28.svg?style=for-the-badge&logo=firebase)](https://firebase.google.com/)
+[![Firebase](https://img.shields.io/badge/Firebase-Auth%20%26%20Firestore-FFCA28.svg?style=for-the-badge&logo=firebase)](https://firebase.google.com/)
+[![Web3](https://img.shields.io/badge/Web3-MetaMask-F6851B.svg?style=for-the-badge&logo=metamask)](https://metamask.io/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
-> **Chainblock AI** is an institutional-grade, high-frequency cryptocurrency spatial arbitrage scanning and automated paper trading terminal built with React 18, Vite, Recharts, and Firebase Authentication. Designed with a sleek Dark Glassmorphism interface, it monitors orderbook price discrepancies across major exchanges in real-time.
+> **CryptoBot AI** is a state-of-the-art, institutional-grade cryptocurrency spatial arbitrage scanner and quantitative automated trading terminal. Powered by React 18, Vite, Recharts, EIP-1193 Web3 providers, and Firebase Authentication with real-time Firestore database logging.
 
 ---
 
-## 🚀 Recent Live Deployments & Enhancements
+## 🚀 Live Production Access
 
-- 💸 **Interactive Web3 & Demo Withdrawal System**: Complete withdrawal module supporting native Web3 transaction execution (`eth_sendTransaction`), target network chain selection (`Arbitrum One`, `Ethereum Mainnet`, `Polygon`), destination address validation, and instant paper balance deductions.
-- 🔥 **Firebase Auth & Firestore Integration**: Connected to project `tradebot-25d4f`. Real-time user account creation (`createUserWithEmailAndPassword`), session security audit logging (`login_logs`), user metadata tracking (`users`), and platform rating submissions (`feedback_submissions`).
-- 🤖 **24/7 AI Support Desk Assistant**: Built-in AI Quant Support Assistant (`AI_SUPPORT` modal) with smart suggestion chips to guide traders.
-- 👥 **Per-User Isolated Workspaces**: Each account receives its own isolated `$100,000.00 USDT` virtual balance, active trades list, and persistent state.
+- **🌐 Live Web Terminal**: [https://tradebot-25d4f.web.app](https://tradebot-25d4f.web.app)
+- **📦 GitHub Repository**: [https://github.com/AGzDeepak/cryptobot](https://github.com/AGzDeepak/cryptobot)
+- **🔥 Firebase Console**: [https://console.firebase.google.com/project/tradebot-25d4f/overview](https://console.firebase.google.com/project/tradebot-25d4f/overview)
 
 ---
 
-## 🌟 Key Features
+## 🌟 Institutional Feature Matrix
 
-### 1. ⚡ High-Frequency Spatial Arbitrage Scanner
-- **Multi-Exchange Feeders**: Live price tick streaming across **Binance**, **Bybit**, **OKX**, and **Coinbase**.
-- **Real-Time Spread Calculation**: Instant calculation of spatial price discrepancies, gross profits, estimated gas fees, and net arbitrage yield.
-- **One-Click Manual Execution**: Instant execution of spatial arbitrage routes (`Buy Exchange ➔ Sell Exchange`).
+### 1. ⚡ High-Frequency Spatial Arbitrage Engine
+- **Multi-Exchange Live Feeders**: Continuous orderbook tick streaming across **Binance**, **Bybit**, **OKX**, and **Coinbase**.
+- **Real-Time Spread Scanner**: Computes cross-exchange price discrepancies, gross yield, network gas fees, and net arbitrage profitability every `800ms`.
+- **1-Click Arbitrage Execution**: Instant execution of high-profit spatial routes (`Buy Exchange ➔ Sell Exchange`).
 
-### 2. 🤖 Autonomous Trading AI Engine
-- **Master Autopilot Switch**: Enable/disable automated bot execution with customizable strategy modes (*Aggressive*, *Balanced*, *Conservative*).
-- **Min Profit Threshold Slider**: Fine-tune minimum profit targets (`0.10% - 2.00%`) before the bot executes spatial routes.
-- **Live System Health**: API latency monitoring (`14ms`), ping telemetry, and rate limit tracking across exchange gateways.
+### 2. 💸 Dual Wallet Architecture (Real Web3 & Demo Paper Wallet)
+- **`[ 🧪 DEMO MODE ($100k) ]`**: Per-user isolated paper trading workspace pre-funded with `$100,000.00 USDT` virtual balance.
+- **`[ ⚡ REAL WEB3 WALLET ]`**: Real EIP-1193 wallet connection supporting **MetaMask**, **Trust Wallet**, **Coinbase Wallet**, and **WalletConnect**.
+- **Interactive Withdraw & Deposit System**: Full-featured withdrawal modal supporting multi-chain routing (**Arbitrum One**, **Ethereum Mainnet**, **Polygon**, **Solana**) with input validation and instant paper/Web3 transfers.
 
-### 3. 💼 Paper Trading Wallet & Live Position Settlement
-- **Virtual Cash Balance**: Pre-funded `$100,000.00 USDT` virtual paper wallet with interactive deposit modal (`+$1k`, `+$5k`, `+$10k`, `+$50k`).
-- **Dynamic Asset Cards**: Real-time calculated portfolio holdings (**BTC**, **ETH**, **SOL**) formatted in standard `en-US` financial notation (`$499,747.89`).
-- **Auto-Settlement Engine**: Live open positions update in real-time with automatic profit-taking settlement when targets are reached.
+### 3. 🤖 Autonomous Trading AI Engine & Autopilot
+- **Master Autopilot Control**: Enable/disable automated quantitative execution with 3 strategy modes:
+  - ⚡ **Aggressive**: Lower threshold targets for max frequency (`0.10%`).
+  - ⚖️ **Balanced**: Optimized risk/reward ratio (`0.25%`).
+  - 🛡️ **Conservative**: High-yield premium arbitrage targets (`0.50%+`).
+- **Telemetry & Gateway Health**: Real-time ping latency (`14ms`), server uptime (`99.99%`), and gateway health monitoring.
 
-### 4. 🔐 Firebase & GitHub OAuth Authentication
-- **Multi-Factor Auth Flow**: Email/password authentication integrated with Firebase Auth SDK.
-- **GitHub OAuth Provider**: Seamless sign-in with **GitHub** (`Continue with GitHub` 🐙).
-- **1-Click Instant Demo**: Instant 1-click access for lead quantitative trader **Deepak Kumar**.
+### 4. 🗄️ Firebase Firestore Real-Time Database Logging
+- **`login_logs` Collection**: 256-bit AES encrypted audit trail of every session with server timestamps and user agent telemetry.
+- **`users` Collection**: Manages user profiles, role privileges (*Institutional Quant Trader*), and last active timestamps.
+- **`withdrawals` Collection**: Stores all withdrawal transactions with destination addresses, network chains, amounts, and transaction hashes.
+- **`feedback_submissions` Collection**: User rating (1-5 ⭐) and platform feedback submissions stored directly in Firestore.
 
-### 5. 🎨 Chainblock Dark Glassmorphic Design System
-- **Obsidian Dark Aesthetic**: Custom glassmorphism UI with translucent card backdrops (`rgba(22, 26, 35, 0.85)`), `#34d399` emerald green accents, and particle canvas background.
-- **Web Audio Sound Effects**: Synthesized Web Audio chimes for trade execution, position closures, and system alerts.
+### 5. 🤖 24/7 AI Quant Support Desk Assistant
+- Integrated AI Assistant (`AI_SUPPORT` modal) with 1-click suggestion chips to assist traders with spatial arbitrage rules, Web3 wallet setup, and bot strategy configuration.
+
+### 6. 🎨 Obsidian Dark Glassmorphic UI System
+- Modern dark mode with translucent card backdrops (`rgba(22, 26, 35, 0.85)`), emerald green `#34d399` accents, interactive Recharts area analytics, and Web Audio sound effects.
 
 ---
 
 ## 🛠️ Technology Stack
 
-| Layer | Technology |
+| Architecture Layer | Technology |
 | :--- | :--- |
-| **Frontend Framework** | [React 18](https://reactjs.org/) + [Vite 5](https://vitejs.dev/) |
-| **Styling & Design** | [TailwindCSS](https://tailwindcss.com/) + Custom Glassmorphism CSS Tokens |
-| **State Management** | React Context API (`CryptoContext.jsx`) |
-| **Data Visualization** | [Recharts](https://recharts.org/) (Interactive Sparklines & Area Analytics) |
-| **Authentication** | [Firebase Auth](https://firebase.google.com/) & GitHub OAuth |
-| **Icons & Micro-UI** | [Lucide React](https://lucide.dev/) + Canvas Confetti |
-| **Audio Engine** | Web Audio API (Synthesized Oscillators) |
-| **Deployment** | GitHub Pages (`gh-pages`) & Firebase Hosting |
+| **Core Frontend** | [React 18.2](https://reactjs.org/) + [Vite 5.4](https://vitejs.dev/) |
+| **Styling System** | [TailwindCSS 3.4](https://tailwindcss.com/) + Custom Glassmorphic Utilities |
+| **State Engine** | React Context API (`CryptoContext.jsx`) |
+| **Web3 & Blockchain** | EIP-1193 Window Ethereum Provider + MetaMask SDK (`web3Service.js`) |
+| **Backend & Database** | [Firebase Auth](https://firebase.google.com/) & [Firestore Real-Time Database](https://firebase.google.com/docs/firestore) |
+| **Charts & Graphics** | [Recharts](https://recharts.org/) + Canvas Particle Engine |
+| **Iconography & UI** | [Lucide React](https://lucide.dev/) + Canvas Confetti |
+| **Audio Processing** | Web Audio API Synthesizer (`audio.js`) |
+| **Deployments** | Firebase Hosting & GitHub Pages (`gh-pages`) |
 
 ---
 
-## 🚀 Quick Start & Installation
+## 🚀 Quick Start & Local Setup
 
 ### Prerequisites
 - Node.js `v18.0.0` or higher
@@ -70,8 +76,8 @@
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/AGzDeepak/tradebot.git
-cd tradebot
+git clone https://github.com/AGzDeepak/cryptobot.git
+cd cryptobot
 ```
 
 ### 2. Install Dependencies
@@ -79,7 +85,7 @@ cd tradebot
 npm install
 ```
 
-### 3. Start Development Server
+### 3. Run Local Development Server
 ```bash
 npm run dev
 ```
@@ -87,14 +93,14 @@ Open **[http://localhost:3000/](http://localhost:3000/)** in your browser.
 
 ---
 
-## 📦 Build & Deployment
+## 📦 Production Build & Deployment
 
-### Production Build
+### Build Bundle
 ```bash
 npm run build
 ```
 
-### Deploy Live to GitHub Pages
+### Deploy to GitHub Pages
 ```bash
 npm run deploy
 ```
@@ -107,37 +113,40 @@ npx firebase-tools deploy
 
 ---
 
-## 📂 Project Structure
+## 📂 Directory Map
 
 ```
-tradebot/
+cryptobot/
 ├── src/
 │   ├── components/
 │   │   ├── AiStrategyPanel.jsx     # AI Trading Bot Strategies
 │   │   ├── ArbitragePanel.jsx     # Spatial Arbitrage Scanner Matrix
-│   │   ├── AuthScreen.jsx         # Firebase & GitHub Auth Screen
+│   │   ├── AuthScreen.jsx         # Firebase Auth & GitHub OAuth Screen
 │   │   ├── AutoTraderBar.jsx      # Master Bot Autopilot Control
 │   │   ├── ExchangeStatus.jsx     # API Telemetry & Latency Health
-│   │   ├── GlobalModals.jsx       # Wallet, Deposit & Notification Modals
-│   │   ├── Header.jsx             # Search & Deepak Kumar Profile Badge
+│   │   ├── GlobalModals.jsx       # Wallet, Withdraw, Deposit & Support Modals
+│   │   ├── Header.jsx             # Dual Wallet Mode Pill & Profile Badge
 │   │   ├── LiveChart.jsx          # Recharts Market Analytics Area Chart
 │   │   ├── LivePositions.jsx      # Active Open Arbitrage Positions
-│   │   ├── OperationSwapTool.jsx  # Buy / Sell / Exchange Swap Tool
+│   │   ├── OperationSwapTool.jsx  # Dynamic Swap & Exchange Tool
 │   │   ├── PaperTradingPanel.jsx  # Paper Wallet Execution & Presets
-│   │   ├── Sidebar.jsx            # Chainblock Navigation & Logo
-│   │   ├── TotalAssetsHero.jsx    # Hero Total Balance & Dynamic Sparklines
-│   │   └── TransactionsWidget.jsx # Recent Settlement Transactions
+│   │   ├── Sidebar.jsx            # Navigation & AI Support Desk Buttons
+│   │   ├── TotalAssetsHero.jsx    # Hero Balance & Dynamic BTC Conversion
+│   │   └── TransactionsWidget.jsx # Settlement Transaction History
 │   ├── config/
-│   │   └── firebase.js            # Firebase App & OAuth Config
+│   │   └── firebase.js            # Firebase App, Auth & Firestore Config
 │   ├── context/
-│   │   └── CryptoContext.jsx      # Master React Context State & WebSocket Stream
+│   │   └── CryptoContext.jsx      # Master Application React Context State
+│   ├── services/
+│   │   ├── securityService.js     # Firestore Audit & Withdrawal Log Helpers
+│   │   └── web3Service.js         # Real Web3 Wallet & MetaMask Provider
 │   ├── utils/
 │   │   └── audio.js               # Web Audio API Synth Effects
 │   ├── App.jsx                    # Root Shell & Route Guard
-│   ├── index.css                  # Dark Glassmorphism CSS Utilities
+│   ├── index.css                  # Dark Glassmorphism CSS System
 │   └── main.jsx                   # React DOM Entry
 ├── firebase.json                  # Firebase Hosting Config
-├── .firebaserc                    # Firebase Project Alias
+├── .firebaserc                    # Firebase Project Alias (tradebot-25d4f)
 ├── vite.config.js                 # Vite Base & Build Config
 └── package.json                   # Dependencies & Deployment Scripts
 ```
@@ -148,7 +157,7 @@ tradebot/
 
 **Deepak Kumar**
 - **GitHub**: [@AGzDeepak](https://github.com/AGzDeepak)
-- **Repository**: [AGzDeepak/tradebot](https://github.com/AGzDeepak/tradebot)
+- **Repository**: [AGzDeepak/cryptobot](https://github.com/AGzDeepak/cryptobot)
 
 ---
 
