@@ -11,6 +11,11 @@ export const AccountSection = () => {
   const [riskProfile, setRiskProfile] = useState('BALANCED');
   const [rebalanceFreq, setRebalanceFreq] = useState('1h');
 
+  const accountName = user?.name || 'Deepak Kumar';
+  const accountEmail = user?.email || 'deepak.quant@tradebot.io';
+  const accountId = user?.id || '#9482-QUANT-PRO';
+  const initials = user?.avatarInitials || (accountName.charAt(0).toUpperCase() || 'D');
+
   const [apiConnections, setApiConnections] = useState([
     { exchange: 'Binance Pro', status: 'CONNECTED', permissions: 'Read & Trade', ip: '192.168.1.1', color: 'text-[#facc15]', border: 'border-[#facc15]/30' },
     { exchange: 'Bybit Quant', status: 'CONNECTED', permissions: 'Full Arbitrage', ip: '192.168.1.1', color: 'text-[#2dd4bf]', border: 'border-[#2dd4bf]/30' },
@@ -19,9 +24,9 @@ export const AccountSection = () => {
   ]);
 
   const copyId = () => {
-    navigator.clipboard.writeText('9482-QUANT-PRO');
+    navigator.clipboard.writeText(accountId);
     setCopiedId(true);
-    addNotification('Account ID copied to clipboard!', 'info');
+    addNotification(`Account ID ${accountId} copied to clipboard!`, 'info');
     setTimeout(() => setCopiedId(false), 2000);
   };
 
@@ -32,29 +37,27 @@ export const AccountSection = () => {
   return (
     <div className="space-y-6 font-sans">
       
-      {/* Trader Profile Hero Card */}
+      {/* Dynamic Trader Profile Hero Card */}
       <div className="chainblock-card p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-center space-x-5">
-          <div className="w-16 h-16 rounded-full border-2 border-[#facc15] overflow-hidden shadow-[0_0_25px_rgba(250,204,21,0.35)] shrink-0">
-            <img
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80"
-              alt="Profile Avatar"
-              className="w-full h-full object-cover"
-            />
+          
+          {/* Dynamic User Avatar Initials Badge */}
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#facc15] to-[#2dd4bf] text-slate-950 flex items-center justify-center font-extrabold font-mono text-xl shadow-[0_0_25px_rgba(250,204,21,0.35)] shrink-0">
+            {initials}
           </div>
 
           <div>
             <div className="flex items-center space-x-2">
-              <h2 className="text-xl font-extrabold text-white font-sans tracking-tight">Deepak Quant Trader</h2>
+              <h2 className="text-xl font-extrabold text-white font-sans tracking-tight">{accountName}</h2>
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#facc15] text-slate-950">
-                VIP TIER 4 INSTITUTIONAL
+                {user?.tier || 'VIP TIER 4 INSTITUTIONAL'}
               </span>
             </div>
-            <p className="text-xs text-slate-400 font-mono mt-0.5">deepak.quant@tradebot.io • ID: #9482-QUANT-PRO</p>
+            <p className="text-xs text-slate-400 font-mono mt-0.5">{accountEmail} • ID: {accountId}</p>
             
             <div className="flex items-center space-x-4 mt-2 text-xs font-mono">
               <span className="text-[#2dd4bf] font-bold flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5" /> KYC LEVEL 3 VERIFIED
+                <ShieldCheck className="w-3.5 h-3.5" /> {user?.kycStatus || 'KYC LEVEL 3 VERIFIED'}
               </span>
               <span className="text-slate-400">•</span>
               <span className="text-indigo-400 font-bold">UNLIMITED ARBITRAGE PLAN</span>
@@ -62,13 +65,21 @@ export const AccountSection = () => {
           </div>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 font-mono text-xs">
           <button
             onClick={copyId}
-            className="px-4 py-2.5 rounded-xl bg-[#0b0c10] border border-slate-700 text-slate-200 text-xs font-mono font-bold hover:text-[#facc15] transition flex items-center gap-1.5"
+            className="px-4 py-2.5 rounded-xl bg-[#0b0c10] border border-slate-700 text-slate-200 font-bold hover:text-[#facc15] hover:border-[#facc15] transition flex items-center gap-1.5"
           >
             {copiedId ? <Check className="w-4 h-4 text-[#2dd4bf]" /> : <Copy className="w-4 h-4" />}
-            <span>{copiedId ? 'COPIED ID' : 'COPY ACCOUNT ID'}</span>
+            <span>{copiedId ? 'COPIED ID' : `COPY ID (${accountId})`}</span>
+          </button>
+
+          <button
+            onClick={logout}
+            className="px-4 py-2.5 rounded-xl bg-rose-950/80 hover:bg-rose-900 border border-rose-800 text-rose-300 font-bold transition flex items-center gap-1.5"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>SIGN OUT</span>
           </button>
         </div>
       </div>

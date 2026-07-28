@@ -107,16 +107,13 @@ export const Header = () => {
           <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#facc15]"></span>
         </button>
 
-        {/* User Profile Avatar picture */}
+        {/* User Profile Avatar Badge */}
         <div
-          onClick={() => openModal('WALLET')}
-          className="w-9 h-9 rounded-full bg-slate-800 border border-[#facc15]/50 overflow-hidden cursor-pointer hover:border-[#facc15] transition flex items-center justify-center font-bold text-[#facc15]"
+          onClick={() => setActiveTab('account')}
+          className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#facc15] to-[#2dd4bf] text-slate-950 font-extrabold font-mono text-xs cursor-pointer shadow-md hover:brightness-110 transition flex items-center justify-center shrink-0"
+          title={user?.name || 'Account Profile'}
         >
-          <img
-            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
-            alt="Profile Avatar"
-            className="w-full h-full object-cover"
-          />
+          {user?.avatarInitials || (user?.name?.charAt(0)?.toUpperCase() || 'D')}
         </div>
 
         {/* Logout */}

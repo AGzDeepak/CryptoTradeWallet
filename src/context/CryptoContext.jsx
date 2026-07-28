@@ -152,17 +152,31 @@ export const CryptoProvider = ({ children }) => {
 
   // Secure Authentication Login Handler
   const login = async (email, password, name = 'Deepak Kumar', provider = 'firebase_email') => {
-    const cleanEmail = sanitizeInput(email);
-    const cleanName = sanitizeInput(name);
+    const cleanEmail = sanitizeInput(email || 'deepak@chainblock.io');
+    const cleanName = sanitizeInput(name || 'Deepak Kumar');
     const storageKey = getStorageKey(cleanEmail);
 
-    setUser({
+    // Generate deterministic 4-digit Account ID from email hash
+    let hash = 0;
+    for (let i = 0; i < cleanEmail.length; i++) {
+      hash = (hash << 5) - hash + cleanEmail.charCodeAt(i);
+      hash |= 0;
+    }
+    const accountNum = Math.abs(hash % 9000) + 1000;
+    const accountId = `#${accountNum}-QUANT-PRO`;
+
+    const newUserObj = {
       name: cleanName,
       email: cleanEmail,
-      avatar: cleanName.charAt(0).toUpperCase(),
+      id: accountId,
+      avatarInitials: cleanName.split(' ').map(n => n.charAt(0)).join('').substring(0, 2).toUpperCase() || 'U',
       role: 'Institutional Quant Trader',
+      tier: 'VIP TIER 4 INSTITUTIONAL',
+      kycStatus: 'KYC LEVEL 3 VERIFIED',
       secStatus: '256-BIT ENCRYPTED'
-    });
+    };
+
+    setUser(newUserObj);
     setIsAuthenticated(true);
 
     const existingRaw = localStorage.getItem(storageKey);
