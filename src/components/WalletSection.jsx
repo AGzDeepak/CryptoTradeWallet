@@ -52,8 +52,8 @@ export const WalletSection = () => {
       return;
     }
 
-    if (num > (wallet.virtualBalance || 100000)) {
-      addNotification(`Insufficient balance! Your available cash is $${wallet.virtualBalance.toLocaleString()} USDT.`, 'danger');
+    if (num > (wallet.virtualBalance ?? 0.00)) {
+      addNotification(`Insufficient balance! Your available cash is $${(wallet.virtualBalance ?? 0.00).toLocaleString()} USDT.`, 'danger');
       return;
     }
 
@@ -74,17 +74,17 @@ export const WalletSection = () => {
   };
 
   const handleQuickPercent = (pct) => {
-    const calc = ((wallet.virtualBalance || 100000) * pct).toFixed(2);
+    const calc = ((wallet.virtualBalance ?? 0.00) * pct).toFixed(2);
     setWithdrawAmount(calc);
   };
 
   const balances = [
-    { symbol: 'USDT', name: 'Tether USD', amount: `${(wallet.virtualBalance || 100000).toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT`, valUsd: `$${(wallet.virtualBalance || 100000).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, icon: '₮', bg: 'bg-[#2dd4bf] text-slate-950' },
-    { symbol: 'BTC', name: 'Bitcoin', amount: '0.2342 BTC', valUsd: '$15,888.24', icon: '₿', bg: 'bg-amber-500 text-slate-950' },
-    { symbol: 'ETH', name: 'Ethereum', amount: '2.4510 ETH', valUsd: '$8,677.03', icon: 'Ξ', bg: 'bg-indigo-500 text-white' },
-    { symbol: 'SOL', name: 'Solana', amount: '45.80 SOL', valUsd: '$8,461.55', icon: '≡', bg: 'bg-purple-500 text-white' },
-    { symbol: 'AVAX', name: 'Avalanche', amount: '120.00 AVAX', valUsd: '$4,632.00', icon: '▲', bg: 'bg-rose-500 text-white' },
-    { symbol: 'XRP', name: 'Ripple', amount: '5,000.00 XRP', valUsd: '$3,120.00', icon: '✕', bg: 'bg-sky-500 text-white' }
+    { symbol: 'USDT', name: 'Tether USD', amount: `${(wallet.virtualBalance ?? 0.00).toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT`, valUsd: `$${(wallet.virtualBalance ?? 0.00).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, icon: '₮', bg: 'bg-[#2dd4bf] text-slate-950' },
+    { symbol: 'BTC', name: 'Bitcoin', amount: '0.00 BTC', valUsd: '$0.00', icon: '₿', bg: 'bg-amber-500 text-slate-950' },
+    { symbol: 'ETH', name: 'Ethereum', amount: '0.00 ETH', valUsd: '$0.00', icon: 'Ξ', bg: 'bg-indigo-500 text-white' },
+    { symbol: 'SOL', name: 'Solana', amount: '0.00 SOL', valUsd: '$0.00', icon: '≡', bg: 'bg-purple-500 text-white' },
+    { symbol: 'AVAX', name: 'Avalanche', amount: '0.00 AVAX', valUsd: '$0.00', icon: '▲', bg: 'bg-rose-500 text-white' },
+    { symbol: 'XRP', name: 'Ripple', amount: '0.00 XRP', valUsd: '$0.00', icon: '✕', bg: 'bg-sky-500 text-white' }
   ];
 
   return (
@@ -117,7 +117,7 @@ export const WalletSection = () => {
               walletMode === 'DEMO' ? 'bg-[#facc15] text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
             }`}
           >
-            DEMO ($100k)
+            DEMO WALLET
           </button>
           <button
             onClick={() => {
@@ -143,10 +143,10 @@ export const WalletSection = () => {
             <div>
               <span className="text-xs text-slate-400 font-mono uppercase block mb-1">Available Cash Balance</span>
               <span className="text-4xl font-extrabold font-mono text-white tracking-tight">
-                ${(wallet.virtualBalance || 100000).toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT
+                ${(wallet.virtualBalance ?? 0.00).toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT
               </span>
               <span className="text-xs text-slate-400 font-mono block mt-1">
-                Total Equity: ${(wallet.totalEquity || 100000).toLocaleString('en-US', { minimumFractionDigits: 2 })} USD
+                Total Equity: ${(wallet.totalEquity ?? 0.00).toLocaleString('en-US', { minimumFractionDigits: 2 })} USD
               </span>
             </div>
 

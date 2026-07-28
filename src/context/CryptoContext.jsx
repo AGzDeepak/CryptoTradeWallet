@@ -17,8 +17,8 @@ const INITIAL_COINS = [
 const EXCHANGES = ['Binance', 'Bybit', 'OKX', 'Coinbase'];
 
 const NEW_USER_WALLET = {
-  virtualBalance: 100000.00,
-  totalEquity: 100000.00,
+  virtualBalance: 0.00,
+  totalEquity: 0.00,
   todayProfit: 0.00,
   roiPct: 0.00,
   address: '0x00D3...C43D',
@@ -224,7 +224,7 @@ export const CryptoProvider = ({ children }) => {
     setAutoTradeCount(0);
     
     const freshNotifs = [
-      { id: 1, message: `Welcome ${name}! Your fresh paper trading account is active with $100,000.00 USDT.`, type: 'success', time: new Date().toLocaleTimeString() },
+      { id: 1, message: `Welcome ${name}! Your trading wallet available balance is initial $0.00 USDT. Click Deposit Funds to add money.`, type: 'info', time: new Date().toLocaleTimeString() },
       { id: 2, message: 'Auto-Trader Bot standby mode enabled.', type: 'info', time: new Date().toLocaleTimeString() }
     ];
     setNotifications(freshNotifs);

@@ -6,7 +6,7 @@ import { ArrowUpRight, ArrowDownRight, Bot } from 'lucide-react';
 export const TotalAssetsHero = () => {
   const { wallet, totalBotProfit } = useCrypto();
 
-  const currentBalance = wallet?.virtualBalance ?? 154610.00;
+  const currentBalance = wallet?.virtualBalance ?? 0.00;
 
   const formatUsd = (num) => {
     return (num || 0).toLocaleString('en-US', {
