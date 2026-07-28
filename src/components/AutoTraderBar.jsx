@@ -18,8 +18,8 @@ export const AutoTraderBar = memo(() => {
   } = useCrypto();
 
   const walletBalance = wallet?.virtualBalance ?? 0;
-  // Minimum funds needed: smallest BTC unit trade (~0.5 BTC at ~$30k = $15k, but we'll use a practical minimum)
-  const MIN_TRADE_FUNDS = 50; // $50 minimum to start bot trading
+  // Minimum funds needed: $10.00 USDT minimum balance to start auto-trading
+  const MIN_TRADE_FUNDS = 10; // $10 minimum balance to start bot trading
   const isInsufficientFunds = autoTradingEnabled && walletBalance < MIN_TRADE_FUNDS;
 
   return (

@@ -316,12 +316,17 @@ export const CryptoProvider = ({ children }) => {
 
         const diffUsd = maxPrice - minPrice;
         const diffPct = (diffUsd / minPrice) * 100;
-        const unitSize = coin.symbol.startsWith('BTC') ? 0.5 : coin.symbol.startsWith('ETH') ? 4 : 50;
+        
+        // Dynamic micro-trade sizing: scale trade size to available wallet balance (25% per trade, max $500, min $20)
+        const currentWalletBal = wallet?.virtualBalance ?? 0;
+        const tradeAllocationUsd = currentWalletBal >= 20 ? Math.min(currentWalletBal * 0.25, 500) : 250;
+        const unitSize = parseFloat((tradeAllocationUsd / minPrice).toFixed(coin.symbol.startsWith('BTC') ? 4 : 2));
+
         const grossProfit = diffUsd * unitSize;
         const estFees = (minPrice * unitSize + maxPrice * unitSize) * 0.0004;
         const netProfit = grossProfit - estFees;
 
-        const isProfitable = diffPct >= 0.20 && netProfit > 5;
+        const isProfitable = diffPct >= 0.20 && netProfit > 0.50;
 
         opps.push({
           symbol: coin.symbol,
@@ -343,7 +348,7 @@ export const CryptoProvider = ({ children }) => {
 
       setArbitrageOpps(opps);
 
-      // Auto Trader Execution — requires sufficient wallet balance
+      // Auto Trader Execution — starts trading with minimum balance ($10 USDT)
       const now = Date.now();
       if (autoTradingEnabled && (now - lastAutoTradeTimeRef.current > 1500)) {
         const topOpp = opps
@@ -354,14 +359,13 @@ export const CryptoProvider = ({ children }) => {
           const requiredFunds = parseFloat((topOpp.ex1Price * topOpp.unitSize).toFixed(2));
           const currentBalance = wallet.virtualBalance ?? 0;
 
-          if (currentBalance < requiredFunds) {
-            // Bot is halted — insufficient wallet balance
+          if (currentBalance < 10.00 || currentBalance < requiredFunds) {
+            // Bot is halted — balance below $10 minimum
             if (now - lastAutoTradeTimeRef.current > 10000) {
-              // Only notify every ~10 seconds to avoid spam
               lastAutoTradeTimeRef.current = now;
               setAutoTradeLogs(prev => [{
                 id: Date.now(),
-                text: `[AUTO-BOT] ⚠ HALTED — Insufficient wallet balance ($${currentBalance.toFixed(2)}). Need $${requiredFunds.toLocaleString('en-US', { minimumFractionDigits: 2 })} for ${topOpp.symbol}. Deposit funds to resume.`,
+                text: `[AUTO-BOT] ⚠ HALTED — Wallet balance ($${currentBalance.toFixed(2)}) is below min required ($10.00 USDT). Deposit $10+ to start trading.`,
                 time: new Date().toLocaleTimeString(),
                 type: 'danger'
               }, ...prev.slice(0, 15)]);
