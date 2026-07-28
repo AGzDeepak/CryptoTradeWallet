@@ -1,14 +1,26 @@
 import React, { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { ArrowDownUp, ChevronDown, ArrowRightLeft } from 'lucide-react';
+import { sendRealWeb3Transaction } from '../services/web3Service';
+import { ArrowDownUp, ChevronDown, ArrowRightLeft, ShieldCheck, Zap, ExternalLink, Wallet } from 'lucide-react';
 
 export const OperationSwapTool = () => {
-  const { wallet, executeOrder, marketData } = useCrypto();
+  const { 
+    wallet, 
+    executeOrder, 
+    marketData, 
+    walletMode, 
+    setWalletMode, 
+    realWallet, 
+    connectRealWallet,
+    addNotification 
+  } = useCrypto();
+
   const [tab, setTab] = useState('Buy');
   const [payCoin, setPayCoin] = useState('USD');
   const [getCoin, setGetCoin] = useState('ETH');
   const [payAmount, setPayAmount] = useState('1000');
   const [showCoinDropdown, setShowCoinDropdown] = useState(false);
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
 
   const ethCoin = marketData.find(c => c.symbol === 'ETHUSDT') || { basePrice: 3540.20 };
   const btcCoin = marketData.find(c => c.symbol === 'BTCUSDT') || { basePrice: 67840.50 };
@@ -17,14 +29,49 @@ export const OperationSwapTool = () => {
   const targetPrice = getCoin === 'BTC' ? btcCoin.basePrice : getCoin === 'SOL' ? solCoin.basePrice : ethCoin.basePrice;
   const estimatedGet = (parseFloat(payAmount || 0) / targetPrice).toFixed(4);
 
-  const handleSubmit = (e) => {
+  const currentAvailableBalance = walletMode === 'REAL' && realWallet.connected 
+    ? realWallet.balanceUsd 
+    : (wallet.virtualBalance ?? 0.00);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const amount = parseFloat(payAmount);
     if (isNaN(amount) || amount <= 0) return;
-    if (tab !== 'Sell' && (wallet.virtualBalance ?? 0) <= 0) return; // Block BUY if no funds
+
+    if (tab !== 'Sell' && currentAvailableBalance <= 0) {
+      addNotification(`Insufficient balance! Available balance is $${currentAvailableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}. Please deposit real funds first.`, 'danger');
+      return;
+    }
 
     const symbol = getCoin === 'USD' ? 'ETHUSDT' : `${getCoin}USDT`;
-    executeOrder(tab === 'Sell' ? 'SELL' : 'BUY', symbol, 'Binance', parseFloat(estimatedGet));
+
+    if (walletMode === 'REAL') {
+      if (!realWallet.connected) {
+        connectRealWallet('MetaMask');
+        return;
+      }
+
+      setIsBroadcasting(true);
+      try {
+        addNotification('🦊 Opening Web3 Wallet prompt for real on-chain transaction signature...', 'info');
+        const ethVal = (amount / targetPrice).toFixed(4);
+        const txRes = await sendRealWeb3Transaction(
+          realWallet.address,
+          '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
+          ethVal,
+          realWallet.chainId
+        );
+
+        executeOrder(tab === 'Sell' ? 'SELL' : 'BUY', symbol, 'MetaMask Real Web3', parseFloat(estimatedGet));
+        addNotification(`✅ REAL WEB3 ORDER BROADCASTED! Tx Hash: ${txRes.txHash.substring(0, 10)}...`, 'success');
+      } catch (err) {
+        addNotification(`Real Web3 Execution Error: ${err.message}`, 'danger');
+      } finally {
+        setIsBroadcasting(false);
+      }
+    } else {
+      executeOrder(tab === 'Sell' ? 'SELL' : 'BUY', symbol, 'Binance', parseFloat(estimatedGet));
+    }
   };
 
   const handleSwapPairs = () => {
@@ -36,11 +83,44 @@ export const OperationSwapTool = () => {
   return (
     <div className="chainblock-card space-y-4 font-sans relative">
       
+      {/* Real vs Demo Money Mode Switcher Banner */}
+      <div className="flex items-center justify-between p-2 rounded-xl bg-[#0b0c10] border border-slate-800 font-mono text-xs">
+        <div className="flex items-center space-x-1.5">
+          <ShieldCheck className={`w-4 h-4 ${walletMode === 'REAL' ? 'text-[#2dd4bf]' : 'text-[#facc15]'}`} />
+          <span className="text-[11px] font-bold text-white uppercase">Trading Mode:</span>
+        </div>
+
+        <div className="flex space-x-1 bg-[#14161d] p-1 rounded-lg border border-slate-800">
+          <button
+            onClick={() => setWalletMode('DEMO')}
+            className={`px-2.5 py-1 rounded text-[10px] font-bold transition ${
+              walletMode === 'DEMO' ? 'bg-[#facc15] text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            DEMO MODE
+          </button>
+          <button
+            onClick={() => {
+              if (realWallet.connected) setWalletMode('REAL');
+              else connectRealWallet('MetaMask');
+            }}
+            className={`px-2.5 py-1 rounded text-[10px] font-bold transition flex items-center gap-1 ${
+              walletMode === 'REAL' ? 'bg-[#2dd4bf] text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Zap className="w-3 h-3" />
+            <span>REAL MONEY</span>
+          </button>
+        </div>
+      </div>
+
       {/* Header & Baseline Alignment */}
       <div className="card-header-baseline">
         <div className="flex items-center space-x-2">
           <ArrowRightLeft className="w-4 h-4 text-teal-400" />
-          <h3 className="text-sm font-extrabold text-white font-mono tracking-tight">MANUAL BUY & SELL TERMINAL</h3>
+          <h3 className="text-sm font-extrabold text-white font-mono tracking-tight">
+            {walletMode === 'REAL' ? 'REAL ON-CHAIN BUY & SELL' : 'MANUAL BUY & SELL TERMINAL'}
+          </h3>
         </div>
 
         <div className="flex items-center space-x-1 bg-[#0b1120] p-1 rounded-xl border border-slate-800 text-xs font-mono">
@@ -78,7 +158,7 @@ export const OperationSwapTool = () => {
               className="bg-transparent text-right text-sm font-bold font-mono text-white outline-none w-28"
             />
             <button
-              onClick={() => setPayAmount((wallet.virtualBalance ?? 0).toFixed(2))}
+              onClick={() => setPayAmount(currentAvailableBalance.toFixed(2))}
               className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-teal-950 text-teal-400 border border-teal-500/40"
             >
               MAX
@@ -147,24 +227,31 @@ export const OperationSwapTool = () => {
 
       {/* Live Balance Bar */}
       <div className={`flex items-center justify-between text-[11px] font-mono px-1 ${
-        (wallet.virtualBalance ?? 0) <= 0 ? 'text-rose-400' : 'text-slate-400'
+        currentAvailableBalance <= 0 ? 'text-rose-400' : 'text-slate-400'
       }`}>
-        <span>Wallet Balance:</span>
+        <span>{walletMode === 'REAL' ? 'Real Web3 Balance:' : 'Wallet Balance:'}</span>
         <span className="font-bold">
-          ${(wallet.virtualBalance ?? 0.00).toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT
+          ${currentAvailableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })} {walletMode === 'REAL' ? 'USD/ETH' : 'USDT'}
         </span>
       </div>
 
       {/* Submit Button */}
       <button
         onClick={handleSubmit}
-        disabled={tab !== 'Sell' && (wallet.virtualBalance ?? 0) <= 0}
-        className={`w-full chainblock-btn-emerald disabled:opacity-40 disabled:cursor-not-allowed`}
+        disabled={isBroadcasting || (tab !== 'Sell' && currentAvailableBalance <= 0)}
+        className={`w-full chainblock-btn-emerald disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 font-extrabold ${
+          walletMode === 'REAL' ? 'bg-[#2dd4bf] text-slate-950' : ''
+        }`}
       >
-        {tab !== 'Sell' && (wallet.virtualBalance ?? 0) <= 0
-          ? 'DEPOSIT FUNDS TO BUY'
-          : tab === 'Sell' ? `SELL ${getCoin} NOW` : `BUY ${getCoin} NOW`
-        }
+        {isBroadcasting ? (
+          <span>BROADCASTING WEB3 TX...</span>
+        ) : tab !== 'Sell' && currentAvailableBalance <= 0 ? (
+          <span>DEPOSIT REAL FUNDS TO BUY</span>
+        ) : walletMode === 'REAL' ? (
+          <span>EXECUTE REAL ON-CHAIN {tab.toUpperCase()} NOW</span>
+        ) : (
+          <span>{tab === 'Sell' ? `SELL ${getCoin} NOW` : `BUY ${getCoin} NOW`}</span>
+        )}
       </button>
 
     </div>

@@ -5,6 +5,10 @@ import { Wallet, RefreshCw, ShoppingBag, ArrowUpRight, PlusCircle, Bot } from 'l
 export const PaperTradingPanel = () => {
   const { 
     wallet, 
+    walletMode,
+    setWalletMode,
+    realWallet,
+    connectRealWallet,
     resetWallet, 
     openPositions, 
     tradeHistory, 
@@ -21,13 +25,17 @@ export const PaperTradingPanel = () => {
 
   const selectedCoin = marketData.find(c => c.symbol === symbol) || marketData[0] || { basePrice: 67840.50 };
 
+  const currentAvailableBalance = walletMode === 'REAL' && realWallet.connected 
+    ? realWallet.balanceUsd 
+    : (wallet.virtualBalance ?? 0.00);
+
   const handleManualExecute = (e) => {
     e.preventDefault();
     executeOrder(side, symbol, exchange, parseFloat(amount));
   };
 
   const handleQuickPercent = (pct) => {
-    const bal = wallet.virtualBalance ?? 0.00;
+    const bal = currentAvailableBalance;
     const price = selectedCoin.basePrice || 67840.50;
     const maxQty = (bal * pct) / price;
     setAmount(maxQty.toFixed(6));
@@ -43,15 +51,40 @@ export const PaperTradingPanel = () => {
             <Wallet className="w-5 h-5 stroke-[2.5]" />
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm sm:text-base font-extrabold text-white font-mono tracking-tight">MOCK PAPER TRADING TERMINAL</h3>
-            <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-950 text-[#facc15] border border-[#facc15]/40">
-              SANDBOX
+            <h3 className="text-sm sm:text-base font-extrabold text-white font-mono tracking-tight">TRADING EXECUTION TERMINAL</h3>
+            <span className={`px-2.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+              walletMode === 'REAL' 
+                ? 'bg-emerald-950 text-[#2dd4bf] border border-[#2dd4bf]' 
+                : 'bg-amber-950 text-[#facc15] border border-[#facc15]/40'
+            }`}>
+              {walletMode === 'REAL' ? '🟢 REAL MONEY MODE (WEB3)' : '🟡 DEMO MODE'}
             </span>
           </div>
         </div>
 
-        {/* Action Buttons: Responsive Wrap */}
+        {/* Action Buttons: Mode Switcher & Deposit/Withdraw */}
         <div className="flex flex-wrap items-center gap-2 font-mono text-xs w-full lg:w-auto">
+          <div className="flex bg-[#0b0c10] p-1 rounded-xl border border-slate-800">
+            <button
+              onClick={() => setWalletMode('DEMO')}
+              className={`px-3 py-1 rounded-lg text-[10px] font-bold transition ${
+                walletMode === 'DEMO' ? 'bg-[#facc15] text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              DEMO
+            </button>
+            <button
+              onClick={() => {
+                if (realWallet.connected) setWalletMode('REAL');
+                else connectRealWallet('MetaMask');
+              }}
+              className={`px-3 py-1 rounded-lg text-[10px] font-bold transition ${
+                walletMode === 'REAL' ? 'bg-[#2dd4bf] text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              REAL MONEY
+            </button>
+          </div>
           <button
             onClick={() => openModal('DEPOSIT')}
             className="flex-1 lg:flex-none h-9 px-3.5 rounded-xl bg-[#facc15] text-slate-950 font-extrabold transition hover:brightness-110 shadow-md flex items-center justify-center gap-1.5"

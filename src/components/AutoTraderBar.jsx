@@ -14,10 +14,16 @@ export const AutoTraderBar = memo(() => {
     tradingMode,
     setTradingMode,
     wallet,
+    walletMode,
+    setWalletMode,
+    realWallet,
+    connectRealWallet,
     openModal
   } = useCrypto();
 
-  const walletBalance = wallet?.virtualBalance ?? 0;
+  const walletBalance = walletMode === 'REAL' && realWallet.connected
+    ? realWallet.balanceUsd
+    : (wallet?.virtualBalance ?? 0);
   // Minimum funds needed: $10.00 USDT minimum balance to start auto-trading
   const MIN_TRADE_FUNDS = 10; // $10 minimum balance to start bot trading
   const isInsufficientFunds = autoTradingEnabled && walletBalance < MIN_TRADE_FUNDS;
@@ -53,7 +59,31 @@ export const AutoTraderBar = memo(() => {
         {/* Controls Cluster */}
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-start lg:justify-end">
           
-          {/* 2. Trading Strategy Selector */}
+          {/* Mode Switcher (DEMO vs REAL MONEY) */}
+          <div className="bg-[#0b0c10] p-1.5 rounded-xl border border-slate-800 shrink-0 font-mono">
+            <div className="text-[10px] text-slate-400 mb-1 uppercase font-bold">Execution Engine Mode</div>
+            <div className="flex space-x-1 bg-[#14161d] p-1 rounded-lg border border-slate-800">
+              <button
+                onClick={() => setWalletMode('DEMO')}
+                className={`px-2.5 py-1 rounded text-[10px] font-bold transition ${
+                  walletMode === 'DEMO' ? 'bg-[#facc15] text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                DEMO
+              </button>
+              <button
+                onClick={() => {
+                  if (realWallet.connected) setWalletMode('REAL');
+                  else connectRealWallet('MetaMask');
+                }}
+                className={`px-2.5 py-1 rounded text-[10px] font-bold transition flex items-center gap-1 ${
+                  walletMode === 'REAL' ? 'bg-[#2dd4bf] text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                🟢 REAL MONEY
+              </button>
+            </div>
+          </div>
           <div className="bg-[#0b0c10] p-2 px-3 rounded-xl border border-slate-800 shrink-0">
             <div className="text-[10px] text-slate-400 font-mono mb-1 uppercase tracking-wider font-bold">
               Trading Strategy Profile
