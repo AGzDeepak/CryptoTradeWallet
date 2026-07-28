@@ -343,7 +343,7 @@ export const CryptoProvider = ({ children }) => {
 
       setArbitrageOpps(opps);
 
-      // Auto Trader Execution
+      // Auto Trader Execution — requires sufficient wallet balance
       const now = Date.now();
       if (autoTradingEnabled && (now - lastAutoTradeTimeRef.current > 1500)) {
         const topOpp = opps
@@ -351,8 +351,26 @@ export const CryptoProvider = ({ children }) => {
           .sort((a, b) => b.netProfit - a.netProfit)[0];
 
         if (topOpp && openPositions.length < 8) {
-          lastAutoTradeTimeRef.current = now;
-          executeAutoTrade(topOpp);
+          const requiredFunds = parseFloat((topOpp.ex1Price * topOpp.unitSize).toFixed(2));
+          const currentBalance = wallet.virtualBalance ?? 0;
+
+          if (currentBalance < requiredFunds) {
+            // Bot is halted — insufficient wallet balance
+            if (now - lastAutoTradeTimeRef.current > 10000) {
+              // Only notify every ~10 seconds to avoid spam
+              lastAutoTradeTimeRef.current = now;
+              setAutoTradeLogs(prev => [{
+                id: Date.now(),
+                text: `[AUTO-BOT] ⚠ HALTED — Insufficient wallet balance ($${currentBalance.toFixed(2)}). Need $${requiredFunds.toLocaleString('en-US', { minimumFractionDigits: 2 })} for ${topOpp.symbol}. Deposit funds to resume.`,
+                time: new Date().toLocaleTimeString(),
+                type: 'danger'
+              }, ...prev.slice(0, 15)]);
+            }
+          } else {
+            // Sufficient balance — execute the trade
+            lastAutoTradeTimeRef.current = now;
+            executeAutoTrade(topOpp);
+          }
         }
       }
 
@@ -492,6 +510,22 @@ export const CryptoProvider = ({ children }) => {
   };
 
   const executeAutoTrade = (opp) => {
+    const tradeCost = parseFloat((opp.ex1Price * opp.unitSize).toFixed(2));
+    const currentBalance = wallet.virtualBalance ?? 0;
+
+    // Safety guard — double-check balance before executing
+    if (currentBalance < tradeCost) {
+      addNotification(`Auto-Bot HALTED: Insufficient funds! Need $${tradeCost.toLocaleString('en-US', { minimumFractionDigits: 2 })} but wallet has $${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT.`, 'danger');
+      return;
+    }
+
+    // Deduct trade cost from wallet balance on entry
+    setWallet(w => ({
+      ...w,
+      virtualBalance: parseFloat((w.virtualBalance - tradeCost).toFixed(2)),
+      totalEquity: parseFloat((w.totalEquity).toFixed(2)) // equity unchanged until PnL realized
+    }));
+
     const newPosId = `POS-${Math.floor(1000 + Math.random() * 9000)}`;
     const newPos = {
       id: newPosId,
@@ -505,7 +539,7 @@ export const CryptoProvider = ({ children }) => {
       currentSellPrice: opp.ex2Price,
       spreadPct: opp.diffPct,
       amount: opp.unitSize,
-      invested: parseFloat((opp.ex1Price * opp.unitSize).toFixed(2)),
+      invested: tradeCost,
       unrealizedPnL: opp.netProfit,
       duration: '0s',
       timestamp: new Date().toISOString(),
@@ -517,6 +551,14 @@ export const CryptoProvider = ({ children }) => {
     setOpenPositions(prev => [newPos, ...prev]);
     setTotalBotProfit(nextBotProfit);
     setAutoTradeCount(prev => prev + 1);
+
+    // Credit back cost + net profit to wallet when auto-bot settles (immediate for arbitrage)
+    setWallet(w => ({
+      ...w,
+      virtualBalance: parseFloat((w.virtualBalance + tradeCost + opp.netProfit).toFixed(2)),
+      totalEquity: parseFloat((w.totalEquity + opp.netProfit).toFixed(2)),
+      todayProfit: parseFloat(((w.todayProfit || 0) + opp.netProfit).toFixed(2))
+    }));
 
     // Store in Trade Settlement Audit History Log
     const botAuditRecord = {
@@ -530,7 +572,7 @@ export const CryptoProvider = ({ children }) => {
       buyPrice: opp.ex1Price,
       sellPrice: opp.ex2Price,
       amount: opp.unitSize,
-      buyTotal: parseFloat((opp.ex1Price * opp.unitSize).toFixed(2)),
+      buyTotal: tradeCost,
       sellTotal: parseFloat((opp.ex2Price * opp.unitSize).toFixed(2)),
       grossProfit: opp.estProfit || opp.netProfit,
       fees: opp.fees || 2.50,
@@ -548,17 +590,15 @@ export const CryptoProvider = ({ children }) => {
     // Record in Firebase Firestore Database
     recordFirebaseBotTradeLog(botAuditRecord);
 
-    audioFx.playTradeSuccess();
-
     const timeStr = new Date().toLocaleTimeString();
     const logMsg = {
       id: Date.now(),
-      text: `[AUTO-BOT] Arbitrage: ${opp.symbol} Buy ${opp.buyExchange} @ $${opp.ex1Price} -> Sell ${opp.sellExchange} @ $${opp.ex2Price} (+$${opp.netProfit}) | Cum. Profit: +$${nextBotProfit}`,
+      text: `[AUTO-BOT] Arbitrage: ${opp.symbol} Buy ${opp.buyExchange} @ $${opp.ex1Price} -> Sell ${opp.sellExchange} @ $${opp.ex2Price} (+$${opp.netProfit}) | Wallet +$${opp.netProfit} | Cum. Profit: +$${nextBotProfit}`,
       time: timeStr,
       type: 'success'
     };
     setAutoTradeLogs(prev => [logMsg, ...prev.slice(0, 15)]);
-    addNotification(`Auto-Trader Executed & Logged: ${opp.symbol} +$${opp.netProfit} (Total: +$${nextBotProfit})`, 'success');
+    addNotification(`Auto-Bot Executed: ${opp.symbol} +$${opp.netProfit} → Wallet Balance Updated (Total: +$${nextBotProfit})`, 'success');
   };
 
   const updateOpenPositionsAndAutoSettle = (newExPrices) => {
