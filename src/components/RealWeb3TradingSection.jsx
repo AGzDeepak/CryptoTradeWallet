@@ -35,8 +35,10 @@ export const RealWeb3TradingSection = () => {
     walletType: 'MetaMask'
   });
 
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isBroadcasting, setIsBroadcasting] = useState(false);
+  // Custom ERC-20 Token Entry & Validation State
+  const [customTokenAddress, setCustomTokenAddress] = useState('');
+  const [validatedToken, setValidatedToken] = useState(null);
+  const [tokenValidationError, setTokenValidationError] = useState('');
 
   // Preset Verified Arbitrum Tokens on Arbiscan
   const ARBISCAN_DEMO_TOKENS = [
