@@ -9,7 +9,8 @@ import {
   Settings, 
   LogOut,
   ShoppingBag,
-  FlaskConical
+  FlaskConical,
+  ShieldCheck
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -19,6 +20,7 @@ export const Sidebar = () => {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
     { id: 'papertrading', label: 'Paper Trading', icon: ShoppingBag },
     { id: 'simulation', label: 'Simulation', icon: FlaskConical },
+    { id: 'web3trading', label: 'Web3 Trading', icon: ShieldCheck },
     { id: 'account', label: 'Account', icon: User },
     { id: 'chart', label: 'Chart', icon: LineChart },
     { id: 'wallet', label: 'Wallet', icon: Wallet },

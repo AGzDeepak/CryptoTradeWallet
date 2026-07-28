@@ -23,6 +23,7 @@ import { WalletSection } from './components/WalletSection';
 import { AccountSection } from './components/AccountSection';
 import { LiveCryptoNews } from './components/LiveCryptoNews';
 import { SimulationSection } from './components/SimulationSection';
+import { RealWeb3TradingSection } from './components/RealWeb3TradingSection';
 
 const DashboardContent = () => {
   const { activeTab } = useCrypto();
@@ -79,6 +80,13 @@ const DashboardContent = () => {
         {activeTab === 'simulation' && (
           <div className="space-y-6">
             <SimulationSection />
+          </div>
+        )}
+
+        {/* Dedicated Standalone Real Web3 Blockchain Trading Section */}
+        {activeTab === 'web3trading' && (
+          <div className="space-y-6">
+            <RealWeb3TradingSection />
           </div>
         )}
 

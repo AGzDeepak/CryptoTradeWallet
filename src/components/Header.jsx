@@ -18,6 +18,7 @@ export const Header = () => {
     switch (activeTab) {
       case 'papertrading': return 'Paper Trading Terminal';
       case 'simulation': return 'Quantitative Market Simulator';
+      case 'web3trading': return 'Real Web3 Blockchain Trading';
       case 'account': return 'Account Management';
       case 'wallet': return 'Institutional Wallet';
       case 'news': return 'Live Crypto News & Intelligence';
