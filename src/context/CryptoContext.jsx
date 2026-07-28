@@ -53,7 +53,7 @@ export const CryptoProvider = ({ children }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(false);
 
   // Modals & Drawers
   const [activeModal, setActiveModal] = useState(null);
