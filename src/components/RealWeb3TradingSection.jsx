@@ -82,6 +82,7 @@ export const RealWeb3TradingSection = () => {
   ]);
 
   const handleQuickSelectDemoToken = (tok) => {
+    if (!tok || !tok.address) return;
     setCustomTokenAddress(tok.address);
     setValidatedToken({ ...tok, isNew: false });
     setTokenValidationError('');
@@ -92,9 +93,11 @@ export const RealWeb3TradingSection = () => {
   // Validate Contract Address Handler
   const handleValidateTokenEntry = (e) => {
     e.preventDefault();
-    const cleanAddr = customTokenAddress.trim();
+    const cleanAddr = (customTokenAddress || '').trim();
     setTokenValidationError('');
     setValidatedToken(null);
+
+    if (!cleanAddr) return;
 
     // Validate Ethereum Hex format (0x + 40 hex chars)
     const ethAddressRegex = /^0x[a-fA-F0-9]{40}$/;
@@ -104,7 +107,7 @@ export const RealWeb3TradingSection = () => {
     }
 
     // Check Arbiscan demo tokens first
-    const demoFound = ARBISCAN_DEMO_TOKENS.find(t => t.address.toLowerCase() === cleanAddr.toLowerCase());
+    const demoFound = ARBISCAN_DEMO_TOKENS.find(t => (t.address || '').toLowerCase() === cleanAddr.toLowerCase());
     if (demoFound) {
       setValidatedToken({ ...demoFound, isNew: false });
       audioFx?.playTradeSuccess();
@@ -113,7 +116,7 @@ export const RealWeb3TradingSection = () => {
     }
 
     // Pre-known token registry check
-    const known = tokenOptions.find(t => t.address.toLowerCase() === cleanAddr.toLowerCase());
+    const known = tokenOptions.find(t => (t.address || '').toLowerCase() === cleanAddr.toLowerCase());
     if (known) {
       setValidatedToken({ ...known, isNew: false, arbiscanUrl: `https://arbiscan.io/token/${known.address}` });
       audioFx?.playTradeSuccess();
@@ -139,9 +142,9 @@ export const RealWeb3TradingSection = () => {
   };
 
   const handleAddTokenToList = () => {
-    if (!validatedToken) return;
+    if (!validatedToken || !validatedToken.address) return;
 
-    if (!tokenOptions.some(t => t.address.toLowerCase() === validatedToken.address.toLowerCase())) {
+    if (!tokenOptions.some(t => (t.address || '').toLowerCase() === validatedToken.address.toLowerCase())) {
       setTokenOptions(prev => [...prev, validatedToken]);
       setSelectedTokenSym(validatedToken.symbol);
       addNotification(`Added ${validatedToken.symbol} to active Web3 trading token list!`, 'success');
@@ -155,12 +158,13 @@ export const RealWeb3TradingSection = () => {
     setIsConnecting(true);
     try {
       const res = await connectRealWeb3Wallet('MetaMask');
-      setWeb3State(res);
-      audioFx?.playTradeSuccess();
-      addNotification(`Connected Real Web3 Wallet: ${res.shortAddress} on ${res.networkName}`, 'success');
+      if (res) {
+        setWeb3State(res);
+        audioFx?.playTradeSuccess();
+        addNotification(`Connected Real Web3 Wallet: ${res.shortAddress} on ${res.networkName}`, 'success');
+      }
     } catch (err) {
-      setWeb3State(prev => ({ ...prev, connected: true }));
-      addNotification(`Connected Web3 Provider (${web3State.shortAddress}) on ${web3State.networkName}`, 'success');
+      console.warn('Connect wallet notice:', err);
     } finally {
       setIsConnecting(false);
     }
@@ -298,7 +302,7 @@ export const RealWeb3TradingSection = () => {
                 type="button"
                 onClick={() => handleQuickSelectDemoToken(tok)}
                 className={`px-3 py-1.5 rounded-lg border font-mono text-[11px] font-bold transition flex items-center gap-1.5 ${
-                  customTokenAddress.toLowerCase() === tok.address.toLowerCase()
+                  (customTokenAddress || '').toLowerCase() === (tok.address || '').toLowerCase()
                     ? 'bg-[#2dd4bf] text-slate-950 border-[#2dd4bf] shadow-md'
                     : 'bg-[#14161d] hover:bg-slate-800 text-slate-300 border-slate-800'
                 }`}
@@ -513,7 +517,7 @@ export const RealWeb3TradingSection = () => {
               {onChainTxs.map((tx) => (
                 <tr key={tx.txHash} className="hover:bg-[#181a24] transition">
                   <td className="py-3.5 px-4 font-bold text-white font-mono text-[11px]">
-                    {tx.txHash.substring(0, 10)}...{tx.txHash.substring(tx.txHash.length - 8)}
+                    {(tx?.txHash || '').length > 18 ? `${tx.txHash.substring(0, 10)}...${tx.txHash.substring(tx.txHash.length - 8)}` : (tx?.txHash || '0x000...000')}
                   </td>
                   <td className="py-3.5 px-4">
                     <span className="font-bold text-white">{tx.pair}</span>
