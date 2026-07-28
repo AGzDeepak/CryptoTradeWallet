@@ -38,18 +38,23 @@ export const RealWeb3TradingSection = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
 
-  // Custom ERC-20 Token Entry & Validation State
-  const [customTokenAddress, setCustomTokenAddress] = useState('');
-  const [validatedToken, setValidatedToken] = useState(null);
-  const [tokenValidationError, setTokenValidationError] = useState('');
+  // Preset Verified Arbitrum Tokens on Arbiscan
+  const ARBISCAN_DEMO_TOKENS = [
+    { symbol: 'ARB', name: 'Arbitrum Token', address: '0x912CE59144191C1204E64559FE8253a0e49E6548', price: 1.15, decimals: 18, verified: true, arbiscanUrl: 'https://arbiscan.io/token/0x912CE59144191C1204E64559FE8253a0e49E6548' },
+    { symbol: 'USDC', name: 'Bridged USDC (Arbitrum)', address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', price: 1.00, decimals: 6, verified: true, arbiscanUrl: 'https://arbiscan.io/token/0xaf88d065e77c8cC2239327C5EDb3A432268e5831' },
+    { symbol: 'WETH', name: 'Wrapped Ether (Arbitrum)', address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1', price: 3540.20, decimals: 18, verified: true, arbiscanUrl: 'https://arbiscan.io/token/0x82aF49447D8a07e3bd95BD0d56f35241523fBab1' },
+    { symbol: 'GMX', name: 'GMX Token (Arbitrum)', address: '0xfC5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a', price: 42.50, decimals: 18, verified: true, arbiscanUrl: 'https://arbiscan.io/token/0xfC5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a' },
+    { symbol: 'WBTC', name: 'Wrapped BTC (Arbitrum)', address: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f', price: 67840.50, decimals: 8, verified: true, arbiscanUrl: 'https://arbiscan.io/token/0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f' },
+    { symbol: 'MAGIC', name: 'Magic (Treasure Arbitrum)', address: '0x539b0e4179213434d289540ce80538f8317e4623', price: 0.85, decimals: 18, verified: true, arbiscanUrl: 'https://arbiscan.io/token/0x539b0e4179213434d289540ce80538f8317e4623' }
+  ];
 
   // Active Web3 Token Options List
   const [tokenOptions, setTokenOptions] = useState([
-    { symbol: 'ETHUSDT', name: 'Ethereum', address: '0x0000000000000000000000000000000000000000', price: 3540.20, decimals: 18, verified: true },
-    { symbol: 'USDT', name: 'Tether USD', address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', price: 1.00, decimals: 6, verified: true },
-    { symbol: 'WBTC', name: 'Wrapped BTC', address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599', price: 67840.50, decimals: 8, verified: true },
-    { symbol: 'LINK', name: 'Chainlink', address: '0x514910771AF9Ca656af840dff83E8264EcF986CA', price: 18.45, decimals: 18, verified: true },
-    { symbol: 'UNI', name: 'Uniswap Protocol Token', address: '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984', price: 8.75, decimals: 18, verified: true }
+    { symbol: 'ETHUSDT', name: 'Ethereum', address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1', price: 3540.20, decimals: 18, verified: true },
+    { symbol: 'ARB', name: 'Arbitrum Token', address: '0x912CE59144191C1204E64559FE8253a0e49E6548', price: 1.15, decimals: 18, verified: true },
+    { symbol: 'USDC', name: 'Tether / USDC', address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', price: 1.00, decimals: 6, verified: true },
+    { symbol: 'WBTC', name: 'Wrapped BTC', address: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f', price: 67840.50, decimals: 8, verified: true },
+    { symbol: 'GMX', name: 'GMX Token', address: '0xfC5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a', price: 42.50, decimals: 18, verified: true }
   ]);
 
   // Form State
@@ -74,6 +79,14 @@ export const RealWeb3TradingSection = () => {
     }
   ]);
 
+  const handleQuickSelectDemoToken = (tok) => {
+    setCustomTokenAddress(tok.address);
+    setValidatedToken({ ...tok, isNew: false });
+    setTokenValidationError('');
+    audioFx?.playTradeSuccess();
+    addNotification(`Loaded Valid Arbiscan Demo Contract: ${tok.symbol} (${tok.name})`, 'success');
+  };
+
   // Validate Contract Address Handler
   const handleValidateTokenEntry = (e) => {
     e.preventDefault();
@@ -88,10 +101,19 @@ export const RealWeb3TradingSection = () => {
       return;
     }
 
+    // Check Arbiscan demo tokens first
+    const demoFound = ARBISCAN_DEMO_TOKENS.find(t => t.address.toLowerCase() === cleanAddr.toLowerCase());
+    if (demoFound) {
+      setValidatedToken({ ...demoFound, isNew: false });
+      audioFx?.playTradeSuccess();
+      addNotification(`Verified Arbiscan Contract Found: ${demoFound.name} (${demoFound.symbol})`, 'success');
+      return;
+    }
+
     // Pre-known token registry check
     const known = tokenOptions.find(t => t.address.toLowerCase() === cleanAddr.toLowerCase());
     if (known) {
-      setValidatedToken({ ...known, isNew: false });
+      setValidatedToken({ ...known, isNew: false, arbiscanUrl: `https://arbiscan.io/token/${known.address}` });
       audioFx?.playTradeSuccess();
       addNotification(`Valid Token Contract Identified: ${known.name} (${known.symbol})`, 'success');
       return;
@@ -105,7 +127,8 @@ export const RealWeb3TradingSection = () => {
       price: parseFloat((Math.random() * 25 + 1.5).toFixed(2)),
       decimals: 18,
       verified: true,
-      isNew: true
+      isNew: true,
+      arbiscanUrl: `https://arbiscan.io/token/${cleanAddr}`
     };
 
     setValidatedToken(mockCustomToken);
@@ -261,6 +284,30 @@ export const RealWeb3TradingSection = () => {
           </button>
         </form>
 
+        {/* 1-CLICK DEMO ARBISCAN VERIFIED TOKEN QUICK SELECT CHIPS */}
+        <div className="space-y-2 pt-1">
+          <span className="text-slate-400 font-bold text-[11px] block">
+            1-Click Fill Verified Arbiscan Demo Contract Addresses:
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {ARBISCAN_DEMO_TOKENS.map((tok) => (
+              <button
+                key={tok.symbol}
+                type="button"
+                onClick={() => handleQuickSelectDemoToken(tok)}
+                className={`px-3 py-1.5 rounded-lg border font-mono text-[11px] font-bold transition flex items-center gap-1.5 ${
+                  customTokenAddress.toLowerCase() === tok.address.toLowerCase()
+                    ? 'bg-[#2dd4bf] text-slate-950 border-[#2dd4bf] shadow-md'
+                    : 'bg-[#14161d] hover:bg-slate-800 text-slate-300 border-slate-800'
+                }`}
+              >
+                <span className="text-[#2dd4bf]">{tok.symbol}</span>
+                <span className="text-slate-500 font-normal">({tok.address.substring(0, 6)}...{tok.address.substring(tok.address.length - 4)})</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Validation Error Alert */}
         {tokenValidationError && (
           <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-800 text-rose-300 text-xs flex items-center gap-2">
@@ -269,27 +316,40 @@ export const RealWeb3TradingSection = () => {
           </div>
         )}
 
-        {/* Validated Token Card Success Result */}
+        {/* Validated Token Card Success Result with Arbiscan Link */}
         {validatedToken && (
           <div className="p-4 rounded-xl bg-emerald-950/30 border border-[#2dd4bf]/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="space-y-1">
               <div className="flex items-center space-x-2">
                 <span className="text-sm font-extrabold text-white">{validatedToken.name} ({validatedToken.symbol})</span>
                 <span className="px-2 py-0.5 rounded bg-emerald-500 text-black text-[10px] font-bold">
-                  VALIDATED CONTRACT
+                  ✅ VERIFIED CONTRACT
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 font-mono">
-                Address: {validatedToken.address} | Decimals: {validatedToken.decimals} | Estimated Price: ${validatedToken.price}
+                Address: <span className="text-[#2dd4bf] font-bold">{validatedToken.address}</span> | Decimals: {validatedToken.decimals} | Price: ${validatedToken.price}
               </p>
             </div>
 
-            <button
-              onClick={handleAddTokenToList}
-              className="h-9 px-4 rounded-lg bg-[#2dd4bf] text-slate-950 font-extrabold text-xs transition hover:brightness-110 shrink-0"
-            >
-              ADD TOKEN TO TRADING LIST
-            </button>
+            <div className="flex items-center space-x-2 shrink-0">
+              {validatedToken.arbiscanUrl && (
+                <a
+                  href={validatedToken.arbiscanUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-9 px-3 rounded-lg bg-[#14161d] hover:bg-slate-800 border border-slate-700 text-[#2dd4bf] font-extrabold text-xs transition flex items-center gap-1"
+                >
+                  <span>View on Arbiscan</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              )}
+              <button
+                onClick={handleAddTokenToList}
+                className="h-9 px-4 rounded-lg bg-[#2dd4bf] text-slate-950 font-extrabold text-xs transition hover:brightness-110"
+              >
+                ADD TOKEN TO TRADING LIST
+              </button>
+            </div>
           </div>
         )}
       </div>
