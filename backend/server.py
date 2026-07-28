@@ -109,33 +109,31 @@ def get_or_create_user(email: str, name: str) -> Dict:
 
 def compute_spatial_arbitrage() -> List[Dict]:
     opps = []
-    t = time.time()
-    
     for coin in INITIAL_COINS:
+        sym = coin["symbol"]
         base_p = coin["basePrice"]
+        
         ex_prices = {}
-        
         for idx, ex in enumerate(EXCHANGES):
-            spread = (math.sin(t + idx * 1.5) * 0.002) + ((random.random() - 0.5) * 0.003)
-            ex_prices[ex] = round(base_p * (1 + spread), 4 if base_p < 1 else 2)
+            spread = (math.sin(time.time() + idx * 1.5) * 0.002) + (random.uniform(-0.003, 0.003))
+            ex_prices[ex] = round(base_p * (1 + spread), 4 if base_p < 10 else 2)
+            
+        sorted_ex = sorted(ex_prices.items(), key=lambda x: x[1])
+        min_ex, min_p = sorted_ex[0]
+        max_ex, max_p = sorted_ex[-1]
         
-        min_ex = min(ex_prices, key=ex_prices.get)
-        max_ex = max(ex_prices, key=ex_prices.get)
-        min_p = ex_prices[min_ex]
-        max_p = ex_prices[max_ex]
-        
-        diff_usd = round(max_p - min_p, 2)
+        diff_usd = round(max_p - min_p, 4 if base_p < 10 else 2)
         diff_pct = round((diff_usd / min_p) * 100, 2)
         
-        unit_size = 0.5 if "BTC" in coin["symbol"] else 4.0 if "ETH" in coin["symbol"] else 50.0
+        unit_size = 0.5 if "BTC" in sym else 4.0 if "ETH" in sym else 50.0
         gross_profit = round(diff_usd * unit_size, 2)
         est_fees = round((min_p * unit_size + max_p * unit_size) * 0.0004, 2)
         net_profit = round(gross_profit - est_fees, 2)
         
-        is_profitable = diff_pct >= 0.20 and net_profit > 5.0
+        is_profitable = diff_pct >= 0.20 and net_profit > 5
         
         opps.append({
-            "symbol": coin["symbol"],
+            "symbol": sym,
             "name": coin["name"],
             "buyExchange": min_ex,
             "sellExchange": max_ex,
@@ -159,10 +157,9 @@ def compute_spatial_arbitrage() -> List[Dict]:
 def root():
     return {
         "status": "ONLINE",
-        "engine": "Python 3.14 FastAPI Quant Server + Stimulation Technique Engine",
+        "engine": "Python 3.14 FastAPI Quant Server Engine",
         "quantTrader": "Deepak Kumar",
         "systemTime": datetime.now().isoformat(),
-        "stimulationEnabled": python_quant_bot.stimulation_enabled,
         "totalBotProfit": python_quant_bot.total_bot_profit
     }
 
@@ -170,7 +167,7 @@ def root():
 def get_health():
     return {
         "status": "HEALTHY",
-        "engine": "Python FastAPI + Orderbook Stimulation Technique",
+        "engine": "Python FastAPI Quant Engine",
         "exchanges": {
             "Binance": {"ping": "14ms", "status": "ONLINE"},
             "Bybit": {"ping": "22ms", "status": "ONLINE"},
@@ -204,32 +201,10 @@ def get_scraped_news():
 def get_bot_status():
     return {
         "status": "ACTIVE" if python_quant_bot.is_running else "PAUSED",
-        "stimulationEnabled": python_quant_bot.stimulation_enabled,
-        "stimulationMode": python_quant_bot.stimulation_mode,
         "minProfitThreshold": python_quant_bot.min_profit_threshold,
         "totalBotProfit": python_quant_bot.total_bot_profit,
         "tradeCount": python_quant_bot.trade_count,
         "recentLogs": python_quant_bot.logs[:10]
-    }
-
-@app.post("/api/bot/stimulate")
-def trigger_stimulation_pulse(req: Optional[StimulateRequest] = None):
-    if req:
-        python_quant_bot.stimulation_mode = req.mode
-        python_quant_bot.stimulation_intensity = req.intensity
-
-    pulse = python_quant_bot.inject_stimulation_pulse()
-    
-    # Execute stimulated trade
-    opps = compute_spatial_arbitrage()
-    executed = python_quant_bot.evaluate_and_execute(opps)
-    
-    return {
-        "status": "SUCCESS",
-        "stimulationTechnique": "ORDERBOOK_LIQUIDITY_PULSE",
-        "pulse": pulse,
-        "executedTrades": executed,
-        "totalBotProfit": python_quant_bot.total_bot_profit
     }
 
 @app.post("/api/wallet/withdraw")

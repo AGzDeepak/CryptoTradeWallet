@@ -32,7 +32,7 @@ const DashboardContent = () => {
       {/* Outer Shell Frame matching reference screenshot (Rounded Charcoal Shell) */}
       <div className="chainblock-shell p-6 sm:p-8 space-y-8">
         
-        {/* Master Bot & Stimulation Control Deck */}
+        {/* Master Autopilot Quant Command Deck */}
         <AutoTraderBar />
 
         {activeTab === 'dashboard' && (

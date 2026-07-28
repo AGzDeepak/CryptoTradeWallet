@@ -8,7 +8,7 @@
 [![Web3](https://img.shields.io/badge/Web3-MetaMask-F6851B.svg?style=for-the-badge&logo=metamask)](https://metamask.io/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
-> **CryptoBot AI** is an institutional-grade cryptocurrency spatial arbitrage scanner, quantitative automated trading engine, and orderbook yield stimulation terminal. Built with a **Python 3.14 FastAPI backend**, **Monte Carlo Yield Simulator**, **React 18 frontend**, **True Financial Candlesticks (OHLC)**, and real-time **Firebase Firestore** persistence.
+> **CryptoBot AI** is an institutional-grade cryptocurrency spatial arbitrage scanner, quantitative automated trading engine, and analytics terminal. Powered by a **Python 3.14 FastAPI backend**, **React 18 frontend**, **True Financial Candlesticks (OHLC)**, and real-time **Firebase Firestore** persistence.
 
 ---
 
@@ -25,10 +25,10 @@
 
 ## ✨ Complete Web Application Features & Architecture
 
-### 1. ⚡ 300ms Orderbook Yield Stimulation Engine (`backend/bot.py` & `AutoTraderBar.jsx`)
-- **Ultra-High Frequency Pulses**: Runs micro-burst stimulation pulses every **300ms** to generate dynamic cross-exchange yield spreads (`+0.4%` - `+2.8%` net profit).
-- **Monte Carlo Stochastic Simulation**: Simulates bid/ask depth injections across Binance, Bybit, OKX, and Coinbase.
-- **Turbo Trigger**: High-speed **`[ ⚡ TURBO STIMULATION (300MS) ]`** button connected to Python FastAPI endpoint `POST /api/bot/stimulate`.
+### 1. 🤖 Autopilot Quant Command Deck (`AutoTraderBar.jsx` & `backend/bot.py`)
+- **Automated Spatial Arbitrage**: Scans spatial price discrepancies across Binance, Bybit, OKX, and Coinbase.
+- **Configurable Risk Profiles**: Balanced Yield, Aggressive Arbitrage, and Conservative Safe Guard modes.
+- **Min Profit Threshold**: Real-time slider adjustments from 0.10% to 1.00%.
 
 ### 2. 🛍️ Dedicated Standalone Paper Trading Section (`PaperTradingPanel.jsx`)
 - **Top-Level Navigation Item**: Accessible as a primary section from the left navigation sidebar.
@@ -64,7 +64,6 @@
 | :--- | :--- |
 | **Python Backend Engine** | [Python 3.14](https://www.python.org/) + [FastAPI](https://fastapi.tiangolo.com/) + [Uvicorn](https://www.uvicorn.org/) |
 | **Web Scraper** | [BeautifulSoup4 (bs4)](https://www.crummy.com/software/BeautifulSoup/) + `requests` |
-| **Stochastic Simulation** | NumPy + Monte Carlo Orderbook Yield Engine |
 | **Frontend Framework** | [React 18.2](https://reactjs.org/) + [Vite 5.4](https://vitejs.dev/) |
 | **Styling & Design** | [TailwindCSS 3.4](https://tailwindcss.com/) + Obsidian Dark Glassmorphism |
 | **Web3 & Blockchain** | EIP-1193 Provider + MetaMask Integration (`web3Service.js`) |
@@ -112,7 +111,7 @@ npm run dev
 ```
 crypto_tradingbot/
 ├── backend/
-│   ├── bot.py                # Python Autonomous Quant Bot & 300ms Stimulation Engine
+│   ├── bot.py                # Python Autonomous Quant Bot Engine
 │   ├── firebase_config.py    # Python Firebase Admin SDK Integration
 │   ├── requirements.txt      # Python Package Manifest
 │   ├── scraper.py            # BeautifulSoup4 (bs4) Crypto News Scraper
@@ -123,7 +122,7 @@ crypto_tradingbot/
 │   │   ├── AddApiKeyModal.jsx     # Exchange API Key Connection Form Modal
 │   │   ├── AnalyticsSection.jsx   # Quant Performance & Win Rate Analytics
 │   │   ├── ArbitragePanel.jsx     # Spatial Arbitrage Scanner Matrix
-│   │   ├── AutoTraderBar.jsx      # Master Bot Autopilot & Turbo Stimulation Deck
+│   │   ├── AutoTraderBar.jsx      # Master Bot Autopilot Command Deck
 │   │   ├── GlobalModals.jsx       # Modal Manager & Wallet Operations
 │   │   ├── Header.jsx             # Top Command Header & Dynamic Tab Title
 │   │   ├── LiveChart.jsx          # Gold SVG Financial Chart (OHLC Candlesticks)
