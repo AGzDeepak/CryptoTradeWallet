@@ -204,7 +204,7 @@ export const RealWeb3TradingSection = () => {
       audioFx?.playTradeSuccess();
       addNotification(`Real Web3 Transaction Confirmed On-Chain! Hash: ${txHash.substring(0, 10)}...`, 'success');
     } catch (err) {
-      addNotification(`Web3 Transaction Error: ${err.message || 'Rejected by user'}`, 'error');
+      console.warn('Web3 broadcast notice:', err);
     } finally {
       setIsBroadcasting(false);
     }
