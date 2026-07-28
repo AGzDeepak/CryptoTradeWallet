@@ -21,6 +21,7 @@ export const OperationSwapTool = () => {
     e.preventDefault();
     const amount = parseFloat(payAmount);
     if (isNaN(amount) || amount <= 0) return;
+    if (tab !== 'Sell' && (wallet.virtualBalance ?? 0) <= 0) return; // Block BUY if no funds
 
     const symbol = getCoin === 'USD' ? 'ETHUSDT' : `${getCoin}USDT`;
     executeOrder(tab === 'Sell' ? 'SELL' : 'BUY', symbol, 'Binance', parseFloat(estimatedGet));
@@ -77,7 +78,7 @@ export const OperationSwapTool = () => {
               className="bg-transparent text-right text-sm font-bold font-mono text-white outline-none w-28"
             />
             <button
-              onClick={() => setPayAmount(wallet.virtualBalance.toFixed(2))}
+              onClick={() => setPayAmount((wallet.virtualBalance ?? 0).toFixed(2))}
               className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-teal-950 text-teal-400 border border-teal-500/40"
             >
               MAX
@@ -144,12 +145,26 @@ export const OperationSwapTool = () => {
         1 {getCoin} = ${targetPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}
       </div>
 
+      {/* Live Balance Bar */}
+      <div className={`flex items-center justify-between text-[11px] font-mono px-1 ${
+        (wallet.virtualBalance ?? 0) <= 0 ? 'text-rose-400' : 'text-slate-400'
+      }`}>
+        <span>Wallet Balance:</span>
+        <span className="font-bold">
+          ${(wallet.virtualBalance ?? 0.00).toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT
+        </span>
+      </div>
+
       {/* Submit Button */}
       <button
         onClick={handleSubmit}
-        className="w-full chainblock-btn-emerald"
+        disabled={tab !== 'Sell' && (wallet.virtualBalance ?? 0) <= 0}
+        className={`w-full chainblock-btn-emerald disabled:opacity-40 disabled:cursor-not-allowed`}
       >
-        {tab === 'Sell' ? `SELL ${getCoin} NOW` : `BUY ${getCoin} NOW`}
+        {tab !== 'Sell' && (wallet.virtualBalance ?? 0) <= 0
+          ? 'DEPOSIT FUNDS TO BUY'
+          : tab === 'Sell' ? `SELL ${getCoin} NOW` : `BUY ${getCoin} NOW`
+        }
       </button>
 
     </div>

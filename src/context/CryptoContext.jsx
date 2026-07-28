@@ -456,9 +456,8 @@ export const CryptoProvider = ({ children }) => {
     const price = priceOverride || coin.basePrice;
     const cost = price * amount;
 
-    if (side === 'BUY' && cost > wallet.virtualBalance) {
-      addNotification(`Insufficient Virtual Cash! Deposit funds or lower amount.`, 'warning');
-      audioFx.playAlertChime();
+    if (side === 'BUY' && cost > (wallet.virtualBalance ?? 0)) {
+      addNotification(`Insufficient funds! Available balance is $${(wallet.virtualBalance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT. Deposit funds first.`, 'danger');
       return false;
     }
 
@@ -605,7 +604,7 @@ export const CryptoProvider = ({ children }) => {
         virtualBalance: parseFloat((w.virtualBalance + pnl + pos.invested).toFixed(2)),
         totalEquity: parseFloat((w.totalEquity + pnl).toFixed(2)),
         todayProfit: parseFloat((w.todayProfit + pnl).toFixed(2)),
-        roiPct: parseFloat(((w.todayProfit + pnl) / 100000 * 100).toFixed(2))
+        roiPct: w.totalEquity > 0 ? parseFloat(((w.todayProfit + pnl) / w.totalEquity * 100).toFixed(2)) : 0
       }));
 
       const historyItem = {
@@ -642,7 +641,7 @@ export const CryptoProvider = ({ children }) => {
     setWithdrawalHistory([]);
     setTotalBotProfit(0.00);
     setAutoTradeCount(0);
-    addNotification('Paper wallet reset to $100,000.00 USDT', 'warning');
+    addNotification('Wallet reset to $0.00 USDT. Deposit funds to start trading.', 'warning');
   };
 
   const addNotification = (message, type = 'info') => {

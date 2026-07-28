@@ -27,8 +27,10 @@ export const PaperTradingPanel = () => {
   };
 
   const handleQuickPercent = (pct) => {
-    const maxQty = ((wallet.virtualBalance || 100000) * pct) / (selectedCoin.basePrice || 67840.50);
-    setAmount(maxQty.toFixed(3));
+    const bal = wallet.virtualBalance ?? 0.00;
+    const price = selectedCoin.basePrice || 67840.50;
+    const maxQty = (bal * pct) / price;
+    setAmount(maxQty.toFixed(6));
   };
 
   return (
@@ -71,7 +73,7 @@ export const PaperTradingPanel = () => {
             className="flex-1 lg:flex-none h-9 px-3.5 rounded-xl bg-[#0b0c10] border border-slate-700 text-slate-300 font-bold hover:text-[#facc15] hover:border-[#facc15] transition flex items-center justify-center gap-1.5"
           >
             <RefreshCw className="w-4 h-4 text-[#facc15]" />
-            <span>Reset ($100k)</span>
+            <span>Reset Wallet</span>
           </button>
         </div>
       </div>
@@ -79,18 +81,26 @@ export const PaperTradingPanel = () => {
       {/* 2. Responsive KPI Cards Grid: 1 Col on Mobile, 2 Cols on Tablet, 4 Cols on Large Desktop */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-xs">
         
-        <div className="p-4 rounded-2xl bg-[#0b0c10] border border-slate-800 space-y-1.5 shadow-sm">
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Available Paper Cash</span>
-          <span className="text-xl font-extrabold text-white block tracking-tight">
-            ${(wallet.virtualBalance || 100000).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+        <div className={`p-4 rounded-2xl border space-y-1.5 shadow-sm ${
+          (wallet.virtualBalance ?? 0) <= 0
+            ? 'bg-rose-950/40 border-rose-700'
+            : 'bg-[#0b0c10] border-slate-800'
+        }`}>
+          <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Available Wallet Balance</span>
+          <span className={`text-xl font-extrabold block tracking-tight ${
+            (wallet.virtualBalance ?? 0) <= 0 ? 'text-rose-400' : 'text-white'
+          }`}>
+            ${(wallet.virtualBalance ?? 0.00).toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </span>
-          <span className="text-[10px] text-slate-400 block">USDT Available</span>
+          <span className="text-[10px] text-slate-400 block">
+            {(wallet.virtualBalance ?? 0) <= 0 ? '⚠ Deposit funds to trade' : 'USDT Available'}
+          </span>
         </div>
 
         <div className="p-4 rounded-2xl bg-[#0b0c10] border border-slate-800 space-y-1.5 shadow-sm">
           <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Account Equity</span>
           <span className="text-xl font-extrabold text-[#2dd4bf] block tracking-tight">
-            ${(wallet.totalEquity || 100000).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            ${(wallet.totalEquity ?? 0.00).toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </span>
           <span className="text-[10px] text-[#2dd4bf]/80 block">Cash + Active Orders</span>
         </div>
@@ -216,16 +226,37 @@ export const PaperTradingPanel = () => {
             </div>
           </div>
 
+          {/* Insufficient Balance Warning */}
+          {side === 'BUY' && (wallet.virtualBalance ?? 0) <= 0 && (
+            <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-700 text-rose-300 text-xs font-mono font-bold flex items-center gap-2">
+              ⚠ Wallet balance is $0.00 — Please deposit funds first before placing a BUY order.
+            </div>
+          )}
+
+          {/* Cost Preview */}
+          {side === 'BUY' && parseFloat(amount) > 0 && (
+            <div className="p-3 rounded-xl bg-[#0b0c10] border border-slate-800 text-xs font-mono flex justify-between items-center">
+              <span className="text-slate-400">Estimated Cost:</span>
+              <span className="text-white font-bold">
+                ${(parseFloat(amount) * (selectedCoin.basePrice || 0)).toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT
+              </span>
+            </div>
+          )}
+
           {/* Primary Submit Button */}
           <button
             type="submit"
+            disabled={side === 'BUY' && (wallet.virtualBalance ?? 0) <= 0}
             className={`w-full h-12 rounded-xl font-extrabold font-sans text-xs sm:text-sm tracking-wider uppercase transition shadow-lg ${
               side === 'BUY'
-                ? 'bg-[#2dd4bf] text-slate-950 hover:brightness-110'
+                ? 'bg-[#2dd4bf] text-slate-950 hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed'
                 : 'bg-rose-500 text-white hover:brightness-110'
             }`}
           >
-            EXECUTE MOCK {side} ORDER FOR {symbol}
+            {side === 'BUY' && (wallet.virtualBalance ?? 0) <= 0
+              ? 'DEPOSIT FUNDS TO TRADE'
+              : `EXECUTE ${side} ORDER — ${symbol}`
+            }
           </button>
 
         </form>
