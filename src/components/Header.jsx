@@ -5,13 +5,15 @@ import { Search, Mail, Bell, Bot, LogOut } from 'lucide-react';
 export const Header = () => {
   const { 
     activeTab,
+    setActiveTab,
     autoTradingEnabled, 
     setAutoTradingEnabled, 
     openModal, 
     logout,
     walletMode,
     setWalletMode,
-    realWallet
+    realWallet,
+    user
   } = useCrypto();
 
   const getTitle = () => {

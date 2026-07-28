@@ -674,6 +674,7 @@ export const CryptoProvider = ({ children }) => {
         isAuthenticated,
         sessionToken,
         user,
+        setUser,
         login,
         logout,
         walletMode,
