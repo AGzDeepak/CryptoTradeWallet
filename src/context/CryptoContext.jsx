@@ -28,7 +28,7 @@ const NEW_USER_WALLET = {
 
 export const CryptoProvider = ({ children }) => {
   // Authentication & Security State
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [sessionToken, setSessionToken] = useState(null);
   const [user, setUser] = useState({
     name: 'Deepak Kumar',

@@ -1,7 +1,7 @@
 import { db, collection, addDoc, doc, setDoc, serverTimestamp } from '../config/firebase';
 
 /**
- * Generate a cryptographically secure 256-bit session token
+ * Generate a cryptographically secure session token
  */
 export const generateSecureSessionToken = () => {
   if (window.crypto && window.crypto.randomUUID) {
@@ -22,12 +22,19 @@ export const sanitizeInput = (input) => {
 };
 
 /**
- * Store user login record in Firebase Firestore Database
+ * Store user login record in Firebase Firestore Database.
+ * Silently skips if Firebase is not configured.
  */
 export const recordFirebaseLoginLog = async (userData, provider = 'email_password') => {
   const sanitizedEmail = sanitizeInput(userData.email);
   const sanitizedName = sanitizeInput(userData.name);
   const sessionToken = generateSecureSessionToken();
+
+  // Skip Firestore if db is not initialized (no Firebase credentials)
+  if (!db) {
+    console.info('[Firebase] Offline/demo mode — login log stored locally only.');
+    return sessionToken;
+  }
 
   const logPayload = {
     userId: userData.uid || `usr_${Date.now()}`,
@@ -48,11 +55,9 @@ export const recordFirebaseLoginLog = async (userData, provider = 'email_passwor
   };
 
   try {
-    // 1. Write to login_logs collection in Firestore
     const logsRef = collection(db, 'login_logs');
     await addDoc(logsRef, logPayload);
 
-    // 2. Upsert user profile document in users collection
     const userDocRef = doc(db, 'users', sanitizedEmail.replace(/[^a-zA-Z0-9]/g, '_'));
     await setDoc(userDocRef, {
       name: sanitizedName,
@@ -71,11 +76,14 @@ export const recordFirebaseLoginLog = async (userData, provider = 'email_passwor
 };
 
 /**
- * Store withdrawal transactions in Firebase Firestore Database
+ * Store withdrawal transactions in Firebase Firestore Database.
+ * Silently skips if Firebase is not configured.
  */
 export const recordFirebaseWithdrawal = async (withdrawData) => {
+  if (!db) return null;
+
   const sanitizedAddress = sanitizeInput(withdrawData.destinationAddress);
-  
+
   const payload = {
     userId: withdrawData.email || 'deepak@chainblock.io',
     userName: withdrawData.name || 'Deepak Kumar',
@@ -102,9 +110,12 @@ export const recordFirebaseWithdrawal = async (withdrawData) => {
 };
 
 /**
- * Store AI Bot execution and cumulative profit logs in Firebase Firestore Database
+ * Store AI Bot execution and cumulative profit logs in Firebase Firestore Database.
+ * Silently skips if Firebase is not configured.
  */
 export const recordFirebaseBotTradeLog = async (botTradeData) => {
+  if (!db) return null;
+
   const payload = {
     tradeId: botTradeData.id || `TRD-BOT-${Date.now()}`,
     symbol: botTradeData.symbol,

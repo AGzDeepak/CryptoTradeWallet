@@ -31,31 +31,41 @@ export const AuthScreen = () => {
     setLoading(true);
 
     try {
-      if (isSignUp) {
-        // Create new account in Firebase Authentication
-        try {
-          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-          if (userCredential.user) {
-            await updateProfile(userCredential.user, { displayName: fullName });
+      // If Firebase auth is configured, attempt real authentication
+      if (auth) {
+        if (isSignUp) {
+          try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            if (userCredential.user) {
+              try { await updateProfile(userCredential.user, { displayName: fullName }); } catch (_) {}
+            }
+            await login(userCredential.user.email, password, fullName, 'firebase_signup');
+          } catch (err) {
+            if (err.code === 'auth/email-already-in-use') {
+              try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                await login(userCredential.user.email, password, fullName, 'firebase_email');
+              } catch (_) {
+                await login(email, password, fullName, 'firebase_email');
+              }
+            } else {
+              // Fall back to local login if Firebase fails
+              await login(email, password, fullName, 'firebase_signup');
+            }
           }
-          await login(userCredential.user.email, password, fullName, 'firebase_signup');
-        } catch (err) {
-          if (err.code === 'auth/email-already-in-use') {
+        } else {
+          try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            await login(userCredential.user.email, password, fullName, 'firebase_email');
-          } else {
-            await login(email, password, fullName, 'firebase_signup');
+            const nameToUse = userCredential.user.displayName || fullName || 'Deepak Kumar';
+            await login(userCredential.user.email, password, nameToUse, 'firebase_email');
+          } catch (err) {
+            // Firebase auth failed — log in locally anyway
+            await login(email, password, fullName || 'Deepak Kumar', 'firebase_email');
           }
         }
       } else {
-        // Sign in existing user in Firebase Authentication
-        try {
-          const userCredential = await signInWithEmailAndPassword(auth, email, password);
-          const nameToUse = userCredential.user.displayName || fullName || 'Deepak Kumar';
-          await login(userCredential.user.email, password, nameToUse, 'firebase_email');
-        } catch (err) {
-          await login(email, password, fullName || 'Deepak Kumar', 'firebase_email');
-        }
+        // Offline/demo mode — local login only
+        await login(email, password, fullName || 'Deepak Kumar', 'local_auth');
       }
     } catch (err) {
       setErrorMsg(err.message || 'Authentication failed. Please check credentials.');
@@ -69,9 +79,14 @@ export const AuthScreen = () => {
     setLoading(true);
     setErrorMsg('');
     try {
-      const result = await signInWithPopup(auth, githubProvider);
-      const user = result.user;
-      await login(user.email || 'github.user@chainblock.io', 'oauth', user.displayName || 'Deepak Kumar (GitHub)', 'github_oauth');
+      if (auth && githubProvider) {
+        const result = await signInWithPopup(auth, githubProvider);
+        const user = result.user;
+        await login(user.email || 'github.user@chainblock.io', 'oauth', user.displayName || 'Deepak Kumar (GitHub)', 'github_oauth');
+      } else {
+        // Demo fallback when Firebase is not configured
+        await login('deepak.github@chainblock.io', 'oauth', 'Deepak Kumar (GitHub)', 'github_oauth');
+      }
     } catch (err) {
       console.log('GitHub OAuth Notice:', err);
       await login('deepak.github@chainblock.io', 'oauth', 'Deepak Kumar (GitHub)', 'github_oauth');
