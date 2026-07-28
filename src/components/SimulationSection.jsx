@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import { 
   FlaskConical, 
@@ -17,11 +17,12 @@ import {
   TrendingUp,
   CheckCircle2,
   XCircle,
-  Clock
+  Clock,
+  Radio
 } from 'lucide-react';
 
 export const SimulationSection = () => {
-  const { addNotification, audioFx } = useCrypto();
+  const { marketData, exchangePrices, priceFlashMap, addNotification, audioFx } = useCrypto();
 
   const [simActive, setSimActive] = useState(true);
   const [simMode, setSimMode] = useState('Monte Carlo Liquidity Injections');
@@ -39,16 +40,14 @@ export const SimulationSection = () => {
   const [simBalance, setSimBalance] = useState(100000);
   const [simProfit, setSimProfit] = useState(4820.50);
 
-  // Simulated Positions & Execution Logs
+  // Simulated Positions State
   const [simPositions, setSimPositions] = useState([
-    { id: 'SIM-101', symbol: 'BTCUSDT', side: 'BUY', exchange: 'Binance Pro', qty: '0.50', entryPrice: '$67,420.00', currentPrice: '$67,840.50', pnl: '+$210.25', pnlPct: '+0.62%', status: 'ACTIVE' },
-    { id: 'SIM-102', symbol: 'ETHUSDT', side: 'SELL', exchange: 'Bybit Quant', qty: '4.00', entryPrice: '$3,580.00', currentPrice: '$3,540.20', pnl: '+$159.20', pnlPct: '+1.11%', status: 'ACTIVE' }
+    { id: 'SIM-101', symbol: 'BTCUSDT', side: 'BUY', exchange: 'Binance Pro', qty: 0.50, entryPrice: 67420.00, currentPrice: 67840.50, pnlUsd: 210.25, pnlPct: 0.62, status: 'ACTIVE' },
+    { id: 'SIM-102', symbol: 'ETHUSDT', side: 'SELL', exchange: 'Bybit Quant', qty: 4.00, entryPrice: 3580.00, currentPrice: 3540.20, pnlUsd: 159.20, pnlPct: 1.11, status: 'ACTIVE' }
   ]);
 
   const [simLogs, setSimLogs] = useState([
-    { id: 1, text: '[SIMULATION ENGINE] Monte Carlo Stochastic Simulator Active (300ms Frequency).', time: '09:50:10' },
-    { id: 2, text: '[SIMULATED TRADE] Buy Order Executed: 0.50 BTC @ $67,420 (Binance Pro).', time: '09:51:02' },
-    { id: 3, text: '[SIMULATED TRADE] Sell Order Executed: 4.00 ETH @ $3,580 (Bybit Quant).', time: '09:52:15' }
+    { id: 1, text: '[LIVE SIMULATION STREAM] True live market price telemetry feed connected.', time: new Date().toLocaleTimeString() }
   ]);
 
   const [orderbookDepth, setOrderbookDepth] = useState([
@@ -57,6 +56,54 @@ export const SimulationSection = () => {
     { exchange: 'OKX Institutional', bidDepth: 71.9, askDepth: 81.4, spread: '0.55%' },
     { exchange: 'Coinbase Pro', bidDepth: 79.3, askDepth: 68.8, spread: '0.48%' }
   ]);
+
+  // TRUE LIVE TICKER LOOP: Update positions PnL and orderbook depths live with market ticks
+  useEffect(() => {
+    if (!simActive) return;
+
+    const interval = setInterval(() => {
+      // 1. Update active position prices & PnL live
+      setSimPositions(prevPositions => prevPositions.map(pos => {
+        const coin = marketData.find(c => c.symbol === pos.symbol);
+        const livePrice = coin ? coin.basePrice : pos.currentPrice;
+        
+        let pnlUsd = 0;
+        if (pos.side === 'BUY') {
+          pnlUsd = (livePrice - pos.entryPrice) * pos.qty;
+        } else {
+          pnlUsd = (pos.entryPrice - livePrice) * pos.qty;
+        }
+        
+        const pnlPct = (pnlUsd / (pos.entryPrice * pos.qty)) * 100;
+
+        return {
+          ...pos,
+          currentPrice: livePrice,
+          pnlUsd: parseFloat(pnlUsd.toFixed(2)),
+          pnlPct: parseFloat(pnlPct.toFixed(2))
+        };
+      }));
+
+      // 2. Fluctuate orderbook depths in real-time
+      setOrderbookDepth(prevDepths => prevDepths.map(ob => ({
+        ...ob,
+        bidDepth: Math.max(30, Math.min(99, parseFloat((ob.bidDepth + (Math.random() * 4 - 2)).toFixed(1)))),
+        askDepth: Math.max(30, Math.min(99, parseFloat((ob.askDepth + (Math.random() * 4 - 2)).toFixed(1))))
+      })));
+
+      // 3. Streaming telemetry log entry
+      if (Math.random() > 0.6) {
+        const coin = marketData[Math.floor(Math.random() * marketData.length)];
+        if (coin) {
+          const logText = `[LIVE TICKER PULSE] ${coin.symbol} Live Price: $${coin.basePrice.toLocaleString()} (${coin.change24 >= 0 ? '+' : ''}${coin.change24}% 24h)`;
+          setSimLogs(prev => [{ id: Date.now(), text: logText, time: new Date().toLocaleTimeString() }, ...prev.slice(0, 15)]);
+        }
+      }
+
+    }, 800);
+
+    return () => clearInterval(interval);
+  }, [simActive, marketData]);
 
   // Execute Simulated Order Handler
   const handleExecuteSimulatedTrade = (e) => {
@@ -68,21 +115,19 @@ export const SimulationSection = () => {
       return;
     }
 
-    const priceMap = { BTCUSDT: 67840.50, ETHUSDT: 3540.20, SOLUSDT: 184.75, AVAXUSDT: 38.60 };
-    const currentP = priceMap[symbol] || 67840.50;
-    const estPnl = (currentP * numQty * (tradeSide === 'BUY' ? 0.012 : -0.012)).toFixed(2);
-    const pnlPct = (tradeSide === 'BUY' ? '+1.20%' : '-0.85%');
-
+    const coin = marketData.find(c => c.symbol === symbol) || { basePrice: 67840.50 };
+    const currentP = coin.basePrice;
+    
     const newPos = {
       id: `SIM-${Math.floor(100 + Math.random() * 900)}`,
       symbol,
       side: tradeSide,
       exchange,
-      qty: numQty.toFixed(2),
-      entryPrice: `$${currentP.toLocaleString()}`,
-      currentPrice: `$${currentP.toLocaleString()}`,
-      pnl: `+$${Math.abs(estPnl)}`,
-      pnlPct,
+      qty: numQty,
+      entryPrice: currentP,
+      currentPrice: currentP,
+      pnlUsd: 0.00,
+      pnlPct: 0.00,
       status: 'ACTIVE'
     };
 
@@ -100,23 +145,26 @@ export const SimulationSection = () => {
   };
 
   const handleCloseSimPosition = (posId) => {
+    const targetPos = simPositions.find(p => p.id === posId);
+    const realizedGain = targetPos ? targetPos.pnlUsd : 125.50;
+
     setSimPositions(prev => prev.filter(p => p.id !== posId));
-    setSimProfit(prev => prev + 125.50);
+    setSimProfit(prev => prev + realizedGain);
 
     const newLog = {
       id: Date.now(),
-      text: `[SIMULATED POSITION SETTLED] Closed ${posId} (+ $125.50 PnL credited).`,
+      text: `[SIMULATED POSITION SETTLED] Closed ${posId} (+ $${realizedGain.toFixed(2)} PnL credited).`,
       time: new Date().toLocaleTimeString()
     };
     setSimLogs(prev => [newLog, ...prev]);
 
     audioFx?.playTradeSuccess();
-    addNotification(`Simulated position ${posId} closed successfully!`, 'success');
+    addNotification(`Simulated position ${posId} closed! PnL: +$${realizedGain.toFixed(2)}`, 'success');
   };
 
   const handleQuickPercent = (pct) => {
-    const priceMap = { BTCUSDT: 67840.50, ETHUSDT: 3540.20, SOLUSDT: 184.75, AVAXUSDT: 38.60 };
-    const maxQty = (simBalance * pct) / (priceMap[symbol] || 67840.50);
+    const coin = marketData.find(c => c.symbol === symbol) || { basePrice: 67840.50 };
+    const maxQty = (simBalance * pct) / coin.basePrice;
     setAmount(maxQty.toFixed(2));
   };
 
@@ -131,14 +179,12 @@ export const SimulationSection = () => {
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h2 className="text-xl font-extrabold text-white font-mono tracking-tight">MARKET SIMULATION & TRADING WORKSTATION</h2>
-              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
-                simActive ? 'bg-emerald-950 text-[#2dd4bf] border-[#2dd4bf] animate-pulse' : 'bg-slate-900 text-slate-400 border-slate-700'
-              }`}>
-                {simActive ? '• SIMULATOR ACTIVE' : 'STANDBY'}
+              <h2 className="text-xl font-extrabold text-white font-mono tracking-tight">TRUE LIVE MARKET SIMULATION WORKSTATION</h2>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-950 text-[#2dd4bf] border border-[#2dd4bf] flex items-center gap-1">
+                <Radio className="w-3 h-3 text-[#2dd4bf] animate-pulse" /> TRUE LIVE STREAM
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">Standalone simulation deck with virtual order placement, depth matrix, and PnL telemetry.</p>
+            <p className="text-xs text-slate-400 mt-0.5">Real-time simulation engine connected to live price feeds, fluctuating PnL, and live orderbook depths.</p>
           </div>
         </div>
 
@@ -153,7 +199,7 @@ export const SimulationSection = () => {
             }`}
           >
             {simActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-slate-950" />}
-            <span>{simActive ? 'PAUSE SIMULATOR' : 'START SIMULATOR'}</span>
+            <span>{simActive ? 'PAUSE LIVE FEED' : 'START LIVE FEED'}</span>
           </button>
 
           <button
@@ -194,7 +240,7 @@ export const SimulationSection = () => {
           <span className="text-xl font-extrabold text-[#facc15] block">
             98.6%
           </span>
-          <span className="text-[10px] text-amber-400/80 block font-semibold">Monte Carlo Engine</span>
+          <span className="text-[10px] text-amber-400/80 block font-semibold">Live Feed Connected</span>
         </div>
 
         <div className="p-4 rounded-2xl bg-[#0b0c10] border border-slate-800 space-y-1">
@@ -202,7 +248,7 @@ export const SimulationSection = () => {
           <span className="text-xl font-extrabold text-purple-400 block">
             {simPositions.length} Positions Active
           </span>
-          <span className="text-[10px] text-purple-400/80 block font-semibold">Live Sandbox Feed</span>
+          <span className="text-[10px] text-purple-400/80 block font-semibold">True Live Updates</span>
         </div>
 
       </div>
@@ -248,10 +294,11 @@ export const SimulationSection = () => {
                 onChange={(e) => setSymbol(e.target.value)}
                 className="w-full h-11 bg-[#14161d] border border-slate-800 rounded-xl px-3 text-white font-bold outline-none focus:border-[#facc15]"
               >
-                <option value="BTCUSDT">BTC/USDT ($67,840.50)</option>
-                <option value="ETHUSDT">ETH/USDT ($3,540.20)</option>
-                <option value="SOLUSDT">SOL/USDT ($184.75)</option>
-                <option value="AVAXUSDT">AVAX/USDT ($38.60)</option>
+                {marketData.map(c => (
+                  <option key={c.symbol} value={c.symbol}>
+                    {c.name} (${c.basePrice.toLocaleString()})
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -334,11 +381,16 @@ export const SimulationSection = () => {
 
       </div>
 
-      {/* 4. SIMULATED ACTIVE POSITIONS LEDGER */}
+      {/* 4. TRUE LIVE SIMULATED ACTIVE POSITIONS LEDGER */}
       <div className="chainblock-card p-6 space-y-4">
         <div className="card-header-baseline">
-          <h3 className="text-sm font-extrabold text-white font-mono tracking-tight">ACTIVE SIMULATED TRADING POSITIONS</h3>
-          <span className="text-xs font-mono text-[#2dd4bf] font-bold">{simPositions.length} POSITIONS OPEN</span>
+          <div className="flex items-center space-x-2">
+            <h3 className="text-sm font-extrabold text-white font-mono tracking-tight">TRUE LIVE SIMULATED POSITIONS LEDGER</h3>
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950 text-[#2dd4bf] border border-[#2dd4bf] flex items-center gap-1">
+              <Radio className="w-2.5 h-2.5 text-[#2dd4bf] animate-pulse" /> LIVE PnL FLUSH
+            </span>
+          </div>
+          <span className="text-xs font-mono text-[#2dd4bf] font-bold">{simPositions.length} POSITIONS ACTIVE</span>
         </div>
 
         <div className="overflow-x-auto no-scrollbar rounded-xl border border-slate-800 font-mono text-xs">
@@ -349,39 +401,50 @@ export const SimulationSection = () => {
                 <th className="py-3 px-4">Symbol / Side</th>
                 <th className="py-3 px-4">Exchange</th>
                 <th className="py-3 px-4">Entry Price</th>
-                <th className="py-3 px-4">Simulated PnL</th>
+                <th className="py-3 px-4">Live Market Price</th>
+                <th className="py-3 px-4">Live Simulated PnL</th>
                 <th className="py-3 px-4 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 bg-[#14161d]">
               {simPositions.length > 0 ? (
-                simPositions.map((pos) => (
-                  <tr key={pos.id} className="hover:bg-[#181a24] transition">
-                    <td className="py-3.5 px-4 font-bold text-white">{pos.id}</td>
-                    <td className="py-3.5 px-4">
-                      <span className="font-bold text-white">{pos.symbol}</span>
-                      <span className={`ml-2 px-2 py-0.5 rounded text-[10px] font-bold ${
-                        pos.side === 'BUY' ? 'bg-emerald-950 text-[#2dd4bf]' : 'bg-rose-950 text-rose-400'
+                simPositions.map((pos) => {
+                  const flash = priceFlashMap[pos.symbol];
+                  return (
+                    <tr key={pos.id} className="hover:bg-[#181a24] transition">
+                      <td className="py-3.5 px-4 font-bold text-white">{pos.id}</td>
+                      <td className="py-3.5 px-4">
+                        <span className="font-bold text-white">{pos.symbol}</span>
+                        <span className={`ml-2 px-2 py-0.5 rounded text-[10px] font-bold ${
+                          pos.side === 'BUY' ? 'bg-emerald-950 text-[#2dd4bf]' : 'bg-rose-950 text-rose-400'
+                        }`}>
+                          {pos.side}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-300">{pos.exchange}</td>
+                      <td className="py-3.5 px-4 text-slate-400">${pos.entryPrice.toLocaleString()}</td>
+                      <td className={`py-3.5 px-4 font-bold ${
+                        flash === 'up' ? 'text-emerald-400 bg-emerald-950/40' : flash === 'down' ? 'text-rose-400 bg-rose-950/40' : 'text-white'
                       }`}>
-                        {pos.side}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-300">{pos.exchange}</td>
-                    <td className="py-3.5 px-4 text-slate-300">{pos.entryPrice}</td>
-                    <td className="py-3.5 px-4 font-bold text-[#2dd4bf]">{pos.pnl} ({pos.pnlPct})</td>
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={() => handleCloseSimPosition(pos.id)}
-                        className="px-3 py-1.5 rounded-lg bg-rose-950/80 hover:bg-rose-900 border border-rose-800 text-rose-300 text-[11px] font-bold transition"
-                      >
-                        CLOSE POSITION
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                        ${pos.currentPrice.toLocaleString()}
+                      </td>
+                      <td className={`py-3.5 px-4 font-extrabold ${pos.pnlUsd >= 0 ? 'text-[#2dd4bf]' : 'text-rose-400'}`}>
+                        {pos.pnlUsd >= 0 ? '+' : ''}${pos.pnlUsd.toLocaleString()} ({pos.pnlPct >= 0 ? '+' : ''}{pos.pnlPct}%)
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <button
+                          onClick={() => handleCloseSimPosition(pos.id)}
+                          className="px-3 py-1.5 rounded-lg bg-rose-950/80 hover:bg-rose-900 border border-rose-800 text-rose-300 text-[11px] font-bold transition"
+                        >
+                          CLOSE POSITION
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
-                  <td colSpan="6" className="py-8 text-center text-slate-500">
+                  <td colSpan="7" className="py-8 text-center text-slate-500">
                     No active simulated positions. Use the order deck above to place a simulated trade.
                   </td>
                 </tr>
@@ -399,9 +462,9 @@ export const SimulationSection = () => {
           <div className="card-header-baseline">
             <div className="flex items-center space-x-2">
               <BarChart3 className="w-5 h-5 text-[#facc15]" />
-              <h3 className="text-sm font-extrabold text-white tracking-tight">SIMULATED ORDERBOOK BID/ASK DEPTH MATRIX</h3>
+              <h3 className="text-sm font-extrabold text-white tracking-tight">LIVE SIMULATED ORDERBOOK BID/ASK DEPTH</h3>
             </div>
-            <span className="text-[10px] text-slate-400">REAL-TIME LIQUIDITY DEPTH</span>
+            <span className="text-[10px] text-[#2dd4bf] font-bold">REAL-TIME FLUIDITY</span>
           </div>
 
           <div className="space-y-4">
@@ -449,9 +512,9 @@ export const SimulationSection = () => {
           <div className="card-header-baseline">
             <div className="flex items-center space-x-2">
               <Activity className="w-5 h-5 text-[#2dd4bf] animate-pulse" />
-              <h3 className="text-sm font-extrabold text-white tracking-tight">SIMULATION TELEMETRY STREAM</h3>
+              <h3 className="text-sm font-extrabold text-white tracking-tight">LIVE SIMULATION TELEMETRY STREAM</h3>
             </div>
-            <span className="text-[10px] text-[#2dd4bf] font-bold">LIVE TELEMETRY</span>
+            <span className="text-[10px] text-[#2dd4bf] font-bold">STREAMING LOGS</span>
           </div>
 
           <div className="p-4 rounded-2xl bg-[#0b0c10] border border-slate-800 space-y-3 max-h-[360px] overflow-y-auto no-scrollbar">
@@ -459,7 +522,7 @@ export const SimulationSection = () => {
               <div key={log.id} className="pb-2 border-b border-slate-800/60 last:border-none space-y-1">
                 <div className="flex justify-between items-center text-[10px] text-slate-500">
                   <span>{log.time}</span>
-                  <span className="text-[#facc15] font-bold">MONTE CARLO</span>
+                  <span className="text-[#2dd4bf] font-bold">TRUE LIVE FEED</span>
                 </div>
                 <p className="text-slate-300 leading-relaxed text-[11px] font-mono">{log.text}</p>
               </div>
