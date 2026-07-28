@@ -152,55 +152,67 @@ export const CryptoProvider = ({ children }) => {
 
   // Secure Authentication Login Handler
   const login = async (email, password, name = 'Deepak Kumar', provider = 'firebase_email') => {
-    const cleanEmail = sanitizeInput(email || 'deepak@chainblock.io');
-    const cleanName = sanitizeInput(name || 'Deepak Kumar');
-    const storageKey = getStorageKey(cleanEmail);
+    try {
+      const cleanEmail = sanitizeInput(email || 'deepak@chainblock.io');
+      const cleanName = sanitizeInput(name || 'Deepak Kumar');
+      const storageKey = getStorageKey(cleanEmail);
 
-    // Generate deterministic 4-digit Account ID from email hash
-    let hash = 0;
-    for (let i = 0; i < cleanEmail.length; i++) {
-      hash = (hash << 5) - hash + cleanEmail.charCodeAt(i);
-      hash |= 0;
-    }
-    const accountNum = Math.abs(hash % 9000) + 1000;
-    const accountId = `#${accountNum}-QUANT-PRO`;
+      // Generate deterministic 4-digit Account ID from email hash
+      let hash = 0;
+      for (let i = 0; i < cleanEmail.length; i++) {
+        hash = (hash << 5) - hash + cleanEmail.charCodeAt(i);
+        hash |= 0;
+      }
+      const accountNum = Math.abs(hash % 9000) + 1000;
+      const accountId = `#${accountNum}-QUANT-PRO`;
 
-    const newUserObj = {
-      name: cleanName,
-      email: cleanEmail,
-      id: accountId,
-      avatarInitials: cleanName.split(' ').map(n => n.charAt(0)).join('').substring(0, 2).toUpperCase() || 'U',
-      role: 'Institutional Quant Trader',
-      tier: 'VIP TIER 4 INSTITUTIONAL',
-      kycStatus: 'KYC LEVEL 3 VERIFIED',
-      secStatus: '256-BIT ENCRYPTED'
-    };
+      const newUserObj = {
+        name: cleanName,
+        email: cleanEmail,
+        id: accountId,
+        avatarInitials: cleanName.split(' ').map(n => n.charAt(0)).join('').substring(0, 2).toUpperCase() || 'U',
+        role: 'Institutional Quant Trader',
+        tier: 'VIP TIER 4 INSTITUTIONAL',
+        kycStatus: 'KYC LEVEL 3 VERIFIED',
+        secStatus: '256-BIT ENCRYPTED'
+      };
 
-    setUser(newUserObj);
-    setIsAuthenticated(true);
+      setUser(newUserObj);
+      setIsAuthenticated(true);
 
-    const existingRaw = localStorage.getItem(storageKey);
-    if (existingRaw) {
-      try {
-        const saved = JSON.parse(existingRaw);
-        setWallet(saved.wallet || NEW_USER_WALLET);
-        setOpenPositions(saved.openPositions || []);
-        setTradeHistory(saved.tradeHistory || []);
-        setWithdrawalHistory(saved.withdrawalHistory || []);
-        setTotalBotProfit(saved.totalBotProfit || 0.00);
-        setAutoTradeCount(saved.autoTradeCount || 0);
-        setNotifications(saved.notifications || []);
-        addNotification(`Welcome back, ${cleanName}! Loaded saved workspace.`, 'success');
-      } catch (e) {
+      const existingRaw = localStorage.getItem(storageKey);
+      if (existingRaw) {
+        try {
+          const saved = JSON.parse(existingRaw);
+          setWallet(saved.wallet || NEW_USER_WALLET);
+          setOpenPositions(saved.openPositions || []);
+          setTradeHistory(saved.tradeHistory || []);
+          setWithdrawalHistory(saved.withdrawalHistory || []);
+          setTotalBotProfit(saved.totalBotProfit || 0.00);
+          setAutoTradeCount(saved.autoTradeCount || 0);
+          setNotifications(saved.notifications || []);
+          addNotification(`Welcome back, ${cleanName}! Loaded saved workspace.`, 'success');
+        } catch (e) {
+          initializeFreshUser(cleanEmail, cleanName);
+        }
+      } else {
         initializeFreshUser(cleanEmail, cleanName);
       }
-    } else {
-      initializeFreshUser(cleanEmail, cleanName);
-    }
 
-    const token = await recordFirebaseLoginLog({ email: cleanEmail, name: cleanName }, provider);
-    setSessionToken(token);
-    audioFx.playTradeSuccess();
+      try {
+        const token = await recordFirebaseLoginLog({ email: cleanEmail, name: cleanName }, provider);
+        setSessionToken(token);
+      } catch (logErr) {
+        console.warn('Firebase login logging notice:', logErr);
+      }
+
+      try {
+        audioFx.playTradeSuccess();
+      } catch (_) {}
+    } catch (err) {
+      console.error('Fatal login error caught safely:', err);
+      setIsAuthenticated(true);
+    }
   };
 
   const initializeFreshUser = (email, name) => {

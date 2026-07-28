@@ -23,38 +23,39 @@ export const sanitizeInput = (input) => {
 
 /**
  * Store user login record in Firebase Firestore Database.
- * Silently skips if Firebase is not configured.
+ * Silently skips if Firebase is not configured or errors out.
  */
 export const recordFirebaseLoginLog = async (userData, provider = 'email_password') => {
-  const sanitizedEmail = sanitizeInput(userData.email);
-  const sanitizedName = sanitizeInput(userData.name);
   const sessionToken = generateSecureSessionToken();
 
-  // Skip Firestore if db is not initialized (no Firebase credentials)
-  if (!db) {
-    console.info('[Firebase] Offline/demo mode — login log stored locally only.');
-    return sessionToken;
-  }
-
-  const logPayload = {
-    userId: userData.uid || `usr_${Date.now()}`,
-    name: sanitizedName || 'Deepak Kumar',
-    email: sanitizedEmail || 'deepak@chainblock.io',
-    provider,
-    loginTimestamp: new Date().toISOString(),
-    serverTimestamp: serverTimestamp(),
-    sessionToken,
-    authStatus: 'SUCCESS',
-    securityDetails: {
-      sslEncrypted: true,
-      encryptionLevel: '256-bit AES',
-      userAgent: navigator.userAgent,
-      platform: navigator.platform,
-      language: navigator.language
-    }
-  };
-
   try {
+    const sanitizedEmail = sanitizeInput(userData?.email || 'user@chainblock.io');
+    const sanitizedName = sanitizeInput(userData?.name || 'Trader');
+
+    // Skip Firestore if db is not initialized (no Firebase credentials)
+    if (!db) {
+      console.info('[Firebase] Offline/demo mode — login log stored locally only.');
+      return sessionToken;
+    }
+
+    const logPayload = {
+      userId: userData?.uid || `usr_${Date.now()}`,
+      name: sanitizedName,
+      email: sanitizedEmail,
+      provider,
+      loginTimestamp: new Date().toISOString(),
+      serverTimestamp: serverTimestamp ? serverTimestamp() : new Date().toISOString(),
+      sessionToken,
+      authStatus: 'SUCCESS',
+      securityDetails: {
+        sslEncrypted: true,
+        encryptionLevel: '256-bit AES',
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        language: navigator.language
+      }
+    };
+
     const logsRef = collection(db, 'login_logs');
     await addDoc(logsRef, logPayload);
 
@@ -69,7 +70,7 @@ export const recordFirebaseLoginLog = async (userData, provider = 'email_passwor
 
     console.log('[SECURITY & FIREBASE] Login metadata successfully recorded in Firestore database.');
   } catch (err) {
-    console.warn('[FIREBASE NOTICE] Firestore write fallback to local session state:', err.message);
+    console.warn('[FIREBASE NOTICE] Firestore write fallback to local session state:', err?.message);
   }
 
   return sessionToken;
@@ -77,68 +78,68 @@ export const recordFirebaseLoginLog = async (userData, provider = 'email_passwor
 
 /**
  * Store withdrawal transactions in Firebase Firestore Database.
- * Silently skips if Firebase is not configured.
+ * Silently skips if Firebase is not configured or errors out.
  */
 export const recordFirebaseWithdrawal = async (withdrawData) => {
-  if (!db) return null;
-
-  const sanitizedAddress = sanitizeInput(withdrawData.destinationAddress);
-
-  const payload = {
-    userId: withdrawData.email || 'deepak@chainblock.io',
-    userName: withdrawData.name || 'Deepak Kumar',
-    amount: parseFloat(withdrawData.amount),
-    currency: withdrawData.currency || 'USDT',
-    destinationAddress: sanitizedAddress || '0x71C7...d7B41',
-    networkChain: withdrawData.networkChain || 'Arbitrum One',
-    walletMode: withdrawData.walletMode || 'DEMO',
-    status: 'COMPLETED',
-    txHash: withdrawData.txHash || `0x${Math.random().toString(16).substring(2)}${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    serverTimestamp: serverTimestamp()
-  };
-
   try {
+    if (!db) return null;
+
+    const sanitizedAddress = sanitizeInput(withdrawData?.destinationAddress);
+
+    const payload = {
+      userId: withdrawData?.email || 'deepak@chainblock.io',
+      userName: withdrawData?.name || 'Deepak Kumar',
+      amount: parseFloat(withdrawData?.amount || 0),
+      currency: withdrawData?.currency || 'USDT',
+      destinationAddress: sanitizedAddress || '0x71C7...d7B41',
+      networkChain: withdrawData?.networkChain || 'Arbitrum One',
+      walletMode: withdrawData?.walletMode || 'DEMO',
+      status: 'COMPLETED',
+      txHash: withdrawData?.txHash || `0x${Math.random().toString(16).substring(2)}${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      serverTimestamp: serverTimestamp ? serverTimestamp() : new Date().toISOString()
+    };
+
     const withdrawRef = collection(db, 'withdrawals');
     await addDoc(withdrawRef, payload);
     console.log('[FIREBASE] Withdrawal successfully stored in Firestore withdrawals collection.');
+    return payload;
   } catch (err) {
-    console.warn('[FIREBASE NOTICE] Firestore withdrawal write notice:', err.message);
+    console.warn('[FIREBASE NOTICE] Firestore withdrawal write notice:', err?.message);
+    return null;
   }
-
-  return payload;
 };
 
 /**
  * Store AI Bot execution and cumulative profit logs in Firebase Firestore Database.
- * Silently skips if Firebase is not configured.
+ * Silently skips if Firebase is not configured or errors out.
  */
 export const recordFirebaseBotTradeLog = async (botTradeData) => {
-  if (!db) return null;
-
-  const payload = {
-    tradeId: botTradeData.id || `TRD-BOT-${Date.now()}`,
-    symbol: botTradeData.symbol,
-    strategy: botTradeData.strategy || 'Autopilot Bot Alpha',
-    buyExchange: botTradeData.buyExchange,
-    sellExchange: botTradeData.sellExchange,
-    buyPrice: botTradeData.ex1Price || botTradeData.buyPrice,
-    sellPrice: botTradeData.ex2Price || botTradeData.sellPrice,
-    amount: botTradeData.unitSize || botTradeData.amount || 0.5,
-    netProfit: botTradeData.netProfit,
-    totalBotCumulativeProfit: botTradeData.totalBotProfit,
-    isBot: true,
-    timestamp: new Date().toISOString(),
-    serverTimestamp: serverTimestamp()
-  };
-
   try {
+    if (!db) return null;
+
+    const payload = {
+      tradeId: botTradeData?.id || `TRD-BOT-${Date.now()}`,
+      symbol: botTradeData?.symbol,
+      strategy: botTradeData?.strategy || 'Autopilot Bot Alpha',
+      buyExchange: botTradeData?.buyExchange,
+      sellExchange: botTradeData?.sellExchange,
+      buyPrice: botTradeData?.ex1Price || botTradeData?.buyPrice,
+      sellPrice: botTradeData?.ex2Price || botTradeData?.sellPrice,
+      amount: botTradeData?.unitSize || botTradeData?.amount || 0.5,
+      netProfit: botTradeData?.netProfit,
+      totalBotCumulativeProfit: botTradeData?.totalBotProfit,
+      isBot: true,
+      timestamp: new Date().toISOString(),
+      serverTimestamp: serverTimestamp ? serverTimestamp() : new Date().toISOString()
+    };
+
     const botLogsRef = collection(db, 'bot_trade_logs');
     await addDoc(botLogsRef, payload);
     console.log('[FIREBASE] Bot Trade Log & Cumulative Profit stored in Firestore bot_trade_logs collection.');
+    return payload;
   } catch (err) {
-    console.warn('[FIREBASE NOTICE] Firestore bot log write notice:', err.message);
+    console.warn('[FIREBASE NOTICE] Firestore bot log write notice:', err?.message);
+    return null;
   }
-
-  return payload;
 };
