@@ -22,6 +22,7 @@ import { GlobalModals } from './components/GlobalModals';
 import { WalletSection } from './components/WalletSection';
 import { AccountSection } from './components/AccountSection';
 import { LiveCryptoNews } from './components/LiveCryptoNews';
+import { SimulationSection } from './components/SimulationSection';
 
 const DashboardContent = () => {
   const { activeTab } = useCrypto();
@@ -71,6 +72,13 @@ const DashboardContent = () => {
             <PaperTradingPanel />
             <LivePositions />
             <TradeHistory />
+          </div>
+        )}
+
+        {/* Dedicated Standalone Quantitative Simulation Section */}
+        {activeTab === 'simulation' && (
+          <div className="space-y-6">
+            <SimulationSection />
           </div>
         )}
 

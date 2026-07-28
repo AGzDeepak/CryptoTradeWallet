@@ -17,6 +17,7 @@ export const Header = () => {
   const getTitle = () => {
     switch (activeTab) {
       case 'papertrading': return 'Paper Trading Terminal';
+      case 'simulation': return 'Quantitative Market Simulator';
       case 'account': return 'Account Management';
       case 'wallet': return 'Institutional Wallet';
       case 'news': return 'Live Crypto News & Intelligence';
