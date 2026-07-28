@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
+import { sendRealWeb3Transaction } from '../services/web3Service';
 import { 
   Wallet, 
   ArrowUpRight, 
@@ -72,16 +73,32 @@ export const WalletSection = () => {
     setTimeout(() => setCopied(''), 2000);
   };
 
-  const handleDepositSubmit = (e) => {
+  const handleDepositSubmit = async (e) => {
     e.preventDefault();
     const num = parseFloat(depositAmount);
     if (isNaN(num) || num <= 0) {
       addNotification('Please enter a valid deposit amount.', 'warning');
       return;
     }
-    depositFunds(num, depositToken);
-    addNotification(`✅ Deposited $${num.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${depositToken} into balance!`, 'success');
-    setDepositAmount('');
+
+    setIsSubmitting(true);
+    try {
+      if (walletMode === 'REAL' && realWallet.connected) {
+        addNotification('🦊 Opening Web3 Wallet prompt to confirm deposit transfer...', 'info');
+        const ethVal = (num / 3540.20).toFixed(4);
+        const txRes = await sendRealWeb3Transaction(realWallet.address, '0x71C7656EC7ab88b098defB751B7401B5f6d7B41', ethVal, realWallet.chainId);
+        depositFunds(num, depositToken);
+        addNotification(`✅ Web3 Deposit Confirmed! Tx: ${txRes.txHash.substring(0, 10)}...`, 'success');
+      } else {
+        depositFunds(num, depositToken);
+        addNotification(`✅ Deposited $${num.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${depositToken} into balance!`, 'success');
+      }
+      setDepositAmount('');
+    } catch (err) {
+      addNotification(`Deposit error: ${err.message}`, 'danger');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleWithdrawSubmit = async (e) => {
@@ -100,6 +117,12 @@ export const WalletSection = () => {
 
     setIsSubmitting(true);
     try {
+      if (walletMode === 'REAL' && realWallet.connected) {
+        addNotification('🦊 Opening Web3 Wallet prompt to sign on-chain withdrawal transfer...', 'info');
+        const ethVal = (num / 3540.20).toFixed(4);
+        await sendRealWeb3Transaction(realWallet.address, destAddress, ethVal, realWallet.chainId);
+      }
+
       const result = await withdrawFunds(num, destAddress, withdrawCurrency, withdrawNetwork);
       if (result !== false) {
         setWithdrawSuccess(true);
