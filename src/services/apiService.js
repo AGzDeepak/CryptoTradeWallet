@@ -17,6 +17,36 @@ export const apiService = {
     return null;
   },
 
+  // POST /api/swap/estimate
+  async estimatePythonSwap(payCoin, getCoin, payAmount) {
+    try {
+      const res = await fetch(`${PYTHON_API_BASE_URL}/swap/estimate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payCoin, getCoin, payAmount })
+      });
+      if (res.ok) return await res.json();
+    } catch (err) {
+      console.warn('Python swap estimate notice:', err?.message);
+    }
+    return null;
+  },
+
+  // POST /api/swap/execute
+  async executePythonSwap(email, side, payCoin, getCoin, payAmount, walletMode, walletAddress = null) {
+    try {
+      const res = await fetch(`${PYTHON_API_BASE_URL}/swap/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, side, payCoin, getCoin, payAmount, walletMode, walletAddress })
+      });
+      if (res.ok) return await res.json();
+    } catch (err) {
+      console.warn('Python swap execute notice:', err?.message);
+    }
+    return null;
+  },
+
   // GET /api/user/workspace
   async getUserWorkspace(email = 'deepak@chainblock.io', name = 'Deepak Kumar') {
     try {

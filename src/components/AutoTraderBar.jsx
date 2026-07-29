@@ -42,18 +42,18 @@ export const AutoTraderBar = memo(() => {
   };
 
   return (
-    <div className="chainblock-card p-6 rounded-2xl space-y-5 font-sans">
+    <div className="chainblock-card p-6 rounded-2xl space-y-6 font-sans">
       
-      {/* Top Controls Bar */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+      {/* Row 1: Header (Branding & Status on Left, Bot Cum. Profit, Wallet Balance, and Action Button on Right) */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
         
-        {/* 1. Left: Bot Branding */}
-        <div className="flex items-center space-x-3.5 shrink-0">
-          <div className="w-11 h-11 rounded-xl bg-[#facc15] text-slate-950 flex items-center justify-center font-bold shadow-[0_0_20px_rgba(250,204,21,0.35)]">
+        {/* Left: Bot Emblem & Title */}
+        <div className="flex items-center space-x-3.5">
+          <div className="w-11 h-11 rounded-xl bg-[#facc15] text-slate-950 flex items-center justify-center font-bold shadow-[0_0_20px_rgba(250,204,21,0.35)] shrink-0">
             <Bot className="w-6 h-6 stroke-[2.5]" />
           </div>
           <div>
-            <div className="flex items-center space-x-2.5">
+            <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-extrabold text-base text-white font-mono tracking-tight">AUTOPILOT QUANT COMMAND DECK</h3>
               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
                 isInsufficientFunds
@@ -69,148 +69,150 @@ export const AutoTraderBar = memo(() => {
           </div>
         </div>
 
-        {/* Controls Cluster */}
-        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-start lg:justify-end">
-          
-          {/* Mode Switcher (DEMO vs REAL MONEY) */}
-          <div className="bg-[#0b0c10] p-1.5 rounded-xl border border-slate-800 shrink-0 font-mono">
-            <div className="text-[10px] text-slate-400 mb-1 uppercase font-bold">Execution Engine Mode</div>
-            <div className="flex space-x-1 bg-[#14161d] p-1 rounded-lg border border-slate-800">
-              <button
-                onClick={() => setWalletMode('DEMO')}
-                className={`px-2.5 py-1 rounded text-[10px] font-bold transition ${
-                  walletMode === 'DEMO' ? 'bg-[#facc15] text-slate-950 shadow' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                DEMO
-              </button>
-              <button
-                onClick={() => {
-                  if (realWallet.connected) setWalletMode('REAL');
-                  else connectRealWallet('MetaMask');
-                }}
-                className={`px-2.5 py-1 rounded text-[10px] font-bold transition flex items-center gap-1 ${
-                  walletMode === 'REAL' ? 'bg-[#2dd4bf] text-slate-950 shadow' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                🟢 REAL MONEY
-              </button>
-            </div>
+        {/* Right: Balance Metrics & Activate/Pause Button */}
+        <div className="flex items-center space-x-4 shrink-0 self-end sm:self-auto">
+          <div className="text-right font-mono hidden md:block">
+            <span className="text-[10px] text-slate-400 uppercase block">Bot Cum. Profit</span>
+            <span className="text-base font-extrabold text-[#facc15]">
+              +${totalBotProfit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            </span>
+            <span className="text-[10px] text-slate-400 block">{autoTradeCount} Executions</span>
           </div>
-          <div className="bg-[#0b0c10] p-2 px-3 rounded-xl border border-slate-800 shrink-0">
-            <div className="text-[10px] text-slate-400 font-mono mb-1 uppercase tracking-wider font-bold">
-              Trading Strategy Profile
-            </div>
-            <select
-              value={tradingMode}
-              onChange={(e) => setTradingMode(e.target.value)}
-              className="bg-[#14161d] border border-slate-800 rounded-lg px-2.5 py-1 text-white font-mono text-xs outline-none focus:border-[#facc15]"
+
+          <div className="text-right font-mono">
+            <span className="text-[10px] text-slate-400 uppercase block">Wallet Balance</span>
+            <span className={`text-base font-extrabold block ${
+              walletBalance <= 0 ? 'text-rose-400' : 'text-white'
+            }`}>
+              ${walletBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            </span>
+            <span className={`text-[10px] block font-bold ${
+              walletBalance < MIN_TRADE_FUNDS ? 'text-rose-400' : 'text-[#2dd4bf]'
+            }`}>
+              {walletBalance < MIN_TRADE_FUNDS ? 'INSUFFICIENT' : 'USDT READY'}
+            </span>
+          </div>
+
+          <button
+            onClick={() => {
+              if (autoStopReason) handleResetLimits();
+              else setAutoTradingEnabled(!autoTradingEnabled);
+            }}
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold font-mono transition border shadow-lg flex items-center gap-1.5 ${
+              autoStopReason
+                ? 'bg-[#facc15] text-slate-950 border-[#facc15] animate-pulse'
+                : autoTradingEnabled
+                  ? 'bg-rose-950/80 hover:bg-rose-900 text-rose-300 border-rose-800'
+                  : 'bg-emerald-950 hover:bg-emerald-900 text-[#2dd4bf] border-[#2dd4bf]'
+            }`}
+          >
+            {autoStopReason ? (
+              <span>RESET & RESUME</span>
+            ) : autoTradingEnabled ? (
+              <>
+                <Pause className="w-3.5 h-3.5" />
+                <span>PAUSE BOT</span>
+              </>
+            ) : (
+              <>
+                <Play className="w-3.5 h-3.5" />
+                <span>ACTIVATE BOT</span>
+              </>
+            )}
+          </button>
+        </div>
+
+      </div>
+
+      {/* Row 2: Controls Grid Across Full Card Width */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        {/* 1. Execution Engine Mode */}
+        <div className="bg-[#0b0c10] p-3 rounded-xl border border-slate-800 font-mono flex flex-col justify-between">
+          <div className="text-[10px] text-slate-400 mb-1.5 uppercase font-bold tracking-wider">Execution Engine Mode</div>
+          <div className="grid grid-cols-2 gap-1 bg-[#14161d] p-1 rounded-lg border border-slate-800">
+            <button
+              onClick={() => setWalletMode('DEMO')}
+              className={`py-1.5 rounded text-[10px] font-bold transition text-center ${
+                walletMode === 'DEMO' ? 'bg-[#facc15] text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+              }`}
             >
-              <option value="Balanced">Balanced Yield</option>
-              <option value="Aggressive">Aggressive Arbitrage</option>
-              <option value="Conservative">Conservative Safe Guard</option>
-            </select>
+              DEMO
+            </button>
+            <button
+              onClick={() => {
+                if (realWallet.connected) setWalletMode('REAL');
+                else connectRealWallet('MetaMask');
+              }}
+              className={`py-1.5 rounded text-[10px] font-bold transition flex items-center justify-center gap-1 ${
+                walletMode === 'REAL' ? 'bg-[#2dd4bf] text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              🟢 REAL MONEY
+            </button>
           </div>
+        </div>
 
-          {/* 3. Min Profit Target Slider Container */}
-          <div className="bg-[#0b0c10] p-2 px-3.5 rounded-xl border border-slate-800 w-full sm:w-44 shrink-0">
-            <div className="flex justify-between items-center text-[10px] font-mono text-slate-400 mb-1">
-              <span className="flex items-center gap-1">
-                <Sliders className="w-3 h-3 text-[#facc15]" /> Min Profit Target
-              </span>
-              <span className="text-[#facc15] font-extrabold text-xs font-mono">{minProfitThreshold}%</span>
-            </div>
-            <input
-              type="range"
-              min="0.10"
-              max="1.00"
-              step="0.05"
-              value={minProfitThreshold}
-              onChange={(e) => setMinProfitThreshold(parseFloat(e.target.value))}
-              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-[#facc15]"
-            />
+        {/* 2. Trading Strategy Profile */}
+        <div className="bg-[#0b0c10] p-3 rounded-xl border border-slate-800 font-mono flex flex-col justify-between">
+          <div className="text-[10px] text-slate-400 mb-1.5 uppercase tracking-wider font-bold">
+            Trading Strategy Profile
           </div>
+          <select
+            value={tradingMode}
+            onChange={(e) => setTradingMode(e.target.value)}
+            className="w-full bg-[#14161d] border border-slate-800 rounded-lg px-3 py-1.5 text-white font-mono text-xs outline-none focus:border-[#facc15]"
+          >
+            <option value="Balanced">Balanced Yield</option>
+            <option value="Aggressive">Aggressive Arbitrage</option>
+            <option value="Conservative">Conservative Safe Guard</option>
+          </select>
+        </div>
 
-          {/* 4. User Money Control Risk Limits (Take Profit Target & Stop Loss) */}
-          <div className="bg-[#0b0c10] p-2 px-3 rounded-xl border border-slate-800 font-mono text-xs shrink-0 flex items-center space-x-2">
+        {/* 3. Min Profit Target Slider */}
+        <div className="bg-[#0b0c10] p-3 rounded-xl border border-slate-800 font-mono flex flex-col justify-between">
+          <div className="flex justify-between items-center text-[10px] text-slate-400 mb-1.5 uppercase font-bold tracking-wider">
+            <span className="flex items-center gap-1">
+              <Sliders className="w-3 h-3 text-[#facc15]" /> Min Profit Target
+            </span>
+            <span className="text-[#facc15] font-extrabold text-xs font-mono">{minProfitThreshold}%</span>
+          </div>
+          <input
+            type="range"
+            min="0.10"
+            max="1.00"
+            step="0.05"
+            value={minProfitThreshold}
+            onChange={(e) => setMinProfitThreshold(parseFloat(e.target.value))}
+            className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-[#facc15] my-auto"
+          />
+        </div>
+
+        {/* 4. Target Stop & Stop Loss */}
+        <div className="bg-[#0b0c10] p-3 rounded-xl border border-slate-800 font-mono text-xs flex flex-col justify-between">
+          <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1.5">
+            Risk Limits (Auto-Pause)
+          </div>
+          <div className="grid grid-cols-2 gap-2">
             <div>
-              <div className="text-[10px] text-[#2dd4bf] uppercase font-bold flex items-center gap-1">
-                🎯 Target Stop ($)
-              </div>
+              <div className="text-[9px] text-[#2dd4bf] uppercase font-bold truncate">🎯 Target ($)</div>
               <input
                 type="number"
                 value={takeProfitTarget}
                 onChange={(e) => setTakeProfitTarget(parseFloat(e.target.value) || 0)}
-                className="bg-[#14161d] border border-slate-800 rounded px-2 py-0.5 text-white font-mono text-xs w-20 outline-none focus:border-[#2dd4bf]"
+                className="w-full bg-[#14161d] border border-slate-800 rounded px-2 py-1 text-white font-mono text-xs outline-none focus:border-[#2dd4bf]"
               />
             </div>
-
             <div>
-              <div className="text-[10px] text-rose-400 uppercase font-bold flex items-center gap-1">
-                🛑 Stop Loss ($)
-              </div>
+              <div className="text-[9px] text-rose-400 uppercase font-bold truncate">🛑 Stop Loss ($)</div>
               <input
                 type="number"
                 value={stopLossLimit}
                 onChange={(e) => setStopLossLimit(parseFloat(e.target.value) || 0)}
-                className="bg-[#14161d] border border-slate-800 rounded px-2 py-0.5 text-white font-mono text-xs w-20 outline-none focus:border-rose-500"
+                className="w-full bg-[#14161d] border border-slate-800 rounded px-2 py-1 text-white font-mono text-xs outline-none focus:border-rose-500"
               />
             </div>
           </div>
-
-          {/* 5. Bot Cumulative Profit & Activate/Pause Button */}
-          <div className="flex items-center space-x-4 pl-2 shrink-0">
-            <div className="text-right font-mono">
-              <span className="text-[10px] text-slate-400 uppercase block">Bot Cum. Profit</span>
-              <span className="text-lg font-extrabold text-[#facc15]">
-                +${totalBotProfit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </span>
-              <span className="text-[10px] text-slate-400 block">{autoTradeCount} Executions</span>
-            </div>
-
-            <div className="text-right font-mono">
-              <span className="text-[10px] text-slate-400 uppercase block">Wallet Balance</span>
-              <span className={`text-lg font-extrabold block ${
-                walletBalance <= 0 ? 'text-rose-400' : 'text-white'
-              }`}>
-                ${walletBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </span>
-              <span className={`text-[10px] block font-bold ${
-                walletBalance < MIN_TRADE_FUNDS ? 'text-rose-400' : 'text-[#2dd4bf]'
-              }`}>
-                {walletBalance < MIN_TRADE_FUNDS ? 'INSUFFICIENT' : 'USDT READY'}
-              </span>
-            </div>
-
-            <button
-              onClick={() => {
-                if (autoStopReason) handleResetLimits();
-                else setAutoTradingEnabled(!autoTradingEnabled);
-              }}
-              className={`px-4 py-2.5 rounded-xl text-xs font-bold font-mono transition border shadow-lg flex items-center gap-1.5 ${
-                autoStopReason
-                  ? 'bg-[#facc15] text-slate-950 border-[#facc15] animate-pulse'
-                  : autoTradingEnabled
-                    ? 'bg-rose-950/80 hover:bg-rose-900 text-rose-300 border-rose-800'
-                    : 'bg-emerald-950 hover:bg-emerald-900 text-[#2dd4bf] border-[#2dd4bf]'
-              }`}
-            >
-              {autoStopReason ? (
-                <span>RESET & RESUME</span>
-              ) : autoTradingEnabled ? (
-                <>
-                  <Pause className="w-3.5 h-3.5" />
-                  <span>PAUSE BOT</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-3.5 h-3.5" />
-                  <span>ACTIVATE BOT</span>
-                </>
-              )}
-            </button>
-          </div>
-
         </div>
 
       </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { User, ShieldCheck, Key, Lock, Bell, Sliders, Server, Cpu, Copy, Check, Download, LogOut, CheckCircle2, ShieldAlert, Zap, Globe, Smartphone } from 'lucide-react';
+import { User, ShieldCheck, Key, Lock, Bell, Sliders, Server, Cpu, Copy, Check, Download, LogOut, CheckCircle2, ShieldAlert, Zap, Globe, Smartphone, FileSpreadsheet, FileText } from 'lucide-react';
 import { AddApiKeyModal } from './AddApiKeyModal';
 
 export const AccountSection = () => {
@@ -10,6 +10,21 @@ export const AccountSection = () => {
   const [ipWhitelist, setIpWhitelist] = useState(true);
   const [riskProfile, setRiskProfile] = useState('BALANCED');
   const [rebalanceFreq, setRebalanceFreq] = useState('1h');
+
+  const [activeSessions, setActiveSessions] = useState([
+    { id: 1, device: 'Chrome on Windows 11', location: 'New York, US', ip: '192.168.1.104', isCurrent: true, lastActive: 'Active Now' },
+    { id: 2, device: 'MetaMask Browser Extension', location: 'New York, US', ip: '192.168.1.104', isCurrent: false, lastActive: '12 mins ago' },
+    { id: 3, device: 'iOS Mobile App (v2.4)', location: 'New York, US', ip: '172.56.21.90', isCurrent: false, lastActive: '2 hours ago' }
+  ]);
+
+  const handleRevokeSession = (id) => {
+    setActiveSessions(prev => prev.filter(s => s.id !== id));
+    addNotification('Revoked session access successfully.', 'info');
+  };
+
+  const handleDownloadReport = (reportType) => {
+    addNotification(`📥 Generating ${reportType}... Download starting in a moment.`, 'success');
+  };
 
   const accountName = user?.name || 'Deepak Kumar';
   const accountEmail = user?.email || 'deepak.quant@tradebot.io';
@@ -180,6 +195,127 @@ export const AccountSection = () => {
                 className="w-4 h-4 accent-[#facc15] cursor-pointer"
               />
             </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* KYC & Institutional Account Limits Card */}
+      <div className="chainblock-card p-6 space-y-4 font-mono text-xs">
+        <div className="card-header-baseline">
+          <div className="flex items-center space-x-2">
+            <Globe className="w-5 h-5 text-[#facc15]" />
+            <h3 className="text-sm font-extrabold text-white tracking-tight">ACCOUNT COMPLIANCE & OPERATIONAL LIMITS</h3>
+          </div>
+          <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/40 text-[10px]">
+            KYC TIER 3 APPROVED
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 rounded-xl bg-[#0b0c10] border border-slate-800 space-y-1">
+            <span className="text-[10px] text-slate-400 block uppercase">Max Daily Withdrawal</span>
+            <span className="text-base font-extrabold text-white">$5,000,000 USDT</span>
+            <span className="text-[10px] text-emerald-400 block font-bold">Unrestricted Fast-Track</span>
+          </div>
+
+          <div className="p-4 rounded-xl bg-[#0b0c10] border border-slate-800 space-y-1">
+            <span className="text-[10px] text-slate-400 block uppercase">Max Arbitrage Allocation</span>
+            <span className="text-base font-extrabold text-[#facc15]">$1,000,000 USDT</span>
+            <span className="text-[10px] text-slate-400 block">Single Trade Max Cap</span>
+          </div>
+
+          <div className="p-4 rounded-xl bg-[#0b0c10] border border-slate-800 space-y-1">
+            <span className="text-[10px] text-slate-400 block uppercase">Tax & Legal Jurisdiction</span>
+            <span className="text-base font-extrabold text-white">United States (US)</span>
+            <span className="text-[10px] text-slate-400 block">Non-Custodial Account</span>
+          </div>
+
+          <div className="p-4 rounded-xl bg-[#0b0c10] border border-slate-800 space-y-1">
+            <span className="text-[10px] text-slate-400 block uppercase">Registration Timestamp</span>
+            <span className="text-base font-extrabold text-slate-200">2026-01-15</span>
+            <span className="text-[10px] text-indigo-400 block font-bold">Member for 195 Days</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 2-Column Grid: Active Device Sessions & Export Center */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* Left: Active Logged In Sessions */}
+        <div className="lg:col-span-7 chainblock-card p-6 space-y-4 font-mono text-xs">
+          <div className="card-header-baseline">
+            <div className="flex items-center space-x-2">
+              <Smartphone className="w-5 h-5 text-[#2dd4bf]" />
+              <h3 className="text-sm font-extrabold text-white tracking-tight">ACTIVE LOGIN SESSIONS & DEVICES</h3>
+            </div>
+            <span className="text-[10px] text-slate-400 font-bold">{activeSessions.length} Active Sessions</span>
+          </div>
+
+          <div className="space-y-3">
+            {activeSessions.map((session) => (
+              <div key={session.id} className="p-3.5 rounded-xl bg-[#0b0c10] border border-slate-800 flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <div className="flex items-center space-x-2">
+                    <span className="font-bold text-white text-xs">{session.device}</span>
+                    {session.isCurrent && (
+                      <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        THIS DEVICE
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[10px] text-slate-400">
+                    IP: {session.ip} • {session.location} • <span className="text-slate-300">{session.lastActive}</span>
+                  </div>
+                </div>
+
+                {!session.isCurrent && (
+                  <button
+                    onClick={() => handleRevokeSession(session.id)}
+                    className="px-3 py-1.5 rounded-lg bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 font-bold text-[10px] transition"
+                  >
+                    REVOKE
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: Institutional Audit & Tax Report Export Center */}
+        <div className="lg:col-span-5 chainblock-card p-6 space-y-4 font-mono text-xs">
+          <div className="card-header-baseline">
+            <div className="flex items-center space-x-2">
+              <Download className="w-5 h-5 text-[#facc15]" />
+              <h3 className="text-sm font-extrabold text-white tracking-tight">TAX & AUDIT REPORT CENTER</h3>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {[
+              { title: 'Annual Tax Statement (1099-B / CSV)', desc: 'Full trade gain/loss CSV for tax filing', icon: FileSpreadsheet, name: 'Tax Statement CSV' },
+              { title: 'Monthly Arbitrage Summary (PDF)', desc: 'Certified monthly profit ledger & fees', icon: FileText, name: 'Monthly Ledger PDF' },
+              { title: 'On-Chain Execution Audit Log', desc: 'Raw Web3 TX hashes & gas logs', icon: ShieldCheck, name: 'On-Chain Audit Log' }
+            ].map((rep, idx) => {
+              const Icon = rep.icon;
+              return (
+                <div key={idx} className="p-3.5 rounded-xl bg-[#0b0c10] border border-slate-800 flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <div className="font-bold text-white flex items-center space-x-1.5">
+                      <Icon className="w-4 h-4 text-[#facc15]" />
+                      <span>{rep.title}</span>
+                    </div>
+                    <div className="text-[10px] text-slate-400">{rep.desc}</div>
+                  </div>
+                  <button
+                    onClick={() => handleDownloadReport(rep.name)}
+                    className="px-3 py-1.5 rounded-lg bg-[#181a20] border border-slate-700 hover:border-[#facc15] text-[#facc15] font-bold text-[10px] transition shrink-0"
+                  >
+                    EXPORT
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
 

@@ -8,7 +8,6 @@ import { AutoTraderBar } from './components/AutoTraderBar';
 import { TotalAssetsHero } from './components/TotalAssetsHero';
 import { YellowPortfolioCard } from './components/YellowPortfolioCard';
 import { OperationSwapTool } from './components/OperationSwapTool';
-import { LiveChart } from './components/LiveChart';
 import { ArbitragePanel } from './components/ArbitragePanel';
 import { AiStrategyPanel } from './components/AiStrategyPanel';
 import { PaperTradingPanel } from './components/PaperTradingPanel';
@@ -28,9 +27,9 @@ const DashboardContent = () => {
   const { activeTab } = useCrypto();
 
   return (
-    <main className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 no-scrollbar smooth-scroll-container bg-[#0b0c10]">
+    <main className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 no-scrollbar smooth-scroll-container bg-[#080a10]">
       
-      {/* Outer Shell Frame matching reference screenshot (Rounded Charcoal Shell) */}
+      {/* Outer Shell Frame */}
       <div className="chainblock-shell p-6 sm:p-8 space-y-8">
         
         {/* Master Autopilot Quant Command Deck */}
@@ -51,9 +50,8 @@ const DashboardContent = () => {
                 <OperationSwapTool />
               </div>
 
-              {/* Right Column (Gold Main SVG Chart & Spatial Arbitrage Matrix) */}
+              {/* Right Column (Spatial Arbitrage Matrix & Active Positions) */}
               <div className="lg:col-span-8 space-y-6">
-                <LiveChart />
                 <ArbitragePanel />
                 <LivePositions />
               </div>
@@ -100,16 +98,9 @@ const DashboardContent = () => {
           </div>
         )}
 
-        {activeTab === 'news' && (
-          <div className="space-y-6">
-            <LiveCryptoNews />
-          </div>
-        )}
-
         {activeTab === 'markets' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <div className="lg:col-span-7 space-y-6">
-              <LiveChart />
               <ArbitragePanel />
             </div>
             <div className="lg:col-span-5 space-y-6">
@@ -146,7 +137,6 @@ const DashboardContent = () => {
         {activeTab === 'analytics' && (
           <div className="space-y-6">
             <AnalyticsSection />
-            <LiveChart />
           </div>
         )}
 

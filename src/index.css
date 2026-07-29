@@ -4,14 +4,13 @@
 
 @layer base {
   html, body {
-    background-color: #0b0c10;
+    background-color: #080a10;
     color: #f8fafc;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     overflow-x: hidden;
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   .font-mono {
@@ -19,107 +18,80 @@
   }
 }
 
-/* Yellow Accent Glows */
-.glow-yellow {
-  box-shadow: 0 0 25px rgba(250, 204, 21, 0.35);
-}
-
-.glow-mint {
-  box-shadow: 0 0 25px rgba(45, 212, 191, 0.25);
-}
-
-/* Smooth Container Scrollbar */
-.smooth-scroll-container {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-  will-change: scroll-position;
-  contain: layout style;
+/* Disable All Unnecessary Motion & Floating Keyframes */
+.animate-float-slow,
+.animate-float-fast,
+.animate-float-3d,
+.animate-pulse-radar-3d,
+.animate-radar-pulse {
+  animation: none !important;
+  transform: none !important;
 }
 
 @layer components {
-  /* Main Charcoal Frame Container */
+  /* Solid Crisp Dark Shell Container */
   .chainblock-shell {
-    background: #14161d;
+    background: #0f131f;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 2rem;
-    box-shadow: 0 25px 80px -15px rgba(0, 0, 0, 0.85);
-    transition: all 0.25s ease;
-  }
-
-  /* Dark Charcoal Card Component matching reference image */
-  .chainblock-card {
-    background: #191b22;
-    border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 1.5rem;
+    box-shadow: 0 15px 40px -10px rgba(0, 0, 0, 0.6);
+  }
+
+  /* Solid Institutional Dark Card */
+  .chainblock-card {
+    background: #141926;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1.25rem;
     padding: 1.5rem;
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.4);
   }
 
-  .chainblock-card:hover {
-    border-color: rgba(250, 204, 21, 0.4);
-    box-shadow: 0 15px 40px -12px rgba(250, 204, 21, 0.15);
-  }
-
-  /* Yellow Portfolio Card matching reference screenshot */
-  .yellow-portfolio-card {
-    background: #facc15;
-    color: #0f172a;
-    border-radius: 1.75rem;
-    padding: 1.5rem;
-    box-shadow: 0 15px 40px -10px rgba(250, 204, 21, 0.25);
-  }
-
-  /* Yellow Accent Buttons */
+  /* High Contrast Emerald Action Button */
   .chainblock-btn-emerald {
     height: 2.75rem;
     padding-left: 1.25rem;
     padding-right: 1.25rem;
-    border-radius: 0.875rem;
+    border-radius: 0.75rem;
     font-size: 0.875rem;
     font-weight: 800;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    background: #facc15;
-    color: #0f172a;
-    box-shadow: 0 4px 20px rgba(250, 204, 21, 0.35);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #2dd4bf;
+    color: #04060d;
+    transition: background 0.15s ease;
   }
 
   .chainblock-btn-emerald:hover {
-    background: #fde047;
-    box-shadow: 0 6px 28px rgba(250, 204, 21, 0.55);
-    transform: translateY(-1.5px);
+    background: #5eead4;
   }
 
-  /* Sidebar Active Navigation Pill matching reference image */
+  /* Sidebar Active Navigation Pill */
   .chainblock-nav-active {
-    background: #232630;
-    color: #ffffff;
-    font-weight: 700;
-    border-radius: 0.875rem;
-    box-shadow: inset 0 0 10px rgba(250, 204, 21, 0.1);
+    background: #1e2638;
+    color: #2dd4bf;
+    font-weight: 800;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(45, 212, 191, 0.3);
   }
 }
 
-/* Custom Scrollbar Styling */
+/* Custom Clean Scrollbar Styling */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #080a10;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #facc15;
+  background: #2dd4bf;
 }

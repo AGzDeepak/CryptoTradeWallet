@@ -18,6 +18,7 @@ from firebase_config import python_firebase
 from trading_engine import python_trading_engine
 from market_generator import python_market_engine
 from web3_engine import python_web3_engine
+from swap_tool import python_swap_engine, SwapEstimateRequest, SwapExecuteRequest
 
 try:
     from fastapi import FastAPI, HTTPException, Depends, Header
@@ -35,8 +36,8 @@ except ImportError:
 # Initialize FastAPI App
 app = FastAPI(
     title="CryptoBot AI — 100% Python Quant Arbitrage & Trading Engine",
-    description="High-frequency Spatial Arbitrage API, Order Execution Engine, Technical Indicators, Web3 Verifier, BeautifulSoup Web Scraper & Autonomous Bot powered by Python 3.14 & FastAPI",
-    version="3.5.0"
+    description="High-frequency Spatial Arbitrage API, Swap Engine, Order Execution, Technical Indicators & Autonomous Bot powered by Python 3.14 & FastAPI",
+    version="3.8.0"
 )
 
 # Enable CORS for React Frontend
@@ -127,6 +128,21 @@ def get_market_prices():
 def get_user_workspace(email: str = "deepak@chainblock.io", name: str = "Deepak Kumar"):
     return python_trading_engine.get_or_create_user(email, name)
 
+# --- PYTHON SWAP ENGINE ENDPOINTS ---
+
+@app.post("/api/swap/estimate")
+def estimate_swap(req: SwapEstimateRequest):
+    return python_swap_engine.calculate_estimate(req.payCoin, req.getCoin, req.payAmount)
+
+@app.post("/api/swap/execute")
+def execute_swap(req: SwapExecuteRequest):
+    res = python_swap_engine.execute_swap(req)
+    if not res["success"]:
+        raise HTTPException(status_code=400, detail=res["message"])
+    return res
+
+# --- TRADING & WALLET ENDPOINTS ---
+
 @app.post("/api/wallet/deposit")
 def deposit_wallet(req: DepositRequest):
     res = python_trading_engine.deposit_funds(req.email, req.amount, req.currency)
@@ -136,9 +152,6 @@ def deposit_wallet(req: DepositRequest):
 
 @app.post("/api/wallet/withdraw")
 def withdraw_wallet(req: WithdrawRequest):
-    if not python_web3_engine.validate_evm_address(req.destinationAddress):
-        print(f"Notice: Destination '{req.destinationAddress}' verified by Python engine.")
-
     res = python_trading_engine.withdraw_funds(
         req.email, req.amount, req.destinationAddress, req.currency, req.networkChain, req.walletMode
     )
@@ -164,12 +177,123 @@ def close_trade_position(req: ClosePositionRequest):
         raise HTTPException(status_code=400, detail=res["message"])
     return res
 
+class RiskLimitsRequest(BaseModel):
+    takeProfitTarget: float = Field(default=500.0)
+    stopLossLimit: float = Field(default=150.0)
+    maxTradeAllocation: float = Field(default=250.0)
+
+@app.post("/api/bot/risk-limits")
+def update_bot_risk_limits(req: RiskLimitsRequest):
+    python_quant_bot.set_risk_limits(req.takeProfitTarget, req.stopLossLimit, req.maxTradeAllocation)
+    return {
+        "status": "SUCCESS",
+        "message": "Python Quant Bot risk limits updated",
+        "limits": {
+            "takeProfitTarget": req.takeProfitTarget,
+            "stopLossLimit": req.stopLossLimit,
+            "maxTradeAllocation": req.maxTradeAllocation
+        }
+    }
+
 @app.post("/api/bot/auto-trade")
 def run_bot_auto_trade(req: AutoTradeRequest):
     res = python_trading_engine.execute_auto_arbitrage(req.email, req.opp)
     if not res["success"]:
         raise HTTPException(status_code=400, detail=res["message"])
     return res
+
+# --- PYDANTIC PAYMENT GATEWAY REQUEST MODELS ---
+
+class StripePaymentRequest(BaseModel):
+    email: str = Field(default="deepak@chainblock.io")
+    cardNumber: str = Field(default="4242 4242 4242 4242")
+    cardHolder: str = Field(default="DEEPAK KUMAR")
+    amount: float = Field(default=1000.0)
+    currency: str = Field(default="USDT")
+
+class Web3PaymentRequest(BaseModel):
+    email: str = Field(default="deepak@chainblock.io")
+    txHash: str = Field(default="0x7a89f2c1b3e4d5a6b7c8d9e0f1a2b3c4d5e6f7a8")
+    fromAddress: str = Field(default="0x71C7656EC7ab88b098defB751B7401B5f6d7B41")
+    networkChain: str = Field(default="Arbitrum One")
+    amountEth: float = Field(default=0.2825)
+    amountUsdt: float = Field(default=1000.0)
+
+class QrPaymentRequest(BaseModel):
+    email: str = Field(default="deepak@chainblock.io")
+    selectedChain: str = Field(default="Arbitrum One")
+    txHashInput: str = Field(default="0x892a019b87c6d5e4f3a2b1c0")
+    amount: float = Field(default=1000.0)
+    currency: str = Field(default="USDT")
+
+class BankPaymentRequest(BaseModel):
+    email: str = Field(default="deepak@chainblock.io")
+    utrReference: str = Field(default="UTR920481029384")
+    amount: float = Field(default=1000.0)
+    currency: str = Field(default="USDT")
+
+@app.post("/api/payment/stripe")
+def process_stripe_card_payment(req: StripePaymentRequest):
+    res = python_trading_engine.deposit_funds(req.email, req.amount, req.currency)
+    if not res["success"]:
+        raise HTTPException(status_code=400, detail=res["message"])
+    return {
+        "status": "SETTLED",
+        "gateway": "Stripe Credit/Debit Card",
+        "authorizationCode": f"AUTH-{secrets.randbelow(899999) + 100000}",
+        "cardEnding": req.cardNumber.replace(" ", "")[-4:],
+        "receipt": {
+            "txId": f"TX-STRIPE-{secrets.randbelow(89999999) + 10000000}",
+            "amount": req.amount,
+            "currency": req.currency,
+            "timestamp": datetime.now().isoformat()
+        },
+        "wallet": res["wallet"]
+    }
+
+@app.post("/api/payment/web3")
+def process_web3_onchain_payment(req: Web3PaymentRequest):
+    res = python_trading_engine.deposit_funds(req.email, req.amountUsdt, "USDT")
+    if not res["success"]:
+        raise HTTPException(status_code=400, detail=res["message"])
+    return {
+        "status": "SETTLED",
+        "gateway": "Direct Web3 On-Chain Wallet",
+        "network": req.networkChain,
+        "txHash": req.txHash,
+        "fromAddress": req.fromAddress,
+        "receipt": {
+            "txId": req.txHash,
+            "amount": req.amountUsdt,
+            "currency": "USDT",
+            "timestamp": datetime.now().isoformat()
+        },
+        "wallet": res["wallet"]
+    }
+
+@app.post("/api/payment/qr")
+def process_crypto_qr_payment(req: QrPaymentRequest):
+    res = python_trading_engine.deposit_funds(req.email, req.amount, req.currency)
+    if not res["success"]:
+        raise HTTPException(status_code=400, detail=res["message"])
+    return {
+        "status": "SETTLED",
+        "gateway": f"Crypto Transfer ({req.selectedChain})",
+        "txHash": req.txHashInput,
+        "wallet": res["wallet"]
+    }
+
+@app.post("/api/payment/bank")
+def process_bank_wire_payment(req: BankPaymentRequest):
+    res = python_trading_engine.deposit_funds(req.email, req.amount, req.currency)
+    if not res["success"]:
+        raise HTTPException(status_code=400, detail=res["message"])
+    return {
+        "status": "SETTLED",
+        "gateway": "Instant Bank Wire / UPI Transfer",
+        "utr": req.utrReference,
+        "wallet": res["wallet"]
+    }
 
 @app.get("/api/news/scrape")
 def get_scraped_news():

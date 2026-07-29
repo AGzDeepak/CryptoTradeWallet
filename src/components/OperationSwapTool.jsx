@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import { sendRealWeb3Transaction } from '../services/web3Service';
+import { apiService } from '../services/apiService';
 import { ArrowDownUp, ChevronDown, ArrowRightLeft, ShieldCheck, Zap, ExternalLink, Wallet } from 'lucide-react';
 
 export const OperationSwapTool = () => {
   const { 
     wallet, 
+    user,
     executeOrder, 
     marketData, 
     walletMode, 
@@ -44,6 +46,8 @@ export const OperationSwapTool = () => {
     }
 
     const symbol = getCoin === 'USD' ? 'ETHUSDT' : `${getCoin}USDT`;
+    const side = tab === 'Sell' ? 'SELL' : 'BUY';
+    const email = user?.email || 'deepak@chainblock.io';
 
     if (walletMode === 'REAL') {
       if (!realWallet.connected) {
@@ -62,15 +66,21 @@ export const OperationSwapTool = () => {
           realWallet.chainId
         );
 
-        executeOrder(tab === 'Sell' ? 'SELL' : 'BUY', symbol, 'MetaMask Real Web3', parseFloat(estimatedGet));
-        addNotification(`✅ REAL WEB3 ORDER BROADCASTED! Tx Hash: ${txRes.txHash.substring(0, 10)}...`, 'success');
+        // Record in Python Swap Engine
+        await apiService.executePythonSwap(email, side, payCoin, getCoin, amount, 'REAL', realWallet.address);
+
+        executeOrder(side, symbol, 'MetaMask Real Web3', parseFloat(estimatedGet));
+        addNotification(`✅ REAL WEB3 PYTHON SWAP BROADCASTED! Tx Hash: ${txRes.txHash.substring(0, 10)}...`, 'success');
       } catch (err) {
         addNotification(`Real Web3 Execution Error: ${err.message}`, 'danger');
       } finally {
         setIsBroadcasting(false);
       }
     } else {
-      executeOrder(tab === 'Sell' ? 'SELL' : 'BUY', symbol, 'Binance', parseFloat(estimatedGet));
+      // Execute in Python Swap Engine
+      await apiService.executePythonSwap(email, side, payCoin, getCoin, amount, 'DEMO');
+      executeOrder(side, symbol, 'Binance (Python Engine)', parseFloat(estimatedGet));
+      addNotification(`✅ Python Swap Engine Executed: ${amount} ${payCoin} -> ${estimatedGet} ${getCoin}`, 'success');
     }
   };
 

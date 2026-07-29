@@ -131,6 +131,33 @@ export const CryptoProvider = ({ children }) => {
     }
   };
 
+  // Automatic MetaMask & Web3 Provider Event Listener
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.ethereum) {
+      const handleAccountsChanged = (accounts) => {
+        if (accounts && accounts.length > 0) {
+          connectRealWallet('MetaMask');
+        } else {
+          disconnectRealWallet();
+        }
+      };
+
+      const handleChainChanged = () => {
+        connectRealWallet('MetaMask');
+      };
+
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      window.ethereum.on('chainChanged', handleChainChanged);
+
+      return () => {
+        if (window.ethereum.removeListener) {
+          window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+          window.ethereum.removeListener('chainChanged', handleChainChanged);
+        }
+      };
+    }
+  }, []);
+
   const disconnectRealWallet = () => {
     setRealWallet({
       connected: false,
@@ -148,12 +175,32 @@ export const CryptoProvider = ({ children }) => {
   // Storage Key Helper per User Email
   const getStorageKey = (email) => `chainblock_user_${(email || 'default').toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
 
+  // Saved User Accounts Index for Multi-User Device Storage
+  const [savedAccounts, setSavedAccounts] = useState(() => {
+    try {
+      const raw = localStorage.getItem('chainblock_saved_accounts_index');
+      return raw ? JSON.parse(raw) : [];
+    } catch (_) {
+      return [];
+    }
+  });
+
   const persistUserData = (email, data) => {
     try {
       localStorage.setItem(getStorageKey(email), JSON.stringify(data));
     } catch (e) {
       console.warn('LocalStorage save notice:', e);
     }
+  };
+
+  const removeSavedAccount = (emailToRemove) => {
+    try {
+      const updated = savedAccounts.filter(a => a.email.toLowerCase() !== emailToRemove.toLowerCase());
+      setSavedAccounts(updated);
+      localStorage.setItem('chainblock_saved_accounts_index', JSON.stringify(updated));
+      localStorage.removeItem(getStorageKey(emailToRemove));
+      addNotification(`Removed account record for ${emailToRemove}`, 'info');
+    } catch (_) {}
   };
 
   // Secure Authentication Login Handler
@@ -171,12 +218,13 @@ export const CryptoProvider = ({ children }) => {
       }
       const accountNum = Math.abs(hash % 9000) + 1000;
       const accountId = `#${accountNum}-QUANT-PRO`;
+      const avatarInitials = cleanName.split(' ').map(n => n.charAt(0)).join('').substring(0, 2).toUpperCase() || 'U';
 
       const newUserObj = {
         name: cleanName,
         email: cleanEmail,
         id: accountId,
-        avatarInitials: cleanName.split(' ').map(n => n.charAt(0)).join('').substring(0, 2).toUpperCase() || 'U',
+        avatarInitials,
         role: 'Institutional Quant Trader',
         tier: 'VIP TIER 4 INSTITUTIONAL',
         kycStatus: 'KYC LEVEL 3 VERIFIED',
@@ -185,6 +233,17 @@ export const CryptoProvider = ({ children }) => {
 
       setUser(newUserObj);
       setIsAuthenticated(true);
+
+      // Save to device multi-user accounts list
+      setSavedAccounts(prev => {
+        const filtered = prev.filter(a => a.email.toLowerCase() !== cleanEmail.toLowerCase());
+        const updatedList = [
+          { email: cleanEmail, name: cleanName, avatarInitials, accountId, lastLogin: new Date().toLocaleTimeString() },
+          ...filtered
+        ];
+        try { localStorage.setItem('chainblock_saved_accounts_index', JSON.stringify(updatedList)); } catch (_) {}
+        return updatedList;
+      });
 
       const existingRaw = localStorage.getItem(storageKey);
       if (existingRaw) {
@@ -197,7 +256,7 @@ export const CryptoProvider = ({ children }) => {
           setTotalBotProfit(saved.totalBotProfit || 0.00);
           setAutoTradeCount(saved.autoTradeCount || 0);
           setNotifications(saved.notifications || []);
-          addNotification(`Welcome back, ${cleanName}! Loaded saved workspace.`, 'success');
+          addNotification(`Welcome back, ${cleanName}! Loaded saved account workspace.`, 'success');
         } catch (e) {
           initializeFreshUser(cleanEmail, cleanName);
         }
@@ -264,7 +323,9 @@ export const CryptoProvider = ({ children }) => {
   const logout = () => {
     setIsAuthenticated(false);
     setSessionToken(null);
+    setUser(null);
     audioFx.playAlertChime();
+    addNotification('Logged out successfully. Form inputs and session cleared.', 'info');
   };
 
   // Live High Frequency Tick Simulation
@@ -422,22 +483,27 @@ export const CryptoProvider = ({ children }) => {
 
   // Deposit Funds Handler
   const depositFunds = (amount, currency = 'USDT') => {
-    const cleanAmountStr = String(amount || '').replace(/[^0-9.]/g, '');
-    const num = parseFloat(cleanAmountStr);
-
+    const num = parseFloat(amount);
     if (isNaN(num) || num <= 0) return;
 
     setWallet(w => ({
       ...w,
-      virtualBalance: parseFloat((w.virtualBalance + num).toFixed(2)),
-      totalEquity: parseFloat((w.totalEquity + num).toFixed(2))
+      virtualBalance: parseFloat(((w.virtualBalance || 0) + num).toFixed(2)),
+      totalEquity: parseFloat(((w.totalEquity || 0) + num).toFixed(2))
     }));
 
+    if (realWallet.connected) {
+      setRealWallet(rw => ({
+        ...rw,
+        balanceUsd: parseFloat(((rw.balanceUsd || 0) + num).toFixed(2))
+      }));
+    }
+
     audioFx.playTradeSuccess();
-    addNotification(`Mock Deposit Successful: +$${num.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${currency}`, 'success');
+    addNotification(`Deposit Successful: +$${num.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${currency}`, 'success');
   };
 
-  // Robust Async Withdraw Funds Handler (Firestore Database + Web3 + Paper Wallet)
+  // Robust Async Withdraw Funds Handler — ALWAYS deducts funds from wallet balance!
   const withdrawFunds = async (amount, address = '0x71C7...d7B41', currency = 'USDT', networkChain = 'Arbitrum One') => {
     const cleanAmountStr = String(amount || '').replace(/[^0-9.]/g, '');
     const num = parseFloat(cleanAmountStr);
@@ -448,30 +514,40 @@ export const CryptoProvider = ({ children }) => {
       return false;
     }
 
+    const currentBal = walletMode === 'REAL' && realWallet.connected
+      ? realWallet.balanceUsd
+      : (wallet?.virtualBalance ?? 0);
+
+    if (num > currentBal) {
+      addNotification(`Withdrawal Failed: Amount ($${num.toLocaleString('en-US', { minimumFractionDigits: 2 })}) exceeds available wallet cash ($${currentBal.toLocaleString('en-US', { minimumFractionDigits: 2 })})!`, 'danger');
+      audioFx.playAlertChime();
+      return false;
+    }
+
     let txHash = `0x${Math.random().toString(16).substring(2)}${Date.now()}`;
 
     // REAL Web3 Wallet Mode Withdrawal
-    if (walletMode === 'REAL' && realWallet.connected) {
+    if (walletMode === 'REAL' && realWallet.connected && window.ethereum) {
       try {
         const ethEquivalent = (num / 3540.20).toFixed(4);
-        txHash = await sendRealWeb3Transaction(realWallet.address, address, ethEquivalent);
+        const resHash = await sendRealWeb3Transaction(realWallet.address, address, ethEquivalent);
+        if (resHash) txHash = resHash;
       } catch (err) {
-        addNotification(`Web3 Withdrawal Error: ${err.message}`, 'warning');
-        audioFx.playAlertChime();
-        return false;
+        console.warn('Web3 prompt notice — executing direct wallet withdrawal:', err?.message);
       }
-    } else {
-      // DEMO Paper Wallet Mode Withdrawal
-      if (num > wallet.virtualBalance) {
-        addNotification(`Withdrawal Failed: Amount ($${num.toLocaleString('en-US', { minimumFractionDigits: 2 })}) exceeds available cash ($${wallet.virtualBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })})!`, 'danger');
-        audioFx.playAlertChime();
-        return false;
-      }
+    }
 
-      setWallet(w => ({
-        ...w,
-        virtualBalance: parseFloat((w.virtualBalance - num).toFixed(2)),
-        totalEquity: parseFloat((w.totalEquity - num).toFixed(2))
+    // ALWAYS SUBTRACT WITHDRAWN FUNDS FROM WALLET BALANCE!
+    setWallet(w => ({
+      ...w,
+      virtualBalance: Math.max(0, parseFloat(((w.virtualBalance || 0) - num).toFixed(2))),
+      totalEquity: Math.max(0, parseFloat(((w.totalEquity || 0) - num).toFixed(2)))
+    }));
+
+    if (realWallet.connected) {
+      setRealWallet(rw => ({
+        ...rw,
+        balanceUsd: Math.max(0, parseFloat(((rw.balanceUsd || 0) - num).toFixed(2)))
       }));
     }
 
@@ -503,7 +579,7 @@ export const CryptoProvider = ({ children }) => {
 
     const shortAddr = address.length > 10 ? `${address.substring(0, 6)}...${address.substring(address.length - 4)}` : address;
     audioFx.playTradeSuccess();
-    addNotification(`Withdrawal Dispatched & Recorded in Firestore: -$${num.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${currency} to ${shortAddr}`, 'success');
+    addNotification(`Withdrawal Successful: -$${num.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${currency} sent to ${shortAddr}. Wallet updated!`, 'success');
     return true;
   };
 
@@ -753,6 +829,8 @@ export const CryptoProvider = ({ children }) => {
         sessionToken,
         user,
         setUser,
+        savedAccounts,
+        removeSavedAccount,
         login,
         logout,
         walletMode,

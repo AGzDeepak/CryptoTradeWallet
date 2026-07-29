@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { EditAccountModal } from './EditAccountModal';
 import { AddApiKeyModal } from './AddApiKeyModal';
+import { RealPaymentGatewayModal } from './RealPaymentGatewayModal';
 
 export const GlobalModals = () => {
   const { 
@@ -185,6 +186,10 @@ export const GlobalModals = () => {
       setSubmittingFeedback(false);
     }
   };
+
+  if (activeModal === 'DEPOSIT' || activeModal === 'PAYMENT') {
+    return <RealPaymentGatewayModal />;
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 font-sans animate-fade-in">

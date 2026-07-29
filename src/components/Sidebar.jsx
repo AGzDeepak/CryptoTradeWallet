@@ -3,7 +3,6 @@ import { useCrypto } from '../context/CryptoContext';
 import { 
   LayoutGrid, 
   User, 
-  LineChart, 
   Wallet, 
   Newspaper, 
   Settings, 
@@ -20,9 +19,7 @@ export const Sidebar = () => {
     { id: 'papertrading', label: 'Paper Trading', icon: ShoppingBag },
     { id: 'simulation', label: 'Simulation', icon: FlaskConical },
     { id: 'account', label: 'Account', icon: User },
-    { id: 'chart', label: 'Chart', icon: LineChart },
     { id: 'wallet', label: 'Wallet', icon: Wallet },
-    { id: 'news', label: 'News', icon: Newspaper },
     { id: 'settings', label: 'Settings', icon: Settings }
   ];
 
@@ -47,7 +44,7 @@ export const Sidebar = () => {
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id === 'chart' ? 'dashboard' : item.id)}
+                onClick={() => setActiveTab(item.id)}
                 className={`w-full flex items-center space-x-3.5 px-4 py-3 rounded-2xl text-xs font-semibold transition ${
                   isActive
                     ? 'bg-[#1a1c23] text-white font-bold'

@@ -105,15 +105,14 @@ class PythonTradingEngine:
         user_data = self.get_or_create_user(email)
         wallet = user_data["wallet"]
 
-        if wallet_mode == "DEMO" and amount > wallet["virtualBalance"]:
+        if amount > wallet["virtualBalance"]:
             return {
                 "success": False, 
                 "message": f"Insufficient funds! Available balance is ${wallet['virtualBalance']:,.2f} USDT."
             }
 
-        if wallet_mode == "DEMO":
-            wallet["virtualBalance"] = round(wallet["virtualBalance"] - amount, 2)
-            wallet["totalEquity"] = round(wallet["totalEquity"] - amount, 2)
+        wallet["virtualBalance"] = max(0.0, round(wallet["virtualBalance"] - amount, 2))
+        wallet["totalEquity"] = max(0.0, round(wallet["totalEquity"] - amount, 2))
 
         tx_hash = f"0x{random.getrandbits(256):064x}"
         record = {

@@ -8,7 +8,7 @@
 [![Web3](https://img.shields.io/badge/Web3-MetaMask-F6851B.svg?style=for-the-badge&logo=metamask)](https://metamask.io/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
-> **CryptoBot AI** is an institutional-grade cryptocurrency spatial arbitrage scanner, quantitative automated trading engine, and analytics terminal. Powered by a **Python 3.14 FastAPI backend**, **React 18 frontend**, **True Financial Candlesticks (OHLC)**, and real-time **Firebase Firestore** persistence.
+> **CryptoBot AI** is an institutional-grade cryptocurrency spatial arbitrage scanner, quantitative automated trading engine, and analytics terminal. Powered by a **Python 3.14 FastAPI backend**, **React 18 frontend**, **Multi-Channel Real Payment Gateway**, and **Firebase Firestore** persistence.
 
 ---
 
@@ -23,38 +23,29 @@
 
 ---
 
-## ✨ Complete Web Application Features & Architecture
+## ✨ Recent Updations & Key Features
 
-### 1. 🤖 Autopilot Quant Command Deck (`AutoTraderBar.jsx` & `backend/bot.py`)
-- **Automated Spatial Arbitrage**: Scans spatial price discrepancies across Binance, Bybit, OKX, and Coinbase.
-- **Configurable Risk Profiles**: Balanced Yield, Aggressive Arbitrage, and Conservative Safe Guard modes.
-- **Min Profit Threshold**: Real-time slider adjustments from 0.10% to 1.00%.
+### 1. 💳 Multi-Channel Real Payment Gateway (`RealPaymentGatewayModal.jsx`)
+- **Web3 Direct On-Chain Gateway (`window.ethereum`)**: Direct EIP-1193 transaction signing with real-time block explorer TxHash links (*Etherscan, Arbiscan, Polygonscan, BSCScan*).
+- **Stripe Credit / Debit Card Gateway**: Interactive 3D credit card visual with brand detection (Visa/Mastercard/Amex), **Stripe Sandbox Autofill Test Card (`4242 4242 4242 4242`)**, **3D-Secure 6-Digit Bank OTP Authorization**, and digital receipts.
+- **Instant Crypto QR Code Gateway**: Dynamic QR code generator and deposit address copier for *Arbitrum One, Ethereum, USDT-TRC20, BNB Chain, and Solana*.
+- **Bank Wire & Instant UPI Gateway**: Beneficiary SWIFT/IBAN details and bank UTR reference verification.
 
-### 2. 🛍️ Dedicated Standalone Paper Trading Section (`PaperTradingPanel.jsx`)
-- **Top-Level Navigation Item**: Accessible as a primary section from the left navigation sidebar.
-- **Virtual $100k Sandbox Execution**: BUY (LONG) and SELL (SHORT) order placement with target exchange selection (*Binance Pro, Bybit Quant, OKX, Coinbase Pro*).
-- **Quick Percentage Size Bar**: Select position size instantly (`25%`, `50%`, `75%`, `100% MAX`).
-- **Responsive Layout**: Spreads onto clean 2-column & 4-column cards on all screens with zero text truncation.
+### 2. 🤖 Realigned Autopilot Quant Command Deck (`AutoTraderBar.jsx` & `backend/bot.py`)
+- **Full-Width 4-Column Control Grid**: Clean layout containing *Execution Engine Mode*, *Trading Strategy Profile*, *Min Profit Target Slider*, and *Risk Limits (Target Stop & Stop Loss)*.
+- **Header Balance & Telemetry**: Real-time display of Bot Cumulative Profit, Wallet Balance, and live execution terminal.
 
-### 3. 🔑 Multi-Exchange Quant API Matrix (`AccountSection.jsx` & `AddApiKeyModal.jsx`)
-- **Add API Key Modal Form**: Dedicated form supporting *Binance Pro, Bybit Quant, OKX Institutional, Coinbase Pro, KuCoin, and Kraken*.
-- **Interactive Security Safeguards**: Public API key, masked secret input, IP whitelist restriction, 2FA toggle, and IP Auto-Lock Guard.
-- **Dynamic State Matrix**: Connected keys automatically update the active exchange connection matrix in real time.
+### 3. 🛡️ Account Compliance, Active Sessions & Tax Center (`AccountSection.jsx`)
+- **Institutional Operational Limits**: Daily withdrawal limits ($5,000,000 USDT cap), single-trade caps, and KYC Tier 3 verification badge.
+- **Active Login Sessions Audit**: Real-time list of active connected devices (Browser, MetaMask Extension, Mobile App) with IP, location, and **Revoke Access** button.
+- **Tax & Audit Export Center**: One-click download buttons for *Annual Tax Statements (CSV)*, *Monthly Arbitrage Summaries (PDF)*, and *On-Chain Execution Audit Logs*.
 
-### 4. 📰 True Live Crypto News & AI Market Intelligence (`LiveCryptoNews.jsx`)
-- **Real-Time Streaming News**: Headlines with category pills (`QUANT ARBITRAGE`, `MACRO`, `ETFS & INSTITUTIONAL`, `LAYER 2 & DEFI`).
-- **Crypto Fear & Greed Index**: Displays real-time market sentiment (`84 / 100 EXTREME GREED`).
-- **AI Price Impact Badges**: Calculates predicted market movement (`+4.8% BTC/USDT`, `+7.8% SOL/USDT`).
+### 4. 🛍️ Dedicated Paper Trading Terminal (`PaperTradingPanel.jsx`)
+- Virtual $100k paper trading execution across *Binance Pro, Bybit Quant, OKX, Coinbase Pro* with quick percentage position sizing (`25%`, `50%`, `75%`, `100% MAX`).
 
-### 5. 💳 Institutional Wallet & Web3 Integration (`WalletSection.jsx`)
-- **Dual Wallet Mode**: Seamlessly toggle between **DEMO $100k Paper Wallet** and **REAL Web3 MetaMask Wallet**.
-- **Working Quick Withdraw Form**: Complete with destination crypto address input, network selector (*Arbitrum One, Ethereum Mainnet, Polygon*), and real-time Firestore database logging.
-- **Asset Balances Breakdown**: Live tracking for 6 major cryptocurrencies (USDT, BTC, ETH, SOL, AVAX, XRP).
-
-### 6. 🎨 Premium Obsidian Glassmorphic UI Aesthetic
-- Dark charcoal obsidian theme (`#0b0c10`) with yellow crescent brand emblem.
-- Bright yellow **My Portfolio Card** (`YellowPortfolioCard.jsx`) with percentage badges.
-- Glowing **Gold SVG Main Chart** (`LiveChart.jsx`) with time interval filters (`1h`, `3h`, `1d`, `1w`, `1m`).
+### 5. 🐍 100% Python Backend & Terminal CLI (`main.py` & `cli_dashboard.py`)
+- **Python FastAPI REST API Engine**: Complete backend endpoints for trading, market ticks, swap tool, web3 verification, news scraping, and payment processing.
+- **Interactive Python CLI Console**: Run full trading engine terminal interface via `python cli_dashboard.py`.
 
 ---
 
@@ -62,17 +53,17 @@
 
 | Layer | Technologies |
 | :--- | :--- |
-| **Python Backend Engine** | [Python 3.14](https://www.python.org/) + [FastAPI](https://fastapi.tiangolo.com/) + [Uvicorn](https://www.uvicorn.org/) |
+| **Python Backend Engine** | [Python 3.14](https://www.python.org/) + [FastAPI](https://fastapi.tiangolo.com/) + [Uvicorn](https://www.uvicorn.org/) + [Pydantic](https://pydantic.dev/) |
 | **Web Scraper** | [BeautifulSoup4 (bs4)](https://www.crummy.com/software/BeautifulSoup/) + `requests` |
 | **Frontend Framework** | [React 18.2](https://reactjs.org/) + [Vite 5.4](https://vitejs.dev/) |
-| **Styling & Design** | [TailwindCSS 3.4](https://tailwindcss.com/) + Obsidian Dark Glassmorphism |
-| **Web3 & Blockchain** | EIP-1193 Provider + MetaMask Integration (`web3Service.js`) |
+| **Styling & Design** | [TailwindCSS 3.4](https://tailwindcss.com/) + Institutional Dark Theme |
+| **Web3 & Blockchain** | EIP-1193 Provider + MetaMask Direct RPC (`web3Service.js`) |
 | **Database & Auth** | [Firebase Auth](https://firebase.google.com/) & [Firestore Database](https://firebase.google.com/docs/firestore) |
-| **Deployments** | Firebase Hosting & GitHub Pages |
+| **Deployments** | Firebase Hosting & GitHub Repositories |
 
 ---
 
-## 🚀 Local Installation & Setup
+## 🚀 Local Installation & Execution
 
 ### Prerequisites
 - Node.js `v18.0.0` or higher
@@ -84,25 +75,23 @@ git clone https://github.com/AGzDeepak/crypto_tradingbot.git
 cd crypto_tradingbot
 ```
 
-### 2. Install Frontend & Python Dependencies
+### 2. Run Main Python Application Launcher
+```bash
+python main.py
+```
+*Automatically installs Python dependencies and starts FastAPI server on http://localhost:8000*
+
+### 3. Run Interactive Python CLI Terminal Console
+```bash
+python cli_dashboard.py
+```
+
+### 4. Run React Web Application
 ```bash
 npm install
-pip install -r backend/requirements.txt
-```
-
-### 3. Run Development Servers
-
-**Terminal 1 — Python FastAPI Backend**:
-```bash
-python backend/server.py
-```
-*Backend API running at http://localhost:8000*
-
-**Terminal 2 — React Vite Frontend**:
-```bash
 npm run dev
 ```
-*Frontend Application running at http://localhost:3000*
+*Web Application running at http://localhost:3000*
 
 ---
 
@@ -111,48 +100,57 @@ npm run dev
 ```
 crypto_tradingbot/
 ├── backend/
-│   ├── bot.py                # Python Autonomous Quant Bot Engine
-│   ├── firebase_config.py    # Python Firebase Admin SDK Integration
-│   ├── requirements.txt      # Python Package Manifest
-│   ├── scraper.py            # BeautifulSoup4 (bs4) Crypto News Scraper
-│   └── server.py             # FastAPI REST Server & Endpoints
+│   ├── bot.py                        # Python Autonomous Quant Bot Engine
+│   ├── firebase_config.py            # Python Firebase Admin SDK Integration
+│   ├── market_generator.py           # NumPy Market Ticks & Indicator Generator
+│   ├── scraper.py                    # BeautifulSoup4 (bs4) Crypto News Scraper
+│   ├── server.py                     # FastAPI REST API Server & Payment Endpoints
+│   ├── swap_tool.py                  # Python Liquidity Swap Engine
+│   ├── trading_engine.py             # Python Datastore, Positions & Wallet Manager
+│   └── web3_engine.py                # Python EVM Address & Network Verifier
 ├── src/
 │   ├── components/
-│   │   ├── AccountSection.jsx     # Professional Account Management & VIP Tier Badge
-│   │   ├── AddApiKeyModal.jsx     # Exchange API Key Connection Form Modal
-│   │   ├── AnalyticsSection.jsx   # Quant Performance & Win Rate Analytics
-│   │   ├── ArbitragePanel.jsx     # Spatial Arbitrage Scanner Matrix
-│   │   ├── AutoTraderBar.jsx      # Master Bot Autopilot Command Deck
-│   │   ├── GlobalModals.jsx       # Modal Manager & Wallet Operations
-│   │   ├── Header.jsx             # Top Command Header & Dynamic Tab Title
-│   │   ├── LiveChart.jsx          # Gold SVG Financial Chart (OHLC Candlesticks)
-│   │   ├── LiveCryptoNews.jsx     # True Live Crypto News Feed & Fear/Greed Index
-│   │   ├── OperationSwapTool.jsx  # Manual Buy/Sell Swap Form
-│   │   ├── PaperTradingPanel.jsx  # Standalone Mock Paper Trading Terminal
-│   │   ├── Sidebar.jsx            # Top-Level Sidebar Navigation Items
-│   │   ├── TotalAssetsHero.jsx    # Hero Balance & Bot Cum. Profit Badge
-│   │   ├── TradeHistory.jsx       # Quantitative Trade Audit Log Ledger
-│   │   ├── WalletSection.jsx      # Institutional Wallet & Quick Withdraw Form
-│   │   └── YellowPortfolioCard.jsx# Yellow Reference Portfolio Card
+│   │   ├── AccountSection.jsx         # Account Limits, Sessions & Tax Export Center
+│   │   ├── AddApiKeyModal.jsx         # Exchange API Key Connection Form Modal
+│   │   ├── AnalyticsSection.jsx       # Quant Performance & Win Rate Analytics
+│   │   ├── ArbitragePanel.jsx         # Spatial Arbitrage Scanner Matrix
+│   │   ├── AutoTraderBar.jsx          # Master Bot Autopilot Command Deck
+│   │   ├── GlobalModals.jsx           # Modal Manager & Wallet Operations
+│   │   ├── Header.jsx                 # Top Navigation Header & Deposit Button
+│   │   ├── LiveCryptoNews.jsx         # Live Crypto News & Fear/Greed Index
+│   │   ├── OperationSwapTool.jsx      # Manual Buy/Sell Swap Form
+│   │   ├── PaperTradingPanel.jsx      # Standalone Mock Paper Trading Terminal
+│   │   ├── RealPaymentGatewayModal.jsx# Multi-Channel Payment Gateway Modal
+│   │   ├── Sidebar.jsx                # Navigation Sidebar
+│   │   ├── TotalAssetsHero.jsx        # Hero Asset Balances Breakdown
+│   │   ├── TradeHistory.jsx           # Quantitative Trade Audit Log Ledger
+│   │   ├── WalletSection.jsx          # Institutional Wallet Section
+│   │   └── YellowPortfolioCard.jsx    # Yellow Reference Portfolio Card
 │   ├── config/
-│   │   └── firebase.js            # Firebase App, Auth & Firestore Config
+│   │   └── firebase.js                # Firebase App, Auth & Firestore Config
 │   ├── context/
-│   │   └── CryptoContext.jsx      # Master React Application Context
-│   ├── App.jsx                    # Application Shell & Tab Routing
-│   ├── index.css                  # Obsidian Dark Theme Design Tokens & Utilities
-│   └── main.jsx                   # React Entry Point
-├── firebase.json                  # Firebase Hosting Deployment Configuration
-└── README.md                      # Comprehensive Project Documentation
+│   │   └── CryptoContext.jsx          # Master React Application State
+│   ├── services/
+│   │   ├── apiService.js              # Python FastAPI REST Client
+│   │   └── web3Service.js             # EIP-1193 Web3 Provider Integration
+│   ├── App.jsx                        # Main Application Shell
+│   ├── index.css                      # Institutional Dark Theme Utilities
+│   └── main.jsx                       # React Entry Point
+├── cli_dashboard.py                   # Interactive Python CLI Terminal Console
+├── main.py                            # Main Python Application Entry Launcher
+├── firebase.json                      # Firebase Hosting Configuration
+└── README.md                          # Comprehensive Project Documentation
 ```
 
 ---
 
-## 👤 Author
+## 👤 Author & Repositories
 
 **Deepak Kumar**
 - **GitHub**: [@AGzDeepak](https://github.com/AGzDeepak)
 - **Primary Repository**: [AGzDeepak/crypto_tradingbot](https://github.com/AGzDeepak/crypto_tradingbot)
 - **Secondary Repository**: [AGzDeepak/trading_cryptobot](https://github.com/AGzDeepak/trading_cryptobot)
+- **Live Firebase Application**: [https://tradebot-25d4f.web.app](https://tradebot-25d4f.web.app)
 
 ---
 

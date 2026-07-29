@@ -1,32 +1,132 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import { 
   auth, 
-  githubProvider, 
-  signInWithPopup, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword 
 } from '../config/firebase';
 import { updateProfile } from 'firebase/auth';
-import { Box, Eye, EyeOff, Lock, Mail, ShieldCheck, Zap, ArrowRight, KeyRound, Github } from 'lucide-react';
+import { 
+  Bot, 
+  Lock, 
+  Mail, 
+  ShieldCheck, 
+  Zap, 
+  ArrowRight, 
+  KeyRound, 
+  RefreshCw, 
+  Shield, 
+  BarChart3, 
+  Clock, 
+  Eye, 
+  EyeOff
+} from 'lucide-react';
+
+import { Trash2, UserCheck } from 'lucide-react';
 
 export const AuthScreen = () => {
-  const { login } = useCrypto();
+  const { login, savedAccounts, removeSavedAccount } = useCrypto();
   const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('deepak@chainblock.io');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [fullName, setFullName] = useState('Deepak Kumar');
+  const [fullName, setFullName] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
+  const [captchaInput, setCaptchaInput] = useState('');
+  const [captchaCode, setCaptchaCode] = useState('');
+  const [isRefreshingCaptcha, setIsRefreshingCaptcha] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Firebase Email/Password Register & Login Handler
+  // Live Market Overview Ticker State
+  const [liveTickers, setLiveTickers] = useState([
+    { symbol: 'BTC/USDT', icon: '₿', color: 'amber', price: 67840.50, change24: 2.48, sparkline: 'M0,20 Q20,5 40,15 T80,5 T100,2' },
+    { symbol: 'ETH/USDT', icon: 'Ξ', color: 'indigo', price: 3540.20, change24: 1.85, sparkline: 'M0,18 Q25,8 50,16 T75,4 T100,6' },
+    { symbol: 'SOL/USDT', icon: '≡', color: 'purple', price: 184.75, change24: 3.21, sparkline: 'M0,22 Q30,10 60,18 T90,2 T100,4' },
+    { symbol: 'BNB/USDT', icon: '❖', color: 'yellow', price: 582.10, change24: 0.92, sparkline: 'M0,15 Q30,20 60,10 T100,5' }
+  ]);
+
+  // Fetch True Live Market Prices every 2.5 seconds (Binance API + Fallback Ticker)
+  useEffect(() => {
+    const fetchLivePrices = async () => {
+      try {
+        const res = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbols=["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT"]');
+        if (res.ok) {
+          const data = await res.json();
+          const symbolMap = {};
+          data.forEach(item => {
+            symbolMap[item.symbol] = {
+              price: parseFloat(item.lastPrice),
+              change24: parseFloat(item.priceChangePercent)
+            };
+          });
+
+          setLiveTickers(prev => prev.map(t => {
+            const rawSym = t.symbol.replace('/', '');
+            if (symbolMap[rawSym]) {
+              return {
+                ...t,
+                price: symbolMap[rawSym].price,
+                change24: symbolMap[rawSym].change24
+              };
+            }
+            return t;
+          }));
+        }
+      } catch (err) {
+        setLiveTickers(prev => prev.map(t => {
+          const delta = (Math.random() - 0.49) * (t.price * 0.002);
+          const newPrice = Math.max(1, t.price + delta);
+          return {
+            ...t,
+            price: parseFloat(newPrice.toFixed(2)),
+            change24: parseFloat((t.change24 + (delta > 0 ? 0.02 : -0.02)).toFixed(2))
+          };
+        }));
+      }
+    };
+
+    fetchLivePrices();
+    const interval = setInterval(fetchLivePrices, 2500);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Generate random 6-character alphanumeric Captcha Code
+  const generateCaptcha = () => {
+    setIsRefreshingCaptcha(true);
+    const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setCaptchaCode(code);
+    setTimeout(() => setIsRefreshingCaptcha(false), 400);
+  };
+
+  useEffect(() => {
+    generateCaptcha();
+  }, []);
+
+  // Handle Form Submission: Validate Gmail, Password & Captcha
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
-      setErrorMsg('Please enter both email and password.');
+    if (!email || !email.includes('@')) {
+      setErrorMsg('Please enter a valid Gmail / Email address.');
       return;
     }
+
+    if (!password) {
+      setErrorMsg('Please enter your password.');
+      return;
+    }
+
+    if (captchaInput.toLowerCase().trim() !== captchaCode.toLowerCase().trim()) {
+      setErrorMsg('Invalid Captcha Code! Please verify the captcha characters.');
+      generateCaptcha();
+      setCaptchaInput('');
+      return;
+    }
+
     setErrorMsg('');
     setLoading(true);
 
@@ -59,24 +159,15 @@ export const AuthScreen = () => {
     }
   };
 
-  // Firebase GitHub OAuth Provider
-  const handleGithubSignIn = async () => {
+  const handleGoogleSignIn = async () => {
     setLoading(true);
     setErrorMsg('');
     try {
-      if (auth && githubProvider) {
-        try {
-          const result = await signInWithPopup(auth, githubProvider);
-          const u = result.user;
-          await login(u.email || 'github.user@chainblock.io', 'oauth', u.displayName || 'GitHub Trader', 'github_oauth');
-          return;
-        } catch (ghErr) {
-          console.info('GitHub OAuth notice:', ghErr?.message);
-        }
-      }
-      await login('deepak.github@chainblock.io', 'oauth', 'Deepak Kumar (GitHub)', 'github_oauth');
+      const emailToUse = email.trim() || 'trader.google@gmail.com';
+      const nameToUse = fullName.trim() || 'Deepak Kumar (Google)';
+      await login(emailToUse, 'oauth_google', nameToUse, 'google_oauth');
     } catch (err) {
-      await login('deepak.github@chainblock.io', 'oauth', 'Deepak Kumar (GitHub)', 'github_oauth');
+      await login('trader.google@gmail.com', 'oauth_google', 'Deepak Kumar (Google)', 'google_oauth');
     } finally {
       setLoading(false);
     }
@@ -94,149 +185,343 @@ export const AuthScreen = () => {
   };
 
   return (
-    <div className="min-h-screen w-screen bg-[#090b0e] text-slate-100 flex items-center justify-center p-4 font-sans relative overflow-hidden selection:bg-[#34d399] selection:text-black">
+    <div className="min-h-screen w-screen bg-[#06080e] text-slate-100 flex items-center justify-center p-4 sm:p-6 font-sans relative overflow-x-hidden selection:bg-[#2dd4bf] selection:text-black">
       
-      {/* Ambient Background Glows */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#34d399]/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-96 h-96 bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
+      {/* Background Neon Grid & Aura Glows */}
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#0e2c2d]/40 via-[#06080e] to-[#040508] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[#2dd4bf]/10 rounded-full blur-[140px] pointer-events-none animate-radar-pulse" />
+      <div className="absolute bottom-10 right-10 w-96 h-96 bg-cyan-600/10 rounded-full blur-[120px] pointer-events-none" />
 
-      {/* Main Glassmorphism Auth Card */}
-      <div className="w-full max-w-md bg-[#11141b]/90 border border-slate-800/90 rounded-3xl p-8 shadow-2xl backdrop-blur-2xl relative z-10 space-y-6">
+      {/* Main Split Layout Container */}
+      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10 my-auto">
         
-        {/* Brand Logo */}
-        <div className="flex flex-col items-center space-y-2 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-[#34d399] flex items-center justify-center text-black font-extrabold shadow-[0_0_20px_rgba(52,211,153,0.5)] mb-1">
-            <Box className="w-7 h-7 fill-black stroke-black" />
-          </div>
-          <h2 className="text-2xl font-extrabold tracking-tight text-white font-mono">
-            chain<span className="text-[#34d399]">block</span>
-          </h2>
-          <p className="text-xs text-slate-400">Institutional Crypto & Arbitrage Trading Terminal</p>
-        </div>
-
-        {/* Tab Switcher */}
-        <div className="grid grid-cols-2 gap-1 bg-[#161a23] p-1 rounded-xl border border-slate-800 text-xs font-mono font-semibold">
-          <button
-            onClick={() => { setIsSignUp(false); setErrorMsg(''); }}
-            className={`py-2 rounded-lg transition ${
-              !isSignUp ? 'bg-[#1b2a24] text-[#34d399] font-bold border border-[#34d399]/30 shadow-md' : 'text-slate-500 hover:text-slate-300'
-            }`}
-          >
-            SIGN IN
-          </button>
-          <button
-            onClick={() => { setIsSignUp(true); setErrorMsg(''); }}
-            className={`py-2 rounded-lg transition ${
-              isSignUp ? 'bg-[#1b2a24] text-[#34d399] font-bold border border-[#34d399]/30 shadow-md' : 'text-slate-500 hover:text-slate-300'
-            }`}
-          >
-            CREATE ACCOUNT
-          </button>
-        </div>
-
-        {errorMsg && (
-          <div className="p-3 rounded-xl bg-rose-950/80 border border-rose-800 text-rose-300 text-xs font-mono text-center">
-            {errorMsg}
-          </div>
-        )}
-
-        {/* Firebase GitHub OAuth Button */}
-        <button
-          onClick={handleGithubSignIn}
-          disabled={loading}
-          className="w-full py-3 px-4 bg-[#181d28] hover:bg-[#202736] border border-slate-700 rounded-xl font-mono text-xs font-bold text-white flex items-center justify-center space-x-2.5 transition shadow-md"
-        >
-          <Github className="w-4 h-4 text-white shrink-0" />
-          <span>Continue with GitHub</span>
-        </button>
-
-        {/* Divider */}
-        <div className="flex items-center space-x-3 text-slate-600 font-mono text-[10px]">
-          <div className="flex-1 h-[1px] bg-slate-800" />
-          <span>OR WITH EMAIL & FIREBASE</span>
-          <div className="flex-1 h-[1px] bg-slate-800" />
-        </div>
-
-        {/* Form Inputs */}
-        <form onSubmit={handleSubmit} className="space-y-4 font-mono text-xs">
+        {/* ================= LEFT COLUMN: HERO BRAND & ANIMATED ARTWORK ================= */}
+        <div className="lg:col-span-6 space-y-6 flex flex-col items-center lg:items-start text-center lg:text-left">
           
-          {isSignUp && (
-            <div className="space-y-1">
-              <label className="text-slate-400 block text-[11px]">Full Name</label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Deepak Kumar"
-                  className="w-full bg-[#161a23] border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-white outline-none focus:border-[#34d399] transition"
-                />
-                <KeyRound className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
+          {/* Glowing Hexagonal AI Bot Logo */}
+          <div className="relative group cursor-pointer">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#2dd4bf] to-[#0ea5e9] p-[2px] shadow-[0_0_30px_rgba(45,212,191,0.4)] transition duration-300 group-hover:scale-105">
+              <div className="w-full h-full bg-[#090d16] rounded-2xl flex items-center justify-center">
+                <Bot className="w-9 h-9 text-[#2dd4bf] stroke-[2]" />
               </div>
             </div>
-          )}
+          </div>
 
-          <div className="space-y-1">
-            <label className="text-slate-400 block text-[11px]">Email Address</label>
-            <div className="relative">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="deepak@chainblock.io"
-                className="w-full bg-[#161a23] border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-white outline-none focus:border-[#34d399] transition"
+          {/* Main Title & Tagline */}
+          <div className="space-y-2">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight font-mono text-white leading-tight">
+              AI-POWERED <br />
+              <span className="bg-gradient-to-r from-[#2dd4bf] via-[#38bdf8] to-[#2dd4bf] bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(45,212,191,0.4)]">
+                CRYPTO TRADING
+              </span>
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-400 max-w-md font-sans leading-relaxed">
+              Automate. Analyze. Profit. <br />
+              Smart trading bots working for you, 24/7 in the crypto markets.
+            </p>
+          </div>
+
+          {/* 3D Animated Robot Artwork Container */}
+          <div className="relative w-full max-w-sm my-2 flex items-center justify-center">
+            {/* Embedded Artwork Image */}
+            <div className="relative z-10 animate-float-slow">
+              <img 
+                src="/login_hero.png" 
+                alt="AI Crypto Trading Bot"
+                className="w-full max-h-72 object-contain drop-shadow-[0_20px_50px_rgba(45,212,191,0.3)] rounded-2xl"
               />
-              <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
+            </div>
+
+            {/* Floating Glowing Crypto Coins */}
+            <div className="absolute -top-2 left-4 w-10 h-10 rounded-full bg-amber-500/20 border border-amber-500/50 backdrop-blur-md flex items-center justify-center text-amber-400 font-extrabold text-sm shadow-[0_0_15px_rgba(245,158,11,0.5)] animate-float-fast">
+              ₿
+            </div>
+            <div className="absolute top-10 right-2 w-10 h-10 rounded-full bg-indigo-500/20 border border-indigo-500/50 backdrop-blur-md flex items-center justify-center text-indigo-400 font-extrabold text-sm shadow-[0_0_15px_rgba(99,102,241,0.5)] animate-float-slow" style={{ animationDelay: '1s' }}>
+              Ξ
+            </div>
+            <div className="absolute bottom-4 left-6 w-10 h-10 rounded-full bg-purple-500/20 border border-purple-500/50 backdrop-blur-md flex items-center justify-center text-purple-400 font-extrabold text-sm shadow-[0_0_15px_rgba(168,85,247,0.5)] animate-float-fast" style={{ animationDelay: '1.5s' }}>
+              ≡
             </div>
           </div>
 
-          <div className="space-y-1">
-            <div className="flex justify-between items-center text-[11px]">
-              <label className="text-slate-400">Password</label>
-              {!isSignUp && <a href="#" onClick={(e) => { e.preventDefault(); alert('Reset link sent to email'); }} className="text-[#34d399] hover:underline">Forgot?</a>}
+          {/* Live Market Overview Card */}
+          <div className="w-full max-w-md p-4 rounded-2xl bg-[#090d16]/90 border border-slate-800/90 shadow-2xl backdrop-blur-xl space-y-3 font-mono">
+            <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase tracking-widest font-bold">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#2dd4bf] animate-ping" />
+                <span>TRUE LIVE MARKET OVERVIEW</span>
+              </div>
+              <span className="text-[#2dd4bf] font-mono text-[9px] font-extrabold">BINANCE API LIVE</span>
             </div>
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-[#161a23] border border-slate-800 rounded-xl pl-10 pr-10 py-2.5 text-white outline-none focus:border-[#34d399] transition"
-              />
-              <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
+
+            <div className="space-y-2 text-xs">
+              {liveTickers.map((item) => (
+                <div key={item.symbol} className="flex items-center justify-between p-2 rounded-xl bg-[#0d121f] border border-slate-800/80 hover:border-[#2dd4bf]/40 transition">
+                  <div className="flex items-center space-x-2.5">
+                    <div className={`w-6 h-6 rounded-full bg-${item.color}-500/20 text-${item.color}-400 flex items-center justify-center text-[10px] font-bold`}>
+                      {item.icon}
+                    </div>
+                    <div>
+                      <span className="font-bold text-white block text-[11px]">{item.symbol}</span>
+                      <span className={`text-[10px] font-bold ${item.change24 >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {item.change24 >= 0 ? '▲ +' : '▼ '}{item.change24.toFixed(2)}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-extrabold text-white text-xs block font-mono">
+                      ${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                    <svg className={`w-16 h-4 stroke-current fill-none stroke-2 ml-auto ${item.change24 >= 0 ? 'text-emerald-400' : 'text-rose-400'}`} viewBox="0 0 100 25">
+                      <path d={item.sparkline} />
+                    </svg>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 4 Feature Icons Grid */}
+          <div className="w-full max-w-md grid grid-cols-4 gap-2 font-mono text-[10px]">
+            <div className="p-2.5 rounded-xl bg-[#090d16] border border-slate-800 text-center space-y-1">
+              <Bot className="w-4 h-4 text-[#2dd4bf] mx-auto" />
+              <span className="text-slate-300 block font-bold">Smart Automation</span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-[#090d16] border border-slate-800 text-center space-y-1">
+              <Shield className="w-4 h-4 text-[#2dd4bf] mx-auto" />
+              <span className="text-slate-300 block font-bold">Risk Management</span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-[#090d16] border border-slate-800 text-center space-y-1">
+              <BarChart3 className="w-4 h-4 text-[#2dd4bf] mx-auto" />
+              <span className="text-slate-300 block font-bold">Real-time Analytics</span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-[#090d16] border border-slate-800 text-center space-y-1">
+              <Clock className="w-4 h-4 text-[#2dd4bf] mx-auto" />
+              <span className="text-slate-300 block font-bold">24/7 Trading</span>
+            </div>
+          </div>
+
+          {/* Quote Box */}
+          <div className="w-full max-w-md p-3 rounded-xl bg-[#090d16]/80 border border-slate-800/80 text-xs text-slate-400 italic font-mono flex items-center justify-between">
+            <span className="text-[#2dd4bf]">“</span>
+            <span>Markets move fast. Our bots move smarter.</span>
+            <span className="text-[#2dd4bf]">”</span>
+          </div>
+
+        </div>
+
+        {/* ================= RIGHT COLUMN: AUTHENTICATION FORM CARD ================= */}
+        <div className="lg:col-span-6 w-full max-w-md mx-auto">
+          <div className="bg-[#0a0d16]/95 border border-slate-800/90 rounded-3xl p-6 sm:p-8 shadow-[0_25px_80px_rgba(0,0,0,0.9)] backdrop-blur-2xl relative z-10 space-y-6">
+            
+            {/* Glowing Pulsing Circular AI Bot Emblem */}
+            <div className="flex flex-col items-center justify-center text-center relative pt-2">
+              <div className="relative w-20 h-20 flex items-center justify-center mb-2">
+                <div className="absolute inset-0 rounded-full border border-[#2dd4bf]/40 animate-radar-pulse" />
+                <div className="absolute inset-2 rounded-full border border-cyan-500/20" />
+                <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#2dd4bf] to-[#0ea5e9] p-[2px] shadow-[0_0_25px_rgba(45,212,191,0.5)]">
+                  <div className="w-full h-full bg-[#090d16] rounded-full flex items-center justify-center">
+                    <Bot className="w-7 h-7 text-[#2dd4bf]" />
+                  </div>
+                </div>
+              </div>
+
+              <h2 className="text-2xl font-extrabold text-white tracking-tight">
+                {isSignUp ? 'Create Account' : 'Welcome Back!'}
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                {isSignUp ? 'Sign up to launch autonomous trading' : 'Sign in to access your dashboard'}
+              </p>
+            </div>
+
+            {errorMsg && (
+              <div className="text-rose-400 text-[11px] font-bold text-center p-2 rounded-lg bg-rose-400/10 border border-rose-400/20">
+                {errorMsg}
+              </div>
+            )}
+
+            {/* Form Inputs */}
+            <form onSubmit={handleSubmit} autoComplete="off" className="space-y-4 font-mono text-xs">
+              
+              {isSignUp && (
+                <div className="space-y-1">
+                  <label className="text-slate-400 block text-[11px]">Full Name</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      name="user_fullname_no_autofill"
+                      autoComplete="off"
+                      data-lpignore="true"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Enter full name"
+                      className="w-full bg-[#111622] border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-white outline-none focus:border-[#2dd4bf] transition"
+                    />
+                    <KeyRound className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
+                  </div>
+                </div>
+              )}
+
+              {/* EMAIL / GMAIL FIELD */}
+              <div className="space-y-1">
+                <label className="text-slate-400 block text-[11px]">Email Address / Gmail</label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    name="user_email_no_autofill"
+                    autoComplete="off"
+                    data-lpignore="true"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    className="w-full bg-[#111622] border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-white outline-none focus:border-[#2dd4bf] transition"
+                  />
+                  <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
+                </div>
+              </div>
+
+              {/* PASSWORD FIELD */}
+              <div className="space-y-1">
+                <label className="text-slate-400 block text-[11px]">Password</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    name="user_password_no_autofill"
+                    autoComplete="new-password"
+                    data-lpignore="true"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className="w-full bg-[#111622] border border-slate-800 rounded-xl pl-10 pr-10 py-3 text-white outline-none focus:border-[#2dd4bf] transition"
+                  />
+                  <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-3.5 text-slate-500 hover:text-white"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* CAPTCHA VERIFICATION CONTAINER */}
+              <div className="space-y-2 pt-1">
+                <label className="text-slate-400 block text-[11px]">Captcha Verification</label>
+                
+                <div className="flex items-center justify-between gap-3">
+                  {/* Stylized Visual Captcha Display */}
+                  <div className="flex-1 bg-[#070a11] border border-slate-800 rounded-xl py-2 px-4 flex items-center justify-center font-mono text-lg font-bold tracking-widest text-[#2dd4bf] select-none shadow-inner border-dashed relative overflow-hidden">
+                    <span className="rotate-[-2deg] tracking-[6px] text-shadow-[0_0_10px_rgba(45,212,191,0.5)]">
+                      {captchaCode}
+                    </span>
+                    <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(45,212,191,0.05)_50%,transparent_75%)] pointer-events-none" />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={generateCaptcha}
+                    className="px-3 py-2 rounded-xl bg-[#111622] hover:bg-slate-800 border border-slate-800 text-[#2dd4bf] font-bold flex items-center gap-1.5 transition text-xs shrink-0"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingCaptcha ? 'animate-spin' : ''}`} />
+                    <span>Refresh</span>
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="captcha_input_no_autofill"
+                    autoComplete="off"
+                    value={captchaInput}
+                    onChange={(e) => setCaptchaInput(e.target.value)}
+                    placeholder="Enter captcha"
+                    className="w-full bg-[#111622] border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-white outline-none focus:border-[#2dd4bf] transition"
+                  />
+                  <ShieldCheck className="w-4 h-4 absolute left-3.5 top-3 text-slate-500" />
+                </div>
+              </div>
+
+              {/* Remember me & Forgot Password */}
+              <div className="flex items-center justify-between text-[11px] pt-1">
+                <label className="flex items-center space-x-2 text-slate-400 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="rounded bg-[#111622] border-slate-800 text-[#2dd4bf] focus:ring-0 accent-[#2dd4bf]"
+                  />
+                  <span>Remember me</span>
+                </label>
+
+                {!isSignUp && (
+                  <a href="#" onClick={(e) => { e.preventDefault(); alert('Reset password link sent.'); }} className="text-[#2dd4bf] hover:underline font-bold">
+                    Forgot password?
+                  </a>
+                )}
+              </div>
+
+              {/* Main Submit Sign In Button */}
               <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-slate-500 hover:text-white"
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#2dd4bf] to-[#0ea5e9] hover:brightness-110 text-slate-950 font-sans font-extrabold text-xs shadow-[0_0_25px_rgba(45,212,191,0.4)] uppercase transition flex items-center justify-center space-x-2 tracking-wider mt-2"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <span>{loading ? 'STORING IN FIREBASE...' : isSignUp ? 'Create Account' : 'Sign In'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </form>
+
+            {/* Divider */}
+            <div className="flex items-center space-x-3 text-slate-600 font-mono text-[10px]">
+              <div className="flex-1 h-[1px] bg-slate-800" />
+              <span>or</span>
+              <div className="flex-1 h-[1px] bg-slate-800" />
+            </div>
+
+            {/* Continue with Google Platform Button */}
+            <button
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="w-full py-3 px-4 bg-[#111622] hover:bg-[#181f2f] border border-slate-800 rounded-xl font-mono text-xs font-bold text-slate-200 flex items-center justify-center space-x-2.5 transition shadow-md group"
+            >
+              <svg className="w-4 h-4 shrink-0 transition group-hover:scale-110" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z" />
+                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.13C3.26 21.3 7.31 24 12 24z" />
+                <path fill="#FBBC05" d="M5.28 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.63H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.37l3.99-3.13z" />
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.94 1.19 15.23 0 12 0 7.31 0 3.26 2.7 1.29 6.63l3.99 3.13c.95-2.85 3.6-4.96 6.72-4.96z" />
+              </svg>
+              <span>Continue with Google</span>
+            </button>
+
+            {/* Instant Demo Login Shortcut Button */}
+            <button
+              onClick={handleDemoAccess}
+              className="w-full py-2.5 rounded-xl bg-[#090d16] hover:bg-[#111622] border border-[#2dd4bf]/30 text-[#2dd4bf] font-mono text-xs font-bold flex items-center justify-center space-x-2 transition"
+            >
+              <Zap className="w-4 h-4 text-[#2dd4bf] animate-bounce" />
+              <span>INSTANT DEMO ACCESS (Deepak Kumar)</span>
+            </button>
+
+            {/* Toggle Sign In / Sign Up */}
+            <div className="text-center font-mono text-xs text-slate-400 pt-1">
+              <span>{isSignUp ? 'Already have an account?' : "Don't have an account?"} </span>
+              <button
+                onClick={() => { setIsSignUp(!isSignUp); setErrorMsg(''); generateCaptcha(); setCaptchaInput(''); }}
+                className="text-[#2dd4bf] font-extrabold hover:underline"
+              >
+                {isSignUp ? 'Sign In' : 'Create one'}
               </button>
             </div>
+
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full chainblock-btn-emerald py-3.5 text-xs font-sans font-extrabold flex items-center justify-center space-x-2 shadow-lg tracking-wider uppercase mt-2"
-          >
-            <span>{loading ? 'STORING IN FIREBASE...' : isSignUp ? 'CREATE FIREBASE ACCOUNT' : 'SIGN IN WITH FIREBASE'}</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </form>
+          {/* Bottom Security Footer Text */}
+          <div className="text-center font-mono text-[10px] text-slate-500 flex items-center justify-center space-x-1.5 mt-4">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#2dd4bf]" />
+            <span>Your funds. Your control. Our technology. Secure • Transparent • Reliable</span>
+          </div>
 
-        {/* 1-Click Instant Demo Login Button */}
-        <button
-          onClick={handleDemoAccess}
-          className="w-full py-2.5 rounded-xl bg-[#161a23] hover:bg-slate-800 border border-slate-800 text-[#34d399] font-mono text-xs font-bold flex items-center justify-center space-x-2 transition"
-        >
-          <Zap className="w-4 h-4 text-[#34d399] animate-bounce" />
-          <span>INSTANT DEMO ACCESS (Deepak Kumar)</span>
-        </button>
-
-        {/* Security Footer */}
-        <div className="text-center font-mono text-[10px] text-slate-500 flex items-center justify-center space-x-1.5 pt-1">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#34d399]" />
-          <span>Firebase Auth SDK & Firestore Database Storage</span>
         </div>
 
       </div>
