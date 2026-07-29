@@ -286,11 +286,11 @@ export const TradeHistory = () => {
         </div>
       </div>
 
-      {/* Audit Log Table with Detailed Buy and Sell Leg Columns */}
-      <div className="overflow-x-auto no-scrollbar rounded-xl border border-slate-800/80 bg-[#060810]">
+      {/* Audit Log Table with Detailed Buy and Sell Leg Columns — Vertical & Horizontal Scrollable */}
+      <div className="overflow-x-auto overflow-y-auto max-h-[480px] rounded-xl border border-slate-800/80 bg-[#060810] shadow-inner custom-scrollbar">
         <table className="w-full text-left border-collapse font-mono text-xs">
-          <thead>
-            <tr className="border-b border-slate-800 uppercase text-[10px] text-slate-400 bg-slate-900/60">
+          <thead className="sticky top-0 z-20 bg-[#090d16] border-b border-slate-800 shadow-md">
+            <tr className="uppercase text-[10px] text-slate-400">
               <th className="py-3 px-3">Audit ID</th>
               <th className="py-3 px-3">Time</th>
               <th className="py-3 px-3">Asset</th>
