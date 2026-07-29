@@ -18,15 +18,28 @@ export const AutoTraderBar = memo(() => {
     setWalletMode,
     realWallet,
     connectRealWallet,
+    takeProfitTarget,
+    setTakeProfitTarget,
+    stopLossLimit,
+    setStopLossLimit,
+    maxTradeAllocation,
+    setMaxTradeAllocation,
+    autoStopReason,
+    setAutoStopReason,
     openModal
   } = useCrypto();
 
   const walletBalance = walletMode === 'REAL' && realWallet.connected
     ? realWallet.balanceUsd
     : (wallet?.virtualBalance ?? 0);
-  // Minimum funds needed: $10.00 USDT minimum balance to start auto-trading
+  
   const MIN_TRADE_FUNDS = 10; // $10 minimum balance to start bot trading
   const isInsufficientFunds = autoTradingEnabled && walletBalance < MIN_TRADE_FUNDS;
+
+  const handleResetLimits = () => {
+    setAutoStopReason(null);
+    setAutoTradingEnabled(true);
+  };
 
   return (
     <div className="chainblock-card p-6 rounded-2xl space-y-5 font-sans">
@@ -100,7 +113,7 @@ export const AutoTraderBar = memo(() => {
           </div>
 
           {/* 3. Min Profit Target Slider Container */}
-          <div className="bg-[#0b0c10] p-2 px-3.5 rounded-xl border border-slate-800 w-full sm:w-48 shrink-0">
+          <div className="bg-[#0b0c10] p-2 px-3.5 rounded-xl border border-slate-800 w-full sm:w-44 shrink-0">
             <div className="flex justify-between items-center text-[10px] font-mono text-slate-400 mb-1">
               <span className="flex items-center gap-1">
                 <Sliders className="w-3 h-3 text-[#facc15]" /> Min Profit Target
@@ -118,7 +131,34 @@ export const AutoTraderBar = memo(() => {
             />
           </div>
 
-          {/* 4. Bot Cumulative Profit & Activate/Pause Button */}
+          {/* 4. User Money Control Risk Limits (Take Profit Target & Stop Loss) */}
+          <div className="bg-[#0b0c10] p-2 px-3 rounded-xl border border-slate-800 font-mono text-xs shrink-0 flex items-center space-x-2">
+            <div>
+              <div className="text-[10px] text-[#2dd4bf] uppercase font-bold flex items-center gap-1">
+                🎯 Target Stop ($)
+              </div>
+              <input
+                type="number"
+                value={takeProfitTarget}
+                onChange={(e) => setTakeProfitTarget(parseFloat(e.target.value) || 0)}
+                className="bg-[#14161d] border border-slate-800 rounded px-2 py-0.5 text-white font-mono text-xs w-20 outline-none focus:border-[#2dd4bf]"
+              />
+            </div>
+
+            <div>
+              <div className="text-[10px] text-rose-400 uppercase font-bold flex items-center gap-1">
+                🛑 Stop Loss ($)
+              </div>
+              <input
+                type="number"
+                value={stopLossLimit}
+                onChange={(e) => setStopLossLimit(parseFloat(e.target.value) || 0)}
+                className="bg-[#14161d] border border-slate-800 rounded px-2 py-0.5 text-white font-mono text-xs w-20 outline-none focus:border-rose-500"
+              />
+            </div>
+          </div>
+
+          {/* 5. Bot Cumulative Profit & Activate/Pause Button */}
           <div className="flex items-center space-x-4 pl-2 shrink-0">
             <div className="text-right font-mono">
               <span className="text-[10px] text-slate-400 uppercase block">Bot Cum. Profit</span>
@@ -143,14 +183,21 @@ export const AutoTraderBar = memo(() => {
             </div>
 
             <button
-              onClick={() => setAutoTradingEnabled(!autoTradingEnabled)}
+              onClick={() => {
+                if (autoStopReason) handleResetLimits();
+                else setAutoTradingEnabled(!autoTradingEnabled);
+              }}
               className={`px-4 py-2.5 rounded-xl text-xs font-bold font-mono transition border shadow-lg flex items-center gap-1.5 ${
-                autoTradingEnabled
-                  ? 'bg-rose-950/80 hover:bg-rose-900 text-rose-300 border-rose-800'
-                  : 'bg-emerald-950 hover:bg-emerald-900 text-[#2dd4bf] border-[#2dd4bf]'
+                autoStopReason
+                  ? 'bg-[#facc15] text-slate-950 border-[#facc15] animate-pulse'
+                  : autoTradingEnabled
+                    ? 'bg-rose-950/80 hover:bg-rose-900 text-rose-300 border-rose-800'
+                    : 'bg-emerald-950 hover:bg-emerald-900 text-[#2dd4bf] border-[#2dd4bf]'
               }`}
             >
-              {autoTradingEnabled ? (
+              {autoStopReason ? (
+                <span>RESET & RESUME</span>
+              ) : autoTradingEnabled ? (
                 <>
                   <Pause className="w-3.5 h-3.5" />
                   <span>PAUSE BOT</span>
@@ -167,6 +214,25 @@ export const AutoTraderBar = memo(() => {
         </div>
 
       </div>
+
+      {/* Auto-Stop Limit Hit Alert Banner */}
+      {autoStopReason && (
+        <div className="flex items-center justify-between p-3 rounded-xl bg-amber-950/80 border border-[#facc15] text-amber-200 font-mono text-xs font-bold">
+          <span className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-[#facc15] shrink-0" />
+            {autoStopReason === 'TAKE_PROFIT_TARGET_HIT'
+              ? `🎯 TAKE-PROFIT TARGET HIT — Cumulative profit reached your target of +$${takeProfitTarget.toFixed(2)} USDT. Bot paused automatically.`
+              : `🛑 STOP-LOSS LIMIT HIT — Loss exceeded your max limit of -$${stopLossLimit.toFixed(2)} USDT. Bot paused to protect capital.`
+            }
+          </span>
+          <button
+            onClick={handleResetLimits}
+            className="px-3 py-1 rounded-lg bg-[#facc15] text-slate-950 text-xs font-extrabold hover:brightness-110 shrink-0 ml-2"
+          >
+            RESET LIMITS & RESUME
+          </button>
+        </div>
+      )}
 
       {/* Auto-Execution Live Stream Terminal */}
       <div className="bg-[#0b0c10] p-4 rounded-xl border border-slate-800 font-mono text-xs space-y-2">

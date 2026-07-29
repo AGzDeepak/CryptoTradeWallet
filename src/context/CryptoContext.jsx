@@ -65,13 +65,19 @@ export const CryptoProvider = ({ children }) => {
   const [exchangePrices, setExchangePrices] = useState({});
   const [arbitrageOpps, setArbitrageOpps] = useState([]);
   
-  // Auto-Trading Bot State
+  // Auto-Trading Bot & Money Control Stop Limit State
   const [autoTradingEnabled, setAutoTradingEnabled] = useState(true);
   const [tradingMode, setTradingMode] = useState('Balanced');
   const [minProfitThreshold, setMinProfitThreshold] = useState(0.25);
   const [autoTradeLogs, setAutoTradeLogs] = useState([]);
   const [totalBotProfit, setTotalBotProfit] = useState(0.00);
   const [autoTradeCount, setAutoTradeCount] = useState(0);
+
+  // Money Control Risk Limits (User Configurable)
+  const [takeProfitTarget, setTakeProfitTarget] = useState(500.00); // Stop trading when profit hits target
+  const [stopLossLimit, setStopLossLimit] = useState(150.00);     // Stop trading if loss exceeds max limit
+  const [maxTradeAllocation, setMaxTradeAllocation] = useState(250.00); // Max USD allocation per trade
+  const [autoStopReason, setAutoStopReason] = useState(null); // 'TAKE_PROFIT_TARGET_HIT' | 'STOP_LOSS_LIMIT_HIT'
 
   // Paper Wallet State
   const [wallet, setWallet] = useState(NEW_USER_WALLET);
@@ -348,9 +354,38 @@ export const CryptoProvider = ({ children }) => {
 
       setArbitrageOpps(opps);
 
-      // Auto Trader Execution — starts trading with minimum balance ($10 USDT)
+      // Auto Trader Execution — Checks Money Control & Stop Limit Rules
       const now = Date.now();
       if (autoTradingEnabled && (now - lastAutoTradeTimeRef.current > 1500)) {
+        
+        // 1. Evaluate User Money Control Stop Limits
+        if (takeProfitTarget > 0 && totalBotProfit >= takeProfitTarget) {
+          setAutoTradingEnabled(false);
+          setAutoStopReason("TAKE_PROFIT_TARGET_HIT");
+          addNotification(`🎯 TAKE-PROFIT TARGET HIT! Bot reached your target of +$${takeProfitTarget.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT. Auto-trading stopped automatically.`, 'success');
+          setAutoTradeLogs(prev => [{
+            id: Date.now(),
+            text: `[AUTO-BOT] 🎯 TAKE-PROFIT TARGET HIT: Reached +$${takeProfitTarget.toFixed(2)} USDT. Auto-trading stopped to secure profits.`,
+            time: new Date().toLocaleTimeString(),
+            type: 'success'
+          }, ...prev.slice(0, 15)]);
+          return;
+        }
+
+        const todayProfit = wallet.todayProfit ?? 0;
+        if (stopLossLimit > 0 && todayProfit < 0 && Math.abs(todayProfit) >= stopLossLimit) {
+          setAutoTradingEnabled(false);
+          setAutoStopReason("STOP_LOSS_LIMIT_HIT");
+          addNotification(`🛑 STOP-LOSS LIMIT HIT! Loss exceeded -$${stopLossLimit.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT. Auto-trading halted to protect capital.`, 'danger');
+          setAutoTradeLogs(prev => [{
+            id: Date.now(),
+            text: `[AUTO-BOT] 🛑 STOP-LOSS LIMIT HIT: Loss exceeded -$${stopLossLimit.toFixed(2)} USDT. Trading halted automatically.`,
+            time: new Date().toLocaleTimeString(),
+            type: 'danger'
+          }, ...prev.slice(0, 15)]);
+          return;
+        }
+
         const topOpp = opps
           .filter(o => o.isProfitable && o.diffPct >= minProfitThreshold)
           .sort((a, b) => b.netProfit - a.netProfit)[0];
@@ -747,6 +782,14 @@ export const CryptoProvider = ({ children }) => {
         setTradingMode,
         minProfitThreshold,
         setMinProfitThreshold,
+        takeProfitTarget,
+        setTakeProfitTarget,
+        stopLossLimit,
+        setStopLossLimit,
+        maxTradeAllocation,
+        setMaxTradeAllocation,
+        autoStopReason,
+        setAutoStopReason,
         autoTradeLogs,
         totalBotProfit,
         autoTradeCount,
