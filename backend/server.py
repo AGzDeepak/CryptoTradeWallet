@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from scraper import scrape_crypto_news
 from bot import python_quant_bot
 from firebase_config import python_firebase
+from trading_engine import python_trading_engine
 
 try:
     from fastapi import FastAPI, HTTPException, Depends, Header
@@ -31,9 +32,9 @@ except ImportError:
 
 # Initialize FastAPI App
 app = FastAPI(
-    title="CryptoBot AI — Python Quant Arbitrage & Stimulation Engine",
-    description="High-frequency Spatial Arbitrage API, Orderbook Stimulation Engine, BeautifulSoup Web Scraper & Autonomous Bot powered by Python 3.14 & FastAPI",
-    version="2.5.0"
+    title="CryptoBot AI — Python Quant Arbitrage & Trading Engine",
+    description="High-frequency Spatial Arbitrage API, Order Execution Engine, BeautifulSoup Web Scraper & Autonomous Bot powered by Python 3.14 & FastAPI",
+    version="3.0.0"
 )
 
 # Enable CORS for React Frontend
@@ -45,7 +46,43 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- IN-MEMORY QUANT DATASTORE & MARKET FEEDERS ---
+# --- PYDANTIC REQUEST MODELS ---
+
+class LoginRequest(BaseModel):
+    email: str = Field(default="deepak@chainblock.io")
+    name: str = Field(default="Deepak Kumar")
+    provider: str = Field(default="python_fastapi")
+
+class DepositRequest(BaseModel):
+    email: str = Field(default="deepak@chainblock.io")
+    amount: float = Field(default=1000.0)
+    currency: str = Field(default="USDT")
+
+class WithdrawRequest(BaseModel):
+    email: str = Field(default="deepak@chainblock.io")
+    name: str = Field(default="Deepak Kumar")
+    amount: float = Field(default=500.0)
+    currency: str = Field(default="USDT")
+    destinationAddress: str = Field(default="0x71C765b28F3D140a831C28190d7B41")
+    networkChain: str = Field(default="Arbitrum One")
+    walletMode: str = Field(default="DEMO")
+
+class OrderRequest(BaseModel):
+    email: str = Field(default="deepak@chainblock.io")
+    side: str = Field(default="BUY")
+    symbol: str = Field(default="BTCUSDT")
+    exchange: str = Field(default="Binance")
+    amount: float = Field(default=0.01)
+    currentPrice: float = Field(default=67840.50)
+
+class ClosePositionRequest(BaseModel):
+    email: str = Field(default="deepak@chainblock.io")
+    positionId: str
+    finalPnL: Optional[float] = None
+
+class AutoTradeRequest(BaseModel):
+    email: str = Field(default="deepak@chainblock.io")
+    opp: Dict
 
 INITIAL_COINS = [
     {"symbol": "BTCUSDT", "name": "Bitcoin", "basePrice": 67840.50, "vol": "4.82B", "high24": 68920.00, "low24": 66500.00, "change24": 2.45},
@@ -57,55 +94,6 @@ INITIAL_COINS = [
 ]
 
 EXCHANGES = ["Binance", "Bybit", "OKX", "Coinbase"]
-
-USER_WORKSPACES: Dict[str, Dict] = {}
-WITHDRAWAL_LOGS: List[Dict] = []
-LOGIN_LOGS: List[Dict] = []
-
-# --- PYDANTIC MODELS ---
-
-class LoginRequest(BaseModel):
-    email: str = Field(default="deepak@chainblock.io")
-    name: str = Field(default="Deepak Kumar")
-    provider: str = Field(default="python_fastapi")
-
-class WithdrawRequest(BaseModel):
-    email: str = Field(default="deepak@chainblock.io")
-    name: str = Field(default="Deepak Kumar")
-    amount: float = Field(default=5000.0)
-    currency: str = Field(default="USDT")
-    destinationAddress: str = Field(default="0x71C765b28F3D140a831C28190d7B41")
-    networkChain: str = Field(default="Arbitrum One")
-    walletMode: str = Field(default="DEMO")
-
-class StimulateRequest(BaseModel):
-    mode: str = Field(default="Stochastic Liquidity Pulse")
-    intensity: str = Field(default="HIGH (800ms)")
-
-# --- PYTHON QUANT UTILITY FUNCTIONS ---
-
-def generate_secure_token() -> str:
-    return f"py_sec_tok_{secrets.token_hex(16)}_{int(time.time())}"
-
-def get_or_create_user(email: str, name: str) -> Dict:
-    clean_email = email.strip().lower()
-    if clean_email not in USER_WORKSPACES:
-        USER_WORKSPACES[clean_email] = {
-            "email": clean_email,
-            "name": name,
-            "wallet": {
-                "virtualBalance": 100000.00,
-                "totalEquity": 100000.00,
-                "todayProfit": 0.00,
-                "roiPct": 0.00,
-                "address": "0x00D3...C43D",
-                "network": "Arbitrum One"
-            },
-            "openPositions": [],
-            "tradeHistory": [],
-            "withdrawals": []
-        }
-    return USER_WORKSPACES[clean_email]
 
 def compute_spatial_arbitrage() -> List[Dict]:
     opps = []
@@ -125,12 +113,12 @@ def compute_spatial_arbitrage() -> List[Dict]:
         diff_usd = round(max_p - min_p, 4 if base_p < 10 else 2)
         diff_pct = round((diff_usd / min_p) * 100, 2)
         
-        unit_size = 0.5 if "BTC" in sym else 4.0 if "ETH" in sym else 50.0
+        unit_size = 0.05 if "BTC" in sym else 0.5 if "ETH" in sym else 10.0
         gross_profit = round(diff_usd * unit_size, 2)
         est_fees = round((min_p * unit_size + max_p * unit_size) * 0.0004, 2)
         net_profit = round(gross_profit - est_fees, 2)
         
-        is_profitable = diff_pct >= 0.20 and net_profit > 5
+        is_profitable = diff_pct >= 0.20 and net_profit > 0.50
         
         opps.append({
             "symbol": sym,
@@ -186,6 +174,51 @@ def get_market_prices():
         "totalOpportunities": len(arbitrage_opps)
     }
 
+@app.get("/api/user/workspace")
+def get_user_workspace(email: str = "deepak@chainblock.io", name: str = "Deepak Kumar"):
+    return python_trading_engine.get_or_create_user(email, name)
+
+@app.post("/api/wallet/deposit")
+def deposit_wallet(req: DepositRequest):
+    res = python_trading_engine.deposit_funds(req.email, req.amount, req.currency)
+    if not res["success"]:
+        raise HTTPException(status_code=400, detail=res["message"])
+    return res
+
+@app.post("/api/wallet/withdraw")
+def withdraw_wallet(req: WithdrawRequest):
+    res = python_trading_engine.withdraw_funds(
+        req.email, req.amount, req.destinationAddress, req.currency, req.networkChain, req.walletMode
+    )
+    if not res["success"]:
+        raise HTTPException(status_code=400, detail=res["message"])
+    
+    python_firebase.record_withdrawal(res["record"])
+    return res
+
+@app.post("/api/trade/execute")
+def execute_trade_order(req: OrderRequest):
+    res = python_trading_engine.execute_order(
+        req.email, req.side, req.symbol, req.exchange, req.amount, req.currentPrice
+    )
+    if not res["success"]:
+        raise HTTPException(status_code=400, detail=res["message"])
+    return res
+
+@app.post("/api/trade/close")
+def close_trade_position(req: ClosePositionRequest):
+    res = python_trading_engine.close_position(req.email, req.positionId, req.finalPnL)
+    if not res["success"]:
+        raise HTTPException(status_code=400, detail=res["message"])
+    return res
+
+@app.post("/api/bot/auto-trade")
+def run_bot_auto_trade(req: AutoTradeRequest):
+    res = python_trading_engine.execute_auto_arbitrage(req.email, req.opp)
+    if not res["success"]:
+        raise HTTPException(status_code=400, detail=res["message"])
+    return res
+
 @app.get("/api/news/scrape")
 def get_scraped_news():
     news_items = scrape_crypto_news()
@@ -195,58 +228,6 @@ def get_scraped_news():
         "timestamp": datetime.now().isoformat(),
         "totalArticles": len(news_items),
         "news": news_items
-    }
-
-@app.get("/api/bot/status")
-def get_bot_status():
-    return {
-        "status": "ACTIVE" if python_quant_bot.is_running else "PAUSED",
-        "minProfitThreshold": python_quant_bot.min_profit_threshold,
-        "totalBotProfit": python_quant_bot.total_bot_profit,
-        "tradeCount": python_quant_bot.trade_count,
-        "recentLogs": python_quant_bot.logs[:10]
-    }
-
-@app.post("/api/wallet/withdraw")
-def process_withdrawal(req: WithdrawRequest):
-    if req.amount <= 0:
-        raise HTTPException(status_code=400, detail="Invalid withdrawal amount.")
-        
-    user = get_or_create_user(req.email, req.name)
-    virtual_bal = user["wallet"]["virtualBalance"]
-    
-    if req.walletMode == "DEMO" and req.amount > virtual_bal:
-        raise HTTPException(status_code=400, detail=f"Insufficient balance! Available: ${virtual_bal}")
-        
-    if req.walletMode == "DEMO":
-        user["wallet"]["virtualBalance"] = round(virtual_bal - req.amount, 2)
-        user["wallet"]["totalEquity"] = round(user["wallet"]["totalEquity"] - req.amount, 2)
-        
-    tx_hash = f"0x{secrets.token_hex(16)}"
-    withdraw_record = {
-        "id": f"WTH-{random.randint(1000, 9999)}",
-        "email": req.email,
-        "name": req.name,
-        "amount": req.amount,
-        "currency": req.currency,
-        "destinationAddress": req.destinationAddress,
-        "networkChain": req.networkChain,
-        "walletMode": req.walletMode,
-        "status": "COMPLETED",
-        "txHash": tx_hash,
-        "timestamp": datetime.now().isoformat()
-    }
-    
-    python_firebase.record_withdrawal(withdraw_record)
-    
-    WITHDRAWAL_LOGS.append(withdraw_record)
-    user["withdrawals"].insert(0, withdraw_record)
-    
-    return {
-        "status": "SUCCESS",
-        "message": f"Withdrawal of ${req.amount} {req.currency} processed by Python backend & recorded in Firestore datastore.",
-        "record": withdraw_record,
-        "updatedBalance": user["wallet"]["virtualBalance"]
     }
 
 if __name__ == "__main__":
