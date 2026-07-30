@@ -97,13 +97,6 @@ export const CryptoProvider = ({ children }) => {
   });
 
   const lastAutoTradeTimeRef = useRef(0);
-  const justResetRef = useRef(false);
-  const takeProfitTargetRef = useRef(takeProfitTarget);
-  const stopLossLimitRef = useRef(stopLossLimit);
-
-  // Keep refs in sync with state (handles manual user input changes)
-  useEffect(() => { takeProfitTargetRef.current = takeProfitTarget; }, [takeProfitTarget]);
-  useEffect(() => { stopLossLimitRef.current = stopLossLimit; }, [stopLossLimit]);
 
   // Real Web3 Wallet Connect Handler
   const connectRealWallet = async (walletType = 'MetaMask') => {
@@ -427,37 +420,32 @@ export const CryptoProvider = ({ children }) => {
       const now = Date.now();
       if (autoTradingEnabled && (now - lastAutoTradeTimeRef.current > 1500)) {
         
-        // 1. Evaluate User Money Control Stop Limits — SKIP if we just reset (ref guard)
-        if (!justResetRef.current) {
-          const liveTP = takeProfitTargetRef.current;
-          const liveSL = stopLossLimitRef.current;
+        // 1. Evaluate User Money Control Stop Limits
+        if (takeProfitTarget > 0 && totalBotProfit >= takeProfitTarget) {
+          setAutoTradingEnabled(false);
+          setAutoStopReason("TAKE_PROFIT_TARGET_HIT");
+          addNotification(`🎯 TAKE-PROFIT TARGET HIT! Bot reached your target of +$${takeProfitTarget.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT. Auto-trading stopped automatically.`, 'success');
+          setAutoTradeLogs(prev => [{
+            id: Date.now(),
+            text: `[AUTO-BOT] 🎯 TAKE-PROFIT TARGET HIT: Reached +$${takeProfitTarget.toFixed(2)} USDT. Auto-trading stopped to secure profits.`,
+            time: new Date().toLocaleTimeString(),
+            type: 'success'
+          }, ...prev.slice(0, 15)]);
+          return;
+        }
 
-          if (liveTP > 0 && totalBotProfit >= liveTP) {
-            setAutoTradingEnabled(false);
-            setAutoStopReason("TAKE_PROFIT_TARGET_HIT");
-            addNotification(`🎯 TAKE-PROFIT TARGET HIT! Bot reached your target of +$${liveTP.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT. Auto-trading stopped automatically.`, 'success');
-            setAutoTradeLogs(prev => [{
-              id: Date.now(),
-              text: `[AUTO-BOT] 🎯 TAKE-PROFIT TARGET HIT: Reached +$${liveTP.toFixed(2)} USDT. Auto-trading stopped to secure profits.`,
-              time: new Date().toLocaleTimeString(),
-              type: 'success'
-            }, ...prev.slice(0, 15)]);
-            return;
-          }
-
-          const todayProfit = wallet.todayProfit ?? 0;
-          if (liveSL > 0 && todayProfit < 0 && Math.abs(todayProfit) >= liveSL) {
-            setAutoTradingEnabled(false);
-            setAutoStopReason("STOP_LOSS_LIMIT_HIT");
-            addNotification(`🛑 STOP-LOSS LIMIT HIT! Loss exceeded -$${liveSL.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT. Auto-trading halted to protect capital.`, 'danger');
-            setAutoTradeLogs(prev => [{
-              id: Date.now(),
-              text: `[AUTO-BOT] 🛑 STOP-LOSS LIMIT HIT: Loss exceeded -$${liveSL.toFixed(2)} USDT. Trading halted automatically.`,
-              time: new Date().toLocaleTimeString(),
-              type: 'danger'
-            }, ...prev.slice(0, 15)]);
-            return;
-          }
+        const todayProfit = wallet.todayProfit ?? 0;
+        if (stopLossLimit > 0 && todayProfit < 0 && Math.abs(todayProfit) >= stopLossLimit) {
+          setAutoTradingEnabled(false);
+          setAutoStopReason("STOP_LOSS_LIMIT_HIT");
+          addNotification(`🛑 STOP-LOSS LIMIT HIT! Loss exceeded -$${stopLossLimit.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT. Auto-trading halted to protect capital.`, 'danger');
+          setAutoTradeLogs(prev => [{
+            id: Date.now(),
+            text: `[AUTO-BOT] 🛑 STOP-LOSS LIMIT HIT: Loss exceeded -$${stopLossLimit.toFixed(2)} USDT. Trading halted automatically.`,
+            time: new Date().toLocaleTimeString(),
+            type: 'danger'
+          }, ...prev.slice(0, 15)]);
+          return;
         }
 
         const topOpp = opps
@@ -950,31 +938,22 @@ export const CryptoProvider = ({ children }) => {
 
   // Dedicated Reset Limits & Resume Autopilot Trading Handler
   const resetLimitsAndResume = () => {
-    // 1. Activate ref guard FIRST — prevents autopilot from re-triggering old targets
-    justResetRef.current = true;
-
-    // 2. Advance Take-Profit Target if target was reached
+    // 1. Advance Take-Profit Target if target was reached
     if (autoStopReason === "TAKE_PROFIT_TARGET_HIT" || (takeProfitTarget > 0 && totalBotProfit >= takeProfitTarget)) {
       const nextTarget = Math.max(takeProfitTarget + 500, Math.ceil((totalBotProfit + 500) / 100) * 100);
       setTakeProfitTarget(nextTarget);
-      takeProfitTargetRef.current = nextTarget; // Sync ref immediately
     }
 
-    // 3. Adjust Stop-Loss Limit if stop-loss was triggered
+    // 2. Adjust Stop-Loss Limit if stop-loss was triggered
     if (autoStopReason === "STOP_LOSS_LIMIT_HIT") {
-      const nextSL = stopLossLimit + 150;
-      setStopLossLimit(nextSL);
-      stopLossLimitRef.current = nextSL; // Sync ref immediately
+      setStopLossLimit(prev => prev + 150);
       setWallet(w => ({ ...w, todayProfit: 0.00 }));
     }
 
-    // 4. Clear stop reason and restart autopilot immediately
+    // 3. Clear stop reason and restart autopilot immediately
     setAutoStopReason(null);
     lastAutoTradeTimeRef.current = 0; // Force immediate trade execution
     setAutoTradingEnabled(true);
-
-    // 5. Release ref guard after 3 seconds (enough time for React state to settle)
-    setTimeout(() => { justResetRef.current = false; }, 3000);
 
     try { audioFx.playTradeSuccess(); } catch (_) {}
     addNotification('✅ Limits reset & Autopilot Quant Bot resumed! Risk targets updated.', 'success');
