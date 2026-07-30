@@ -338,6 +338,7 @@ export const CryptoProvider = ({ children }) => {
   // Live High Frequency Tick Simulation
   useEffect(() => {
     const interval = setInterval(() => {
+      try {
       const newFlash = {};
       const newExPrices = {};
       
@@ -488,6 +489,9 @@ export const CryptoProvider = ({ children }) => {
 
       updateOpenPositionsAndAutoSettle(newExPrices);
 
+      } catch (err) {
+        console.error('[AUTO-BOT] Interval error caught (app stays alive):', err);
+      }
     }, 400); // Ultra High-Frequency 400ms Stimulation Pulse Loop
 
     return () => clearInterval(interval);
@@ -825,6 +829,9 @@ export const CryptoProvider = ({ children }) => {
   };
 
   const updateOpenPositionsAndAutoSettle = (newExPrices) => {
+    // Collect positions to settle outside of setState to avoid nested setState crash
+    let positionsToSettle = [];
+
     setOpenPositions(prevPositions => {
       const remainingPositions = [];
       prevPositions.forEach(pos => {
@@ -840,7 +847,8 @@ export const CryptoProvider = ({ children }) => {
         const currPnL = parseFloat(((currSell - currBuy) * pos.amount - (pos.invested * 0.0004)).toFixed(2));
 
         if (currPnL > 35 || Math.random() < 0.15) {
-          closePosition(pos.id, currPnL, 'AUTO-SETTLED');
+          // Mark for settlement — handle wallet/history OUTSIDE setState
+          positionsToSettle.push({ ...pos, currentBuyPrice: currBuy, currentSellPrice: currSell, unrealizedPnL: currPnL, settledPnL: currPnL });
         } else {
           remainingPositions.push({
             ...pos,
@@ -853,6 +861,49 @@ export const CryptoProvider = ({ children }) => {
       });
       return remainingPositions;
     });
+
+    // Process settled positions OUTSIDE setOpenPositions to avoid nested setState crash
+    if (positionsToSettle.length > 0) {
+      let totalSettledPnL = 0;
+      let totalReturnedInvested = 0;
+      const newHistoryItems = [];
+
+      positionsToSettle.forEach(pos => {
+        const pnl = pos.settledPnL;
+        totalSettledPnL += pnl;
+        totalReturnedInvested += pos.invested;
+
+        newHistoryItems.push({
+          id: `TRD-${Math.floor(100 + Math.random() * 900)}`,
+          time: new Date().toLocaleTimeString(),
+          symbol: pos.symbol,
+          strategy: 'Cross Exchange Arbitrage',
+          buyExchange: pos.buyExchange,
+          sellExchange: pos.sellExchange,
+          entryPrice: pos.entryBuyPrice,
+          exitPrice: pos.currentSellPrice,
+          amount: pos.amount,
+          fees: parseFloat((pos.invested * 0.0004).toFixed(2)),
+          netProfit: pnl,
+          result: pnl >= 0 ? 'PROFIT' : 'LOSS'
+        });
+
+        addNotification(`Closed ${pos.symbol} Position (AUTO-SETTLED): Net PnL $${pnl.toFixed(2)}`, pnl >= 0 ? 'success' : 'danger');
+      });
+
+      // Batch wallet update for all settled positions at once
+      setWallet(w => ({
+        ...w,
+        virtualBalance: parseFloat((w.virtualBalance + totalSettledPnL + totalReturnedInvested).toFixed(2)),
+        totalEquity: parseFloat((w.totalEquity + totalSettledPnL).toFixed(2)),
+        todayProfit: parseFloat(((w.todayProfit || 0) + totalSettledPnL).toFixed(2)),
+        roiPct: w.totalEquity > 0 ? parseFloat((((w.todayProfit || 0) + totalSettledPnL) / w.totalEquity * 100).toFixed(2)) : 0
+      }));
+
+      setTradeHistory(th => [...newHistoryItems, ...th]);
+
+      try { audioFx.playAlertChime(); } catch (_) {}
+    }
   };
 
   const closePosition = (posId, finalPnL = null, reason = 'MANUAL') => {
