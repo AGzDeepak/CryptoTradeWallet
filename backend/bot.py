@@ -33,6 +33,12 @@ class PythonQuantArbitrageBot:
         self.max_trade_size = max_allocation
 
     def reset_limits_and_resume(self):
+        if self.auto_stop_reason == "TAKE_PROFIT_TARGET_HIT" or (self.take_profit_target > 0 and self.total_bot_profit >= self.take_profit_target):
+            self.take_profit_target = max(self.take_profit_target + 500.0, self.total_bot_profit + 500.0)
+        
+        if self.auto_stop_reason == "STOP_LOSS_LIMIT_HIT":
+            self.stop_loss_limit += 150.0
+
         self.auto_stop_reason = None
         self.is_running = True
 

@@ -885,6 +885,36 @@ export const CryptoProvider = ({ children }) => {
     executeOrder('BUY', symbol, buyEx, amount);
   };
 
+  // Dedicated Reset Limits & Resume Autopilot Trading Handler
+  const resetLimitsAndResume = () => {
+    // 1. Advance Take-Profit Target if target was reached
+    if (autoStopReason === "TAKE_PROFIT_TARGET_HIT" || (takeProfitTarget > 0 && totalBotProfit >= takeProfitTarget)) {
+      const nextTarget = Math.max(takeProfitTarget + 500, Math.ceil((totalBotProfit + 500) / 100) * 100);
+      setTakeProfitTarget(nextTarget);
+    }
+
+    // 2. Adjust Stop-Loss Limit if stop-loss was triggered
+    if (autoStopReason === "STOP_LOSS_LIMIT_HIT") {
+      setStopLossLimit(prev => prev + 150);
+      setWallet(w => ({ ...w, todayProfit: 0.00 }));
+    }
+
+    // 3. Clear stop reason and restart autopilot immediately
+    setAutoStopReason(null);
+    lastAutoTradeTimeRef.current = 0; // Force immediate trade execution
+    setAutoTradingEnabled(true);
+
+    try { audioFx.playTradeSuccess(); } catch (_) {}
+    addNotification('✅ Limits reset & Autopilot Quant Bot resumed! Risk targets updated.', 'success');
+
+    setAutoTradeLogs(prev => [{
+      id: Date.now(),
+      text: '[AUTO-BOT] 🚀 RESET LIMITS & RESUME: Stop reason cleared, target advanced, autopilot active.',
+      time: new Date().toLocaleTimeString(),
+      type: 'success'
+    }, ...prev.slice(0, 15)]);
+  };
+
   const resetWallet = () => {
     setWallet(NEW_USER_WALLET);
     setOpenPositions([]);
@@ -964,6 +994,7 @@ export const CryptoProvider = ({ children }) => {
         setMaxTradeAllocation,
         autoStopReason,
         setAutoStopReason,
+        resetLimitsAndResume,
         autoTradeLogs,
         totalBotProfit,
         autoTradeCount,

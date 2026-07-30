@@ -26,6 +26,7 @@ export const AutoTraderBar = memo(() => {
     setMaxTradeAllocation,
     autoStopReason,
     setAutoStopReason,
+    resetLimitsAndResume,
     openModal
   } = useCrypto();
 
@@ -36,9 +37,13 @@ export const AutoTraderBar = memo(() => {
   const MIN_TRADE_FUNDS = 10; // $10 minimum balance to start bot trading
   const isInsufficientFunds = autoTradingEnabled && walletBalance < MIN_TRADE_FUNDS;
 
-  const handleResetLimits = () => {
-    setAutoStopReason(null);
-    setAutoTradingEnabled(true);
+  const handleResetClick = () => {
+    if (resetLimitsAndResume) {
+      resetLimitsAndResume();
+    } else {
+      setAutoStopReason(null);
+      setAutoTradingEnabled(true);
+    }
   };
 
   return (
@@ -95,8 +100,13 @@ export const AutoTraderBar = memo(() => {
 
           <button
             onClick={() => {
-              if (autoStopReason) handleResetLimits();
-              else setAutoTradingEnabled(!autoTradingEnabled);
+              if (autoStopReason) {
+                handleResetClick();
+              } else if (!autoTradingEnabled && walletBalance < MIN_TRADE_FUNDS) {
+                openModal('DEPOSIT');
+              } else {
+                setAutoTradingEnabled(!autoTradingEnabled);
+              }
             }}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold font-mono transition border shadow-lg flex items-center gap-1.5 ${
               autoStopReason

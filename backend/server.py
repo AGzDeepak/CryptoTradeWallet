@@ -195,6 +195,18 @@ def update_bot_risk_limits(req: RiskLimitsRequest):
         }
     }
 
+@app.post("/api/bot/reset-limits")
+def reset_bot_limits():
+    python_quant_bot.reset_limits_and_resume()
+    return {
+        "status": "SUCCESS",
+        "message": "Python Quant Bot risk limits reset & autopilot resumed",
+        "isRunning": python_quant_bot.is_running,
+        "autoStopReason": python_quant_bot.auto_stop_reason,
+        "takeProfitTarget": python_quant_bot.take_profit_target,
+        "stopLossLimit": python_quant_bot.stop_loss_limit
+    }
+
 @app.post("/api/bot/auto-trade")
 def run_bot_auto_trade(req: AutoTradeRequest):
     res = python_trading_engine.execute_auto_arbitrage(req.email, req.opp)
