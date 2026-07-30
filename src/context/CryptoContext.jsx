@@ -583,45 +583,141 @@ export const CryptoProvider = ({ children }) => {
     return true;
   };
 
-  // Order Placement
+  // Order Placement (BUY / SELL FIFO Execution)
   const executeOrder = (side, symbol, exchange, amount, priceOverride = null) => {
     const coin = marketData.find(c => c.symbol === symbol) || marketData[0];
     const price = priceOverride || coin.basePrice;
-    const cost = price * amount;
+    const sideUpper = side.toUpperCase();
 
-    if (side === 'BUY' && cost > (wallet.virtualBalance ?? 0)) {
-      addNotification(`Insufficient funds! Available balance is $${(wallet.virtualBalance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT. Deposit funds first.`, 'danger');
-      return false;
+    // ============================================================
+    // BUY ORDER
+    // ============================================================
+    if (sideUpper === 'BUY') {
+      const totalCost = parseFloat((amount * price).toFixed(2));
+      const currentBal = wallet.virtualBalance ?? 0;
+
+      if (currentBal < totalCost) {
+        addNotification(`Insufficient USDT balance! Available: $${currentBal.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT.`, 'danger');
+        audioFx.playAlertChime();
+        return false;
+      }
+
+      setWallet(w => ({
+        ...w,
+        virtualBalance: parseFloat((w.virtualBalance - totalCost).toFixed(2))
+      }));
+
+      const newPos = {
+        id: `POS-${Math.floor(1000 + Math.random() * 9000)}`,
+        symbol,
+        exchange,
+        buyExchange: exchange,
+        sellExchange: exchange === 'Binance' ? 'Bybit' : 'Binance',
+        type: 'BUY',
+        amount,
+        entryPrice: price,
+        entryBuyPrice: price,
+        entrySellPrice: parseFloat((price * 1.004).toFixed(2)),
+        currentPrice: price,
+        currentBuyPrice: price,
+        currentSellPrice: parseFloat((price * 1.004).toFixed(2)),
+        invested: totalCost,
+        status: 'OPEN',
+        timestamp: new Date().toISOString(),
+        unrealizedPnL: 0.0
+      };
+
+      setOpenPositions(prev => [newPos, ...prev]);
+      setTradeHistory(prev => [{
+        type: 'BUY',
+        symbol,
+        exchange,
+        amount,
+        price,
+        total: totalCost,
+        time: new Date().toLocaleTimeString()
+      }, ...prev]);
+
+      audioFx.playTradeSuccess();
+      addNotification(`Bought ${amount} ${symbol} @ $${price.toLocaleString()} on ${exchange}`, 'success');
+      return true;
     }
 
-    setWallet(w => ({
-      ...w,
-      virtualBalance: side === 'BUY' ? parseFloat((w.virtualBalance - cost).toFixed(2)) : parseFloat((w.virtualBalance + cost).toFixed(2))
-    }));
+    // ============================================================
+    // SELL ORDER (FIFO Position Settlement)
+    // ============================================================
+    if (sideUpper === 'SELL') {
+      let remaining = amount;
+      let totalSellValue = 0;
+      let totalProfit = 0;
 
-    const newPos = {
-      id: `POS-${Math.floor(1000 + Math.random() * 9000)}`,
-      symbol,
-      type: side,
-      buyExchange: exchange,
-      sellExchange: exchange === 'Binance' ? 'Bybit' : 'Binance',
-      entryBuyPrice: price,
-      entrySellPrice: parseFloat((price * 1.004).toFixed(2)),
-      currentBuyPrice: price,
-      currentSellPrice: parseFloat((price * 1.004).toFixed(2)),
-      spreadPct: 0.40,
-      amount,
-      invested: parseFloat(cost.toFixed(2)),
-      unrealizedPnL: parseFloat((cost * 0.004).toFixed(2)),
-      duration: '0s',
-      timestamp: new Date().toISOString(),
-      status: 'ACTIVE'
-    };
+      const matchingPositions = openPositions.filter(p => p.symbol === symbol && (p.status === 'OPEN' || p.status === 'ACTIVE'));
+      const availableQty = matchingPositions.reduce((acc, p) => acc + p.amount, 0);
 
-    setOpenPositions(prev => [newPos, ...prev]);
-    audioFx.playTradeSuccess();
-    addNotification(`Executed ${side}: ${amount} ${symbol} @ $${price.toLocaleString()} on ${exchange} (${walletMode} Mode)`, 'success');
-    return true;
+      if (availableQty < amount) {
+        addNotification(`Not enough ${symbol} to sell! You hold ${availableQty} ${symbol} but tried to sell ${amount}.`, 'danger');
+        audioFx.playAlertChime();
+        return false;
+      }
+
+      const updatedPositions = [];
+      for (const pos of openPositions) {
+        if (pos.symbol !== symbol || (pos.status !== 'OPEN' && pos.status !== 'ACTIVE') || remaining <= 0) {
+          updatedPositions.push(pos);
+          continue;
+        }
+
+        const avail = pos.amount;
+        const sellQty = Math.min(avail, remaining);
+        const entryP = pos.entryPrice || pos.entryBuyPrice || price;
+        const buyVal = sellQty * entryP;
+        const sellVal = sellQty * price;
+        const profit = sellVal - buyVal;
+
+        totalSellValue += sellVal;
+        totalProfit += profit;
+        remaining -= sellQty;
+
+        if (avail - sellQty > 0) {
+          updatedPositions.push({
+            ...pos,
+            amount: parseFloat((avail - sellQty).toFixed(4)),
+            invested: parseFloat(((avail - sellQty) * entryP).toFixed(2))
+          });
+        }
+      }
+
+      setOpenPositions(updatedPositions);
+
+      setWallet(w => {
+        const newBal = parseFloat((w.virtualBalance + totalSellValue).toFixed(2));
+        const newProfit = parseFloat(((w.todayProfit || 0) + totalProfit).toFixed(2));
+        const newEquity = parseFloat(((w.totalEquity || newBal) + totalProfit).toFixed(2));
+        return {
+          ...w,
+          virtualBalance: newBal,
+          todayProfit: newProfit,
+          totalEquity: newEquity
+        };
+      });
+
+      setTradeHistory(prev => [{
+        type: 'SELL',
+        symbol,
+        exchange,
+        amount,
+        price,
+        total: parseFloat(totalSellValue.toFixed(2)),
+        profit: parseFloat(totalProfit.toFixed(2)),
+        time: new Date().toLocaleTimeString()
+      }, ...prev]);
+
+      audioFx.playTradeSuccess();
+      addNotification(`Sold ${amount} ${symbol} @ $${price.toLocaleString()} on ${exchange} (Profit: +$${totalProfit.toFixed(2)})`, 'success');
+      return true;
+    }
+
+    return false;
   };
 
   const executeAutoTrade = (opp) => {

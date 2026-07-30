@@ -49,6 +49,12 @@ class PythonQuantArbitrageBot:
             self.auto_stop_reason = "TAKE_PROFIT_TARGET_HIT"
             return []
 
+        # Money Control Check 2: Stop Loss Limit Hit
+        if self.stop_loss_limit > 0 and self.total_bot_profit < 0 and abs(self.total_bot_profit) >= self.stop_loss_limit:
+            self.is_running = False
+            self.auto_stop_reason = "STOP_LOSS_LIMIT_HIT"
+            return []
+
         profitable_opps = [
             o for o in arbitrage_opps 
             if o.get("isProfitable") and o.get("diffPct", 0) >= self.min_profit_threshold

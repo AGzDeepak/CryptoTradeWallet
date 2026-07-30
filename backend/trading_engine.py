@@ -6,6 +6,7 @@ Stack: Python 3.14, FastAPI, Pydantic, NumPy, Datastore Engine
 
 import time
 import random
+import uuid
 from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 
@@ -135,49 +136,153 @@ class PythonTradingEngine:
             "wallet": wallet
         }
 
-    def execute_order(self, email: str, side: str, symbol: str, exchange: str, amount: float, current_price: float) -> Dict:
-        user_data = self.get_or_create_user(email)
-        wallet = user_data["wallet"]
-        cost = round(current_price * amount, 2)
+    def execute_order(
+        self,
+        email: str,
+        side: str,
+        symbol: str,
+        exchange: str,
+        amount: float,
+        current_price: float,
+    ) -> Dict:
+        user = self.get_or_create_user(email)
+        wallet = user["wallet"]
+        positions = user["openPositions"]
+        history = user.setdefault("tradeHistory", [])
 
-        if side.upper() == "BUY" and cost > wallet["virtualBalance"]:
-            return {
-                "success": False,
-                "message": f"Insufficient funds! Order cost is ${cost:,.2f} but available balance is ${wallet['virtualBalance']:,.2f} USDT."
+        side = side.upper()
+
+        # ============================================================
+        # BUY ORDER
+        # ============================================================
+        if side == "BUY":
+            total_cost = round(amount * current_price, 2)
+
+            if wallet["virtualBalance"] < total_cost:
+                return {
+                    "success": False,
+                    "message": "Insufficient USDT balance."
+                }
+
+            wallet["virtualBalance"] = round(
+                wallet["virtualBalance"] - total_cost,
+                2
+            )
+
+            position = {
+                "id": str(uuid.uuid4()),
+                "symbol": symbol,
+                "exchange": exchange,
+                "buyExchange": exchange,
+                "sellExchange": "Bybit" if exchange == "Binance" else "Binance",
+                "type": "BUY",
+                "amount": amount,
+                "entryPrice": current_price,
+                "entryBuyPrice": current_price,
+                "entrySellPrice": round(current_price * 1.004, 2),
+                "currentPrice": current_price,
+                "currentBuyPrice": current_price,
+                "currentSellPrice": round(current_price * 1.004, 2),
+                "invested": total_cost,
+                "status": "OPEN",
+                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "unrealizedPnL": 0.0
             }
 
-        # Deduct cost on BUY, add cash on SELL
-        if side.upper() == "BUY":
-            wallet["virtualBalance"] = round(wallet["virtualBalance"] - cost, 2)
-        else:
-            wallet["virtualBalance"] = round(wallet["virtualBalance"] + cost, 2)
+            positions.append(position)
 
-        pos_id = f"POS-{random.randint(1000, 9999)}"
-        new_pos = {
-            "id": pos_id,
-            "symbol": symbol,
-            "type": side.upper(),
-            "buyExchange": exchange,
-            "sellExchange": "Bybit" if exchange == "Binance" else "Binance",
-            "entryBuyPrice": current_price,
-            "entrySellPrice": round(current_price * 1.004, 2),
-            "currentBuyPrice": current_price,
-            "currentSellPrice": round(current_price * 1.004, 2),
-            "spreadPct": 0.40,
-            "amount": amount,
-            "invested": cost,
-            "unrealizedPnL": round(cost * 0.004, 2),
-            "duration": "0s",
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "status": "ACTIVE"
-        }
+            history.append({
+                "type": "BUY",
+                "symbol": symbol,
+                "exchange": exchange,
+                "amount": amount,
+                "price": current_price,
+                "total": total_cost,
+                "time": position["timestamp"]
+            })
 
-        user_data["openPositions"].insert(0, new_pos)
+            return {
+                "success": True,
+                "message": f"Bought {amount} {symbol}",
+                "wallet": wallet,
+                "position": position
+            }
+
+        # ============================================================
+        # SELL ORDER
+        # ============================================================
+        elif side == "SELL":
+            remaining = amount
+            total_sell_value = 0.0
+            total_profit = 0.0
+            closed_positions = []
+
+            for position in positions[:]:
+                if position["symbol"] != symbol:
+                    continue
+
+                if position["status"] not in ("OPEN", "ACTIVE"):
+                    continue
+
+                available = position["amount"]
+                sell_qty = min(available, remaining)
+                entry_p = position.get("entryPrice", position.get("entryBuyPrice", current_price))
+                buy_value = sell_qty * entry_p
+                sell_value = sell_qty * current_price
+                profit = sell_value - buy_value
+
+                total_sell_value += sell_value
+                total_profit += profit
+
+                position["amount"] -= sell_qty
+                remaining -= sell_qty
+
+                if position["amount"] <= 0:
+                    position["status"] = "CLOSED"
+                    positions.remove(position)
+                    closed_positions.append(position["id"])
+
+                if remaining <= 0:
+                    break
+
+            if remaining > 0:
+                return {
+                    "success": False,
+                    "message": "Not enough crypto to sell."
+                }
+
+            wallet["virtualBalance"] = round(
+                wallet["virtualBalance"] + total_sell_value,
+                2
+            )
+            wallet["todayProfit"] = round(wallet.get("todayProfit", 0.0) + total_profit, 2)
+            wallet["totalEquity"] = round(wallet.get("totalEquity", wallet["virtualBalance"]) + total_profit, 2)
+
+            history.append({
+                "type": "SELL",
+                "symbol": symbol,
+                "exchange": exchange,
+                "amount": amount,
+                "price": current_price,
+                "total": round(total_sell_value, 2),
+                "profit": round(total_profit, 2),
+                "time": time.strftime("%Y-%m-%d %H:%M:%S")
+            })
+
+            return {
+                "success": True,
+                "message": f"Sold {amount} {symbol}",
+                "wallet": wallet,
+                "profit": round(total_profit, 2),
+                "closedPositions": closed_positions
+            }
+
+        # ============================================================
+        # INVALID ORDER
+        # ============================================================
         return {
-            "success": True,
-            "message": f"Executed {side.upper()} order: {amount} {symbol} @ ${current_price:,.2f} on {exchange}",
-            "position": new_pos,
-            "wallet": wallet
+            "success": False,
+            "message": "Invalid order type."
         }
 
     def close_position(self, email: str, position_id: str, final_pnl: Optional[float] = None) -> Dict:
