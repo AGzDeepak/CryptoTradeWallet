@@ -22,15 +22,16 @@ import { WalletSection } from './components/WalletSection';
 import { AccountSection } from './components/AccountSection';
 import { LiveCryptoNews } from './components/LiveCryptoNews';
 import { SimulationSection } from './components/SimulationSection';
+import { MobileBottomNav } from './components/MobileBottomNav';
 
 const DashboardContent = () => {
   const { activeTab } = useCrypto();
 
   return (
-    <main className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 no-scrollbar smooth-scroll-container bg-[#080a10]">
+    <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 space-y-8 no-scrollbar smooth-scroll-container bg-[#080a10]">
       
       {/* Outer Shell Frame */}
-      <div className="chainblock-shell p-6 sm:p-8 space-y-8">
+      <div className="chainblock-shell p-4 sm:p-6 lg:p-8 space-y-8">
         
         {/* Master Autopilot Quant Command Deck */}
         <AutoTraderBar />
@@ -176,8 +177,9 @@ const MainLayout = () => {
         </div>
       </div>
 
-      {/* Global Modals */}
+      {/* Global Modals & Mobile Navigation */}
       <GlobalModals />
+      <MobileBottomNav />
     </div>
   );
 };

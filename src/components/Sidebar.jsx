@@ -24,7 +24,7 @@ export const Sidebar = () => {
   ];
 
   return (
-    <aside className="w-60 bg-[#0b0c10] border-r border-slate-800/80 flex flex-col justify-between p-6 z-30 shrink-0 h-full overflow-y-auto no-scrollbar font-sans">
+    <aside className="hidden lg:flex w-60 bg-[#0b0c10] border-r border-slate-800/80 flex-col justify-between p-6 z-30 shrink-0 h-full overflow-y-auto no-scrollbar font-sans">
       <div className="space-y-8">
         
         {/* Brand Emblem matching reference screenshot (Yellow Crescent / Circle) */}
