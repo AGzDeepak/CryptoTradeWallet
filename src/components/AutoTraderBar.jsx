@@ -198,33 +198,6 @@ export const AutoTraderBar = memo(() => {
           />
         </div>
 
-        {/* 4. Target Stop & Stop Loss */}
-        <div className="bg-[#0b0c10] p-3 rounded-xl border border-slate-800 font-mono text-xs flex flex-col justify-between">
-          <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1.5">
-            Risk Limits (Auto-Pause)
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <div className="text-[9px] text-[#2dd4bf] uppercase font-bold truncate">🎯 Target ($)</div>
-              <input
-                type="number"
-                value={takeProfitTarget}
-                onChange={(e) => setTakeProfitTarget(parseFloat(e.target.value) || 0)}
-                className="w-full bg-[#14161d] border border-slate-800 rounded px-2 py-1 text-white font-mono text-xs outline-none focus:border-[#2dd4bf]"
-              />
-            </div>
-            <div>
-              <div className="text-[9px] text-rose-400 uppercase font-bold truncate">🛑 Stop Loss ($)</div>
-              <input
-                type="number"
-                value={stopLossLimit}
-                onChange={(e) => setStopLossLimit(parseFloat(e.target.value) || 0)}
-                className="w-full bg-[#14161d] border border-slate-800 rounded px-2 py-1 text-white font-mono text-xs outline-none focus:border-rose-500"
-              />
-            </div>
-          </div>
-        </div>
-
       </div>
 
       {/* Auto-Stop Limit Hit Alert Banner */}

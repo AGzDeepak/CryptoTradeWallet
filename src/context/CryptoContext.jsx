@@ -421,19 +421,6 @@ export const CryptoProvider = ({ children }) => {
       if (autoTradingEnabled && (now - lastAutoTradeTimeRef.current > 1500)) {
         
         // 1. Evaluate User Money Control Stop Limits
-        if (takeProfitTarget > 0 && totalBotProfit >= takeProfitTarget) {
-          setAutoTradingEnabled(false);
-          setAutoStopReason("TAKE_PROFIT_TARGET_HIT");
-          addNotification(`🎯 TAKE-PROFIT TARGET HIT! Bot reached your target of +$${takeProfitTarget.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT. Auto-trading stopped automatically.`, 'success');
-          setAutoTradeLogs(prev => [{
-            id: Date.now(),
-            text: `[AUTO-BOT] 🎯 TAKE-PROFIT TARGET HIT: Reached +$${takeProfitTarget.toFixed(2)} USDT. Auto-trading stopped to secure profits.`,
-            time: new Date().toLocaleTimeString(),
-            type: 'success'
-          }, ...prev.slice(0, 15)]);
-          return;
-        }
-
         const todayProfit = wallet.todayProfit ?? 0;
         if (stopLossLimit > 0 && todayProfit < 0 && Math.abs(todayProfit) >= stopLossLimit) {
           setAutoTradingEnabled(false);
@@ -939,10 +926,7 @@ export const CryptoProvider = ({ children }) => {
   // Dedicated Reset Limits & Resume Autopilot Trading Handler
   const resetLimitsAndResume = () => {
     // 1. Advance Take-Profit Target if target was reached
-    if (autoStopReason === "TAKE_PROFIT_TARGET_HIT" || (takeProfitTarget > 0 && totalBotProfit >= takeProfitTarget)) {
-      const nextTarget = Math.max(takeProfitTarget + 500, Math.ceil((totalBotProfit + 500) / 100) * 100);
-      setTakeProfitTarget(nextTarget);
-    }
+
 
     // 2. Adjust Stop-Loss Limit if stop-loss was triggered
     if (autoStopReason === "STOP_LOSS_LIMIT_HIT") {
