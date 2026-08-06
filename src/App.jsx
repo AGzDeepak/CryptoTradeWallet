@@ -9,6 +9,7 @@ import { TotalAssetsHero } from './components/TotalAssetsHero';
 import { YellowPortfolioCard } from './components/YellowPortfolioCard';
 import { OperationSwapTool } from './components/OperationSwapTool';
 import { MarketGraphPanel } from './components/MarketGraphPanel';
+import { ArbitrageBotTerminal } from './components/ArbitrageBotTerminal';
 import { AiStrategyPanel } from './components/AiStrategyPanel';
 import { PaperTradingPanel } from './components/PaperTradingPanel';
 import { LivePositions } from './components/LivePositions';
@@ -41,6 +42,9 @@ const DashboardContent = () => {
             
             {/* Master Autopilot Quant Command Deck (Dashboard Only) */}
             <AutoTraderBar />
+
+            {/* 500ms HFT Spatial Arbitrage Bot Terminal */}
+            <ArbitrageBotTerminal />
 
             {/* Live Interactive Market Price Chart Graph */}
             <MarketGraphPanel />
