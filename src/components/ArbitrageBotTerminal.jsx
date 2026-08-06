@@ -649,43 +649,101 @@ export const ArbitrageBotTerminal = () => {
 
       </div>
 
-      {/* 5. Live Arbitrage Execution Audit Log Table */}
-      <div className="p-5 rounded-2xl bg-[#090d16] border border-slate-800 space-y-4 font-mono text-xs">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-          <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <Activity className="w-4 h-4 text-emerald-400 animate-pulse" />
-            <span>REAL-TIME ARBITRAGE EXECUTION LEDGER (arbitrage.db)</span>
-          </h3>
-          <span className="text-[10px] text-slate-400">Auto-logging active</span>
+      {/* 5. Live Real-Time MetaMask Web3 Execution Audit Stream & Ledger */}
+      <div className="p-6 rounded-2xl bg-gradient-to-br from-[#0c101d] via-[#090d16] to-[#04060c] border border-amber-500/40 space-y-4 font-mono text-xs shadow-xl">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div className="flex items-center space-x-2">
+            <span className="text-xl">🦊</span>
+            <div>
+              <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+                <Activity className="w-4 h-4 text-emerald-400 animate-pulse" />
+                <span>REAL-TIME METAMASK WEB3 ON-CHAIN TRADE STREAM</span>
+              </h3>
+              <p className="text-[10px] text-slate-400">
+                Live automated Web3 trade executions powered by {realWalletAddress ? `${realWalletAddress.substring(0, 10)}...` : 'MetaMask Wallet'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2 font-bold text-[10px]">
+            <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span>LIVE WEB3 BROADCAST</span>
+            </span>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="text-[10px] text-slate-400 border-b border-slate-800">
-                <th className="pb-2">TIMESTAMP</th>
-                <th className="pb-2">DIRECTION</th>
-                <th className="pb-2">BUY PRICE</th>
-                <th className="pb-2">SELL PRICE</th>
-                <th className="pb-2">NET PROFIT</th>
-                <th className="pb-2">LATENCY</th>
-                <th className="pb-2">COLD WALLET TARGET</th>
-                <th className="pb-2">TX HASH</th>
+              <tr className="text-[10px] text-slate-400 border-b border-slate-800 uppercase tracking-wider">
+                <th className="pb-2.5">TIMESTAMP</th>
+                <th className="pb-2.5">PAIR / ASSET</th>
+                <th className="pb-2.5">EXECUTION DIRECTION</th>
+                <th className="pb-2.5">BUY / SELL PRICE</th>
+                <th className="pb-2.5">NET PROFIT</th>
+                <th className="pb-2.5">LATENCY</th>
+                <th className="pb-2.5">METAMASK DEPOSIT WALLET</th>
+                <th className="pb-2.5">ON-CHAIN TX HASH (ETHERSCAN)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-[11px]">
-              {liveLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-slate-900/50 transition">
-                  <td className="py-2.5 text-slate-400">{log.time}</td>
-                  <td className="py-2.5 font-bold text-cyan-400">{log.direction}</td>
-                  <td className="py-2.5 text-slate-300">${log.buyPrice}</td>
-                  <td className="py-2.5 text-slate-300">${log.sellPrice}</td>
-                  <td className="py-2.5 font-extrabold text-emerald-400">+${log.netProfit} USDT</td>
-                  <td className="py-2.5 font-bold text-amber-400">{log.latency}ms</td>
-                  <td className="py-2.5 text-cyan-300 font-mono text-[10px]">{log.targetWallet}</td>
-                  <td className="py-2.5 text-slate-400 font-mono text-[10px]">{log.txHash}</td>
+              {liveLogs.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-8 text-center text-slate-500 font-mono">
+                    <Activity className="w-6 h-6 mx-auto mb-2 opacity-50 animate-pulse text-amber-400" />
+                    <span>Waiting for live market tick spread... Auto-bot scanning Binance vs Bybit depth...</span>
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                liveLogs.map((log, index) => {
+                  const isLatest = index === 0;
+                  const isSepolia = realWalletNetwork?.toLowerCase().includes('sepolia');
+                  const explorerBase = isSepolia ? 'https://sepolia.etherscan.io/tx/' : 'https://etherscan.io/tx/';
+                  
+                  return (
+                    <tr 
+                      key={log.id} 
+                      className={`transition ${
+                        isLatest 
+                          ? 'bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-transparent border-l-4 border-l-amber-400 text-white font-bold' 
+                          : 'hover:bg-slate-900/60 text-slate-300'
+                      }`}
+                    >
+                      <td className="py-3 text-slate-400">{log.time}</td>
+                      <td className="py-3 font-black text-amber-300">
+                        <span className="px-2 py-0.5 rounded-lg bg-amber-500/20 border border-amber-500/30">
+                          {log.symbol || 'BTC/USDT'}
+                        </span>
+                      </td>
+                      <td className="py-3 font-extrabold text-cyan-300">{log.direction}</td>
+                      <td className="py-3 text-slate-200">
+                        <span className="text-rose-400">${log.buyPrice}</span> ➔ <span className="text-emerald-400">${log.sellPrice}</span>
+                      </td>
+                      <td className="py-3 font-black text-emerald-400 text-xs">
+                        +${log.netProfit} USDT
+                      </td>
+                      <td className="py-3 font-bold text-amber-400">
+                        {log.latency} ms
+                      </td>
+                      <td className="py-3 text-cyan-300 font-mono text-[10px] truncate max-w-[120px]">
+                        🦊 {log.targetWallet}
+                      </td>
+                      <td className="py-3 font-mono text-[10px]">
+                        <a
+                          href={`${explorerBase}${log.txHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 flex items-center gap-1 w-fit transition hover:brightness-110"
+                        >
+                          <span>{log.txHash.substring(0, 12)}...</span>
+                          <span className="text-[9px]">↗</span>
+                        </a>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
