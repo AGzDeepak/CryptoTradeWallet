@@ -29,6 +29,8 @@ export const GlobalModals = () => {
     walletMode,
     setWalletMode,
     realWallet,
+    realWalletAddress,
+    setRealWalletAddress,
     connectRealWallet,
     disconnectRealWallet,
     user
