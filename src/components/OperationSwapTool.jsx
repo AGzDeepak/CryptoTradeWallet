@@ -14,7 +14,10 @@ export const OperationSwapTool = () => {
     setWalletMode, 
     realWallet, 
     connectRealWallet,
-    addNotification 
+    addNotification,
+    activeTradeExecutionMode,
+    setActiveTradeExecutionMode,
+    openModal
   } = useCrypto();
 
   const [tab, setTab] = useState('Buy');
@@ -93,33 +96,49 @@ export const OperationSwapTool = () => {
   return (
     <div className="chainblock-card space-y-4 font-sans relative">
       
-      {/* Real vs Demo Money Mode Switcher Banner */}
-      <div className="flex items-center justify-between p-2 rounded-xl bg-[#0b0c10] border border-slate-800 font-mono text-xs">
-        <div className="flex items-center space-x-1.5">
-          <ShieldCheck className={`w-4 h-4 ${walletMode === 'REAL' ? 'text-[#2dd4bf]' : 'text-[#facc15]'}`} />
-          <span className="text-[11px] font-bold text-white uppercase">Trading Mode:</span>
+      {/* Real vs Mock Execution Mode Toggle */}
+      <div className="card-header-baseline">
+        <div>
+          <div className="flex items-center space-x-2">
+            <h3 className="text-sm font-extrabold text-white tracking-tight">INSTITUTIONAL DEX SWAP ENGINE</h3>
+            <span className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold ${
+              activeTradeExecutionMode === 'REAL' ? 'bg-emerald-950 text-[#2dd4bf] border border-[#2dd4bf]' : 'bg-amber-950 text-[#facc15] border border-[#facc15]'
+            }`}>
+              {activeTradeExecutionMode === 'REAL' ? '🟢 REAL ON-CHAIN SWAP' : '🟡 MOCK PAPER SWAP'}
+            </span>
+          </div>
+          <span className="text-xs text-slate-400 font-mono mt-0.5 block">Instant low-slippage execution across Liquidity Pools</span>
         </div>
 
-        <div className="flex space-x-1 bg-[#14161d] p-1 rounded-lg border border-slate-800">
+        <div className="flex items-center bg-[#0b0c10] p-1 rounded-xl border border-slate-800 text-[10px] font-mono">
           <button
-            onClick={() => setWalletMode('DEMO')}
-            className={`px-2.5 py-1 rounded text-[10px] font-bold transition ${
-              walletMode === 'DEMO' ? 'bg-[#facc15] text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+            type="button"
+            onClick={() => {
+              setActiveTradeExecutionMode('MOCK');
+              setWalletMode('DEMO');
+              addNotification('🟡 Switched to MOCK TRADE (Paper Swap) Mode!', 'info');
+            }}
+            className={`px-3 py-1.5 rounded-lg font-bold transition ${
+              activeTradeExecutionMode === 'MOCK' ? 'bg-[#facc15] text-slate-950 shadow' : 'text-slate-400 hover:text-white'
             }`}
           >
-            DEMO MODE
+            MOCK SWAP
           </button>
+
           <button
+            type="button"
             onClick={() => {
-              if (realWallet.connected) setWalletMode('REAL');
-              else connectRealWallet('MetaMask');
+              setActiveTradeExecutionMode('REAL');
+              setWalletMode('REAL');
+              if (!realWallet.connected) connectRealWallet('MetaMask');
+              addNotification('🟢 Switched to REAL TRADE (Web3 DEX Swap) Mode!', 'success');
             }}
-            className={`px-2.5 py-1 rounded text-[10px] font-bold transition flex items-center gap-1 ${
-              walletMode === 'REAL' ? 'bg-[#2dd4bf] text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+            className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1 ${
+              activeTradeExecutionMode === 'REAL' ? 'bg-[#2dd4bf] text-slate-950 shadow' : 'text-slate-400 hover:text-white'
             }`}
           >
             <Zap className="w-3 h-3" />
-            <span>REAL MONEY</span>
+            <span>REAL WEB3</span>
           </button>
         </div>
       </div>
@@ -245,24 +264,37 @@ export const OperationSwapTool = () => {
         </span>
       </div>
 
-      {/* Submit Button */}
-      <button
-        onClick={handleSubmit}
-        disabled={isBroadcasting || (tab !== 'Sell' && currentAvailableBalance <= 0)}
-        className={`w-full chainblock-btn-emerald disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 font-extrabold ${
-          walletMode === 'REAL' ? 'bg-[#2dd4bf] text-slate-950' : ''
-        }`}
-      >
-        {isBroadcasting ? (
-          <span>BROADCASTING WEB3 TX...</span>
-        ) : tab !== 'Sell' && currentAvailableBalance <= 0 ? (
-          <span>DEPOSIT REAL FUNDS TO BUY</span>
-        ) : walletMode === 'REAL' ? (
-          <span>EXECUTE REAL ON-CHAIN {tab.toUpperCase()} NOW</span>
-        ) : (
-          <span>{tab === 'Sell' ? `SELL ${getCoin} NOW` : `BUY ${getCoin} NOW`}</span>
-        )}
-      </button>
+      {/* Action Buttons */}
+      <div className="space-y-2">
+        <button
+          onClick={handleSubmit}
+          disabled={isBroadcasting || (tab !== 'Sell' && currentAvailableBalance <= 0)}
+          className={`w-full chainblock-btn-emerald disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 font-extrabold ${
+            walletMode === 'REAL' ? 'bg-[#2dd4bf] text-slate-950' : ''
+          }`}
+        >
+          {isBroadcasting ? (
+            <span>BROADCASTING WEB3 TX...</span>
+          ) : tab !== 'Sell' && currentAvailableBalance <= 0 ? (
+            <span>DEPOSIT REAL FUNDS TO BUY</span>
+          ) : walletMode === 'REAL' ? (
+            <span>EXECUTE REAL ON-CHAIN {tab.toUpperCase()} NOW</span>
+          ) : (
+            <span>{tab === 'Sell' ? `SELL ${getCoin} NOW` : `BUY ${getCoin} NOW`}</span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (!realWallet.connected) connectRealWallet('MetaMask');
+            openModal('metamask_trade');
+          }}
+          className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 hover:bg-slate-800 text-amber-300 font-extrabold text-xs uppercase border border-amber-500/40 flex items-center justify-center gap-2 shadow transition"
+        >
+          <span>🦊 OPEN METAMASK WEB3 TRADE TERMINAL</span>
+        </button>
+      </div>
 
     </div>
   );

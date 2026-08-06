@@ -28,14 +28,30 @@ const NEW_USER_WALLET = {
 
 export const CryptoProvider = ({ children }) => {
   // Authentication & Security State
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    try {
+      const active = localStorage.getItem('chainblock_active_session');
+      return active ? JSON.parse(active).isAuthenticated : false;
+    } catch (_) {
+      return false;
+    }
+  });
   const [sessionToken, setSessionToken] = useState(null);
-  const [user, setUser] = useState({
-    name: 'Deepak Kumar',
-    email: 'deepak@chainblock.io',
-    avatar: 'D',
-    role: 'Institutional Quant Trader',
-    secStatus: '256-BIT ENCRYPTED'
+  const [user, setUser] = useState(() => {
+    try {
+      const active = localStorage.getItem('chainblock_active_session');
+      if (active) {
+        const parsed = JSON.parse(active);
+        if (parsed.user) return parsed.user;
+      }
+    } catch (_) {}
+    return {
+      name: 'Deepak Kumar',
+      email: 'deepak@chainblock.io',
+      avatar: 'D',
+      role: 'Institutional Quant Trader',
+      secStatus: '256-BIT ENCRYPTED'
+    };
   });
 
   // Dual Wallet Mode State: 'DEMO' (Paper Trading) | 'REAL' (Web3 Wallet)
@@ -50,7 +66,96 @@ export const CryptoProvider = ({ children }) => {
     walletType: 'MetaMask'
   });
 
-  const [activeTab, setActiveTab] = useState('dashboard');
+  // ─── Real Wallet Persistent State (survives tab navigation) ───────
+  const [realWalletAddress, setRealWalletAddress] = useState('');
+  const [realWalletNetwork, setRealWalletNetwork] = useState('ethereum');
+  const [realWalletData, setRealWalletData] = useState(null);
+  const [realWalletLastRefresh, setRealWalletLastRefresh] = useState('');
+
+  // ─── Team Vault Sharing & Dual Execution Trade State ──────────────
+  const [teamVaultCode, setTeamVaultCode] = useState('TEAM-VAULT-QUANT-ALPHA-928F');
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [teamCodeStats, setTeamCodeStats] = useState(() => {
+    try {
+      const saved = localStorage.getItem('chainblock_team_code_stats');
+      return saved ? JSON.parse(saved) : {
+        code: 'TEAM-VAULT-QUANT-ALPHA-928F',
+        createdTime: 'Just now',
+        createdBy: 'Lead Quant',
+        usesCount: 0,
+        joinedMembers: []
+      };
+    } catch (_) {
+      return {
+        code: 'TEAM-VAULT-QUANT-ALPHA-928F',
+        createdTime: 'Just now',
+        createdBy: 'Lead Quant',
+        usesCount: 0,
+        joinedMembers: []
+      };
+    }
+  });
+
+  const joinTeamViaCode = (code, password, nameInput = '', emailInput = '') => {
+    const teammateName = nameInput || user?.name || 'Quant Teammate';
+    const teammateEmail = emailInput || user?.email || 'teammate@chainblock.io';
+    
+    const currentList = teamCodeStats?.joinedMembers || [];
+    const existingIndex = currentList.findIndex(
+      m => m.email.toLowerCase() === teammateEmail.toLowerCase()
+    );
+
+    const newJoined = {
+      id: existingIndex >= 0 ? currentList[existingIndex].id : Date.now(),
+      name: teammateName,
+      email: teammateEmail,
+      role: 'Quant Trader',
+      joinedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      ip: `10.24.123.${Math.floor(100 + Math.random() * 100)}`,
+      status: 'JOINED & ACTIVE 🟢'
+    };
+
+    let updatedMembers = [];
+    if (existingIndex >= 0) {
+      updatedMembers = [...currentList];
+      updatedMembers[existingIndex] = newJoined;
+    } else {
+      updatedMembers = [newJoined, ...currentList];
+    }
+
+    const newStats = {
+      ...teamCodeStats,
+      code: code || teamCodeStats?.code || 'TEAM-VAULT-QUANT-ALPHA-928F',
+      usesCount: updatedMembers.length,
+      joinedMembers: updatedMembers
+    };
+
+    setTeamCodeStats(newStats);
+    try {
+      localStorage.setItem('chainblock_team_code_stats', JSON.stringify(newStats));
+    } catch (_) {}
+
+    addNotification(`🎉 ${teammateName} joined the Team Vault using Team Code ${(code || '').substring(0, 14)}...!`, 'success');
+    return newJoined;
+  };
+
+  const [activeTradeExecutionMode, setActiveTradeExecutionMode] = useState('MOCK'); // 'MOCK' (Paper Trade) | 'REAL' (Web3 On-Chain)
+
+  const [activeTab, setActiveTabState] = useState(() => {
+    try {
+      const saved = localStorage.getItem('chainblock_active_tab');
+      return saved || 'dashboard';
+    } catch (_) {
+      return 'dashboard';
+    }
+  });
+
+  const setActiveTab = (tab) => {
+    setActiveTabState(tab);
+    try {
+      localStorage.setItem('chainblock_active_tab', tab);
+    } catch (_) {}
+  };
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(false);
@@ -112,21 +217,44 @@ export const CryptoProvider = ({ children }) => {
           connected: true
         };
         setRealWallet(simulated);
+        setRealWalletAddress(simulated.address);
+        setRealWalletNetwork('arbitrum');
         setWalletMode('REAL');
         audioFx.playTradeSuccess();
         addNotification(`Connected ${walletType} Real Web3 Wallet: ${simulated.shortAddress}`, 'success');
-        return true;
+        return simulated;
       }
 
       const walletInfo = await connectRealWeb3Wallet(walletType);
       setRealWallet(walletInfo);
+      if (walletInfo && walletInfo.address) {
+        setRealWalletAddress(walletInfo.address);
+        setRealWalletNetwork(walletInfo.networkName?.toLowerCase()?.includes('arbitrum') ? 'arbitrum' : walletInfo.networkName?.toLowerCase()?.includes('polygon') ? 'polygon' : walletInfo.networkName?.toLowerCase()?.includes('bsc') ? 'bsc' : 'ethereum');
+      }
       setWalletMode('REAL');
       audioFx.playTradeSuccess();
       addNotification(`Connected Real Web3 Wallet: ${walletInfo.shortAddress} on ${walletInfo.networkName}`, 'success');
-      return true;
+      return walletInfo;
     } catch (err) {
       addNotification(`Web3 Wallet Connection Error: ${err.message}`, 'warning');
       audioFx.playAlertChime();
+      return false;
+    }
+  };
+
+  const switchRealWalletAccount = async () => {
+    try {
+      if (typeof window !== 'undefined' && window.ethereum) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_requestPermissions',
+            params: [{ eth_accounts: {} }]
+          });
+        } catch (_) {}
+      }
+      return await connectRealWallet('MetaMask');
+    } catch (err) {
+      addNotification(`Switch Account Notice: ${err.message}`, 'warning');
       return false;
     }
   };
@@ -204,10 +332,24 @@ export const CryptoProvider = ({ children }) => {
   };
 
   // Secure Authentication Login Handler
-  const login = async (email, password, name = 'Deepak Kumar', provider = 'firebase_email') => {
+  const login = async (emailInput, password, nameInput = '', provider = 'firebase_email') => {
     try {
-      const cleanEmail = sanitizeInput(email || 'deepak@chainblock.io');
-      const cleanName = sanitizeInput(name || 'Deepak Kumar');
+      const cleanEmail = sanitizeInput(emailInput || '').trim();
+      if (!cleanEmail) {
+        throw new Error('Email address is required for authentication.');
+      }
+
+      // Format display name from input or derive clean name from email prefix (e.g. alex.rivera@gmail.com -> Alex Rivera)
+      let cleanName = sanitizeInput(nameInput || '').trim();
+      if (!cleanName || cleanName === 'Deepak Kumar' && !cleanEmail.includes('deepak')) {
+        const prefix = cleanEmail.split('@')[0] || 'Trader';
+        cleanName = prefix.replace(/[^a-zA-Z0-9]/g, ' ')
+          .split(' ')
+          .filter(Boolean)
+          .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ') || 'Trader';
+      }
+
       const storageKey = getStorageKey(cleanEmail);
 
       // Generate deterministic 4-digit Account ID from email hash
@@ -233,6 +375,9 @@ export const CryptoProvider = ({ children }) => {
 
       setUser(newUserObj);
       setIsAuthenticated(true);
+      try {
+        localStorage.setItem('chainblock_active_session', JSON.stringify({ user: newUserObj, isAuthenticated: true }));
+      } catch (_) {}
 
       // Save to device multi-user accounts list
       setSavedAccounts(prev => {
@@ -320,10 +465,38 @@ export const CryptoProvider = ({ children }) => {
     }
   }, [wallet, openPositions, tradeHistory, withdrawalHistory, totalBotProfit, autoTradeCount, notifications, user]);
 
+  // Initial Mount: Restore active session workspace
+  useEffect(() => {
+    try {
+      const active = localStorage.getItem('chainblock_active_session');
+      if (active) {
+        const parsed = JSON.parse(active);
+        if (parsed.isAuthenticated && parsed.user?.email) {
+          const storageKey = getStorageKey(parsed.user.email);
+          const existingRaw = localStorage.getItem(storageKey);
+          if (existingRaw) {
+            const saved = JSON.parse(existingRaw);
+            if (saved.wallet) setWallet(saved.wallet);
+            if (saved.openPositions) setOpenPositions(saved.openPositions);
+            if (saved.tradeHistory) setTradeHistory(saved.tradeHistory);
+            if (saved.withdrawalHistory) setWithdrawalHistory(saved.withdrawalHistory);
+            if (saved.totalBotProfit) setTotalBotProfit(saved.totalBotProfit);
+            if (saved.autoTradeCount) setAutoTradeCount(saved.autoTradeCount);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Session workspace restore notice:', e);
+    }
+  }, []);
+
   const logout = () => {
     setIsAuthenticated(false);
     setSessionToken(null);
     setUser(null);
+    try {
+      localStorage.removeItem('chainblock_active_session');
+    } catch (_) {}
     audioFx.playAlertChime();
     addNotification('Logged out successfully. Form inputs and session cleared.', 'info');
   };
@@ -1047,7 +1220,25 @@ export const CryptoProvider = ({ children }) => {
         notifications,
         addNotification,
         removeNotification,
-        clearNotifications
+        clearNotifications,
+        realWalletAddress,
+        setRealWalletAddress,
+        realWalletNetwork,
+        setRealWalletNetwork,
+        realWalletData,
+        setRealWalletData,
+        realWalletLastRefresh,
+        setRealWalletLastRefresh,
+        teamVaultCode,
+        setTeamVaultCode,
+        teamMembers,
+        setTeamMembers,
+        teamCodeStats,
+        setTeamCodeStats,
+        joinTeamViaCode,
+        activeTradeExecutionMode,
+        setActiveTradeExecutionMode,
+        switchRealWalletAccount
       }}
     >
       {children}

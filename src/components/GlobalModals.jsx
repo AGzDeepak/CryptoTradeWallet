@@ -9,6 +9,7 @@ import {
 import { EditAccountModal } from './EditAccountModal';
 import { AddApiKeyModal } from './AddApiKeyModal';
 import { RealPaymentGatewayModal } from './RealPaymentGatewayModal';
+import { MetaMaskTradeModal } from './MetaMaskTradeModal';
 
 export const GlobalModals = () => {
   const { 
@@ -879,6 +880,8 @@ export const GlobalModals = () => {
 
         </div>
       </div>
+
+      <MetaMaskTradeModal />
     </div>
   );
 };

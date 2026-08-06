@@ -7,6 +7,7 @@ import { initializeApp, getApps } from 'firebase/app';
 import {
   getAuth,
   GithubAuthProvider,
+  GoogleAuthProvider,
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -34,6 +35,7 @@ let app = null;
 let auth = null;
 let db = null;
 let githubProvider = null;
+let googleProvider = null;
 
 if (apiKey && projectId && !apiKey.includes('Demo') && !apiKey.includes('demo')) {
   try {
@@ -54,6 +56,7 @@ if (apiKey && projectId && !apiKey.includes('Demo') && !apiKey.includes('demo'))
 
     auth = getAuth(app);
     db = getFirestore(app);
+    googleProvider = new GoogleAuthProvider();
     githubProvider = new GithubAuthProvider();
     githubProvider.addScope('user:email');
     githubProvider.addScope('read:user');
@@ -71,6 +74,7 @@ export {
   auth,
   db,
   githubProvider,
+  googleProvider,
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,

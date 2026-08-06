@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { Search, Mail, Bell, Bot, LogOut, CreditCard } from 'lucide-react';
+import { Search, Mail, Bell, Bot, LogOut, Wallet } from 'lucide-react';
 
 export const Header = () => {
   const { 
@@ -106,7 +106,7 @@ export const Header = () => {
           onClick={() => openModal('DEPOSIT')}
           className="flex items-center space-x-1.5 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-[#facc15] to-amber-500 text-slate-950 font-extrabold text-xs font-mono shadow-lg hover:brightness-110 transition cursor-pointer whitespace-nowrap shrink-0"
         >
-          <CreditCard className="w-4 h-4 text-slate-950 shrink-0" />
+          <Wallet className="w-4 h-4 text-slate-950 shrink-0" />
           <span className="whitespace-nowrap">+ DEPOSIT / PAY</span>
         </button>
 

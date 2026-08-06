@@ -4,10 +4,16 @@ Author: Deepak Kumar (@AGzDeepak)
 Stack: Python 3.14, FastAPI, Uvicorn, Pydantic, NumPy, BeautifulSoup4, Firebase Admin SDK
 """
 
+import sys
+import os
+sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
 import math
 import time
 import random
 import secrets
+import asyncio
 from datetime import datetime
 from typing import List, Dict, Optional
 from pydantic import BaseModel, Field
@@ -21,7 +27,7 @@ from web3_engine import python_web3_engine
 from swap_tool import python_swap_engine, SwapEstimateRequest, SwapExecuteRequest
 
 try:
-    from fastapi import FastAPI, HTTPException, Depends, Header
+    from fastapi import FastAPI, HTTPException, Depends, Header, WebSocket, WebSocketDisconnect, Body
     from fastapi.middleware.cors import CORSMiddleware
     import uvicorn
 except ImportError:
@@ -33,12 +39,19 @@ except ImportError:
     from fastapi.middleware.cors import CORSMiddleware
     import uvicorn
 
+from backend.routes.wallet_routes import router as wallet_router
+from backend.routes.blockchain_routes import router as blockchain_router
+
 # Initialize FastAPI App
 app = FastAPI(
     title="CryptoBot AI — 100% Python Quant Arbitrage & Trading Engine",
     description="High-frequency Spatial Arbitrage API, Swap Engine, Order Execution, Technical Indicators & Autonomous Bot powered by Python 3.14 & FastAPI",
     version="3.8.0"
 )
+
+# Register Decentralized Wallet & Multi-chain Routers
+app.include_router(wallet_router)
+app.include_router(blockchain_router)
 
 # Enable CORS for React Frontend
 app.add_middleware(
@@ -48,6 +61,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # --- PYDANTIC REQUEST MODELS ---
 
@@ -176,6 +190,92 @@ def close_trade_position(req: ClosePositionRequest):
     if not res["success"]:
         raise HTTPException(status_code=400, detail=res["message"])
     return res
+
+@app.get("/api/bot/status")
+def get_bot_status():
+    return {
+        "status": "ONLINE" if python_quant_bot.is_running else "STOPPED",
+        "isRunning": python_quant_bot.is_running,
+        "autoStopReason": python_quant_bot.auto_stop_reason,
+        "totalBotProfit": python_quant_bot.total_bot_profit,
+        "tradeCount": python_quant_bot.trade_count,
+        "minProfitThreshold": python_quant_bot.min_profit_threshold,
+        "takeProfitTarget": python_quant_bot.take_profit_target,
+        "stopLossLimit": python_quant_bot.stop_loss_limit,
+        "maxTradeSize": python_quant_bot.max_trade_size,
+        "logs": python_quant_bot.logs[:20]
+    }
+
+@app.post("/api/bot/start")
+def start_bot_execution():
+    python_quant_bot.is_running = True
+    python_quant_bot.auto_stop_reason = None
+    return {
+        "status": "SUCCESS",
+        "message": "Python Quant Arbitrage Bot started",
+        "isRunning": True
+    }
+
+@app.post("/api/bot/stop")
+def stop_bot_execution():
+    python_quant_bot.is_running = False
+    python_quant_bot.auto_stop_reason = "USER_MANUAL_STOP"
+    return {
+        "status": "SUCCESS",
+        "message": "Python Quant Arbitrage Bot stopped",
+        "isRunning": False
+    }
+
+@app.get("/api/v1/team/list")
+def get_team_list():
+    return {
+        "status": "SUCCESS",
+        "teams": [
+            {
+                "id": 6,
+                "name": "Alpha Quant Trading Desk",
+                "code": "TEAM-VAULT-QUANT-ALPHA-928F",
+                "membersCount": 3,
+                "status": "ACTIVE"
+            }
+        ]
+    }
+
+@app.get("/api/v1/team/overview")
+def get_team_overview(team_id: Optional[int] = 6):
+    return {
+        "status": "SUCCESS",
+        "teamId": team_id or 6,
+        "teamName": "Alpha Quant Trading Desk",
+        "teamCode": "TEAM-VAULT-QUANT-ALPHA-928F",
+        "members": [
+            { "id": 1, "name": "Deepak Kumar", "email": "deepak@chainblock.io", "role": "Lead Quant", "status": "ACTIVE" },
+            { "id": 2, "name": "Alex Rivera", "email": "alex@quantfund.io", "role": "Senior Trader", "status": "ACTIVE" },
+            { "id": 3, "name": "Sarah Chen", "email": "sarah@arbitrage.ai", "role": "Risk Auditor", "status": "ACTIVE" }
+        ],
+        "totalTradeVolume": 148500.00,
+        "totalTeamProfit": 4820.50
+    }
+
+@app.post("/api/v1/team/join")
+def join_team_legacy(payload: Dict[str, Any] = Body(...)):
+    return {
+        "status": "SUCCESS",
+        "message": "Joined team desk successfully",
+        "teamId": payload.get("team_id", 6),
+        "code": payload.get("code", "TEAM-VAULT-QUANT-ALPHA-928F")
+    }
+
+@app.websocket("/ws/market")
+async def websocket_market_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            ticks = python_market_engine.generate_live_ticks()
+            await websocket.send_json(ticks)
+            await asyncio.sleep(1)
+    except Exception:
+        pass
 
 class RiskLimitsRequest(BaseModel):
     takeProfitTarget: float = Field(default=500.0)

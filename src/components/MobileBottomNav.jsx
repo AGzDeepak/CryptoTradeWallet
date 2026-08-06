@@ -6,7 +6,11 @@ import {
   FlaskConical, 
   Wallet, 
   User, 
-  Settings 
+  Settings,
+  Gem,
+  ShieldCheck,
+  Users,
+  Zap
 } from 'lucide-react';
 
 export const MobileBottomNav = () => {
@@ -14,10 +18,10 @@ export const MobileBottomNav = () => {
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
-    { id: 'papertrading', label: 'Paper Trade', icon: ShoppingBag },
-    { id: 'simulation', label: 'Simulator', icon: FlaskConical },
-    { id: 'wallet', label: 'Wallet', icon: Wallet },
-    { id: 'account', label: 'Account', icon: User }
+    { id: 'metamaskterminal', label: 'MetaMask', icon: Zap },
+    { id: 'realwallet', label: 'Real Wallet', icon: Gem },
+    { id: 'decentralized', label: 'Vault', icon: ShieldCheck },
+    { id: 'team', label: 'Team', icon: Users }
   ];
 
   return (

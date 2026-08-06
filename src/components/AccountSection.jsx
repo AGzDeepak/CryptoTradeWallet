@@ -1,52 +1,141 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { User, ShieldCheck, Key, Lock, Bell, Sliders, Server, Cpu, Copy, Check, Download, LogOut, CheckCircle2, ShieldAlert, Zap, Globe, Smartphone, FileSpreadsheet, FileText } from 'lucide-react';
+import { 
+  User, ShieldCheck, Key, Lock, Copy, Check, LogOut, Zap, RefreshCw, 
+  ExternalLink, ArrowUpRight, Shield, Activity, Globe, CheckCircle2, 
+  Wallet, AlertCircle, LogIn 
+} from 'lucide-react';
 import { AddApiKeyModal } from './AddApiKeyModal';
+import { fetchEthBalance } from '../services/walletService';
 
 export const AccountSection = () => {
-  const { user, openModal, activeModal, addNotification, soundEnabled, setSoundEnabled, logout } = useCrypto();
+  const { 
+    user, 
+    openModal, 
+    activeModal, 
+    addNotification, 
+    soundEnabled, 
+    setSoundEnabled, 
+    logout,
+    realWalletAddress,
+    setRealWalletAddress,
+    realWalletNetwork,
+    setRealWalletNetwork,
+    switchRealWalletAccount,
+    connectRealWallet,
+    setActiveTab
+  } = useCrypto();
+
   const [copiedId, setCopiedId] = useState(false);
-  const [twoFactor, setTwoFactor] = useState(true);
-  const [ipWhitelist, setIpWhitelist] = useState(true);
-  const [riskProfile, setRiskProfile] = useState('BALANCED');
-  const [rebalanceFreq, setRebalanceFreq] = useState('1h');
+  const [copiedAddress, setCopiedAddress] = useState(false);
+  const [isConnectingMetaMask, setIsConnectingMetaMask] = useState(false);
+  const [ethBalance, setEthBalance] = useState('0.000000');
 
-  const [activeSessions, setActiveSessions] = useState([
-    { id: 1, device: 'Chrome on Windows 11', location: 'New York, US', ip: '192.168.1.104', isCurrent: true, lastActive: 'Active Now' },
-    { id: 2, device: 'MetaMask Browser Extension', location: 'New York, US', ip: '192.168.1.104', isCurrent: false, lastActive: '12 mins ago' },
-    { id: 3, device: 'iOS Mobile App (v2.4)', location: 'New York, US', ip: '172.56.21.90', isCurrent: false, lastActive: '2 hours ago' }
-  ]);
+  // Live On-Chain Balance Sync Effect
+  useEffect(() => {
+    let isMounted = true;
+    const syncLiveBalance = async () => {
+      if (realWalletAddress) {
+        try {
+          const bal = await fetchEthBalance(realWalletAddress, 'sepolia');
+          if (isMounted && bal !== undefined) {
+            setEthBalance(bal.toFixed(6));
+          }
+        } catch (_) {}
+      }
+    };
 
-  const handleRevokeSession = (id) => {
-    setActiveSessions(prev => prev.filter(s => s.id !== id));
-    addNotification('Revoked session access successfully.', 'info');
-  };
-
-  const handleDownloadReport = (reportType) => {
-    addNotification(`📥 Generating ${reportType}... Download starting in a moment.`, 'success');
-  };
+    syncLiveBalance();
+    const interval = setInterval(syncLiveBalance, 4000);
+    return () => { isMounted = false; clearInterval(interval); };
+  }, [realWalletAddress]);
 
   const accountName = user?.name || 'Deepak Kumar';
-  const accountEmail = user?.email || 'deepak.quant@tradebot.io';
+  const accountEmail = user?.email || 'deepak@chainblock.io';
   const accountId = user?.id || '#9482-QUANT-PRO';
   const initials = user?.avatarInitials || (accountName.charAt(0).toUpperCase() || 'D');
 
-  const [apiConnections, setApiConnections] = useState([
-    { exchange: 'Binance Pro', status: 'CONNECTED', permissions: 'Read & Trade', ip: '192.168.1.1', color: 'text-[#facc15]', border: 'border-[#facc15]/30' },
-    { exchange: 'Bybit Quant', status: 'CONNECTED', permissions: 'Full Arbitrage', ip: '192.168.1.1', color: 'text-[#2dd4bf]', border: 'border-[#2dd4bf]/30' },
-    { exchange: 'OKX Institutional', status: 'CONNECTED', permissions: 'Read & Trade', ip: '192.168.1.1', color: 'text-purple-400', border: 'border-purple-500/30' },
-    { exchange: 'Coinbase Pro', status: 'CONNECTED', permissions: 'Read & Trade', ip: '192.168.1.1', color: 'text-sky-400', border: 'border-sky-500/30' }
-  ]);
-
   const copyId = () => {
-    navigator.clipboard.writeText(accountId);
-    setCopiedId(true);
-    addNotification(`Account ID ${accountId} copied to clipboard!`, 'info');
-    setTimeout(() => setCopiedId(false), 2000);
+    try {
+      navigator.clipboard.writeText(accountId);
+      setCopiedId(true);
+      addNotification(`Account ID ${accountId} copied to clipboard!`, 'info');
+      setTimeout(() => setCopiedId(false), 2000);
+    } catch (_) {}
   };
 
-  const handleAddNewKey = (newKey) => {
-    setApiConnections(prev => [newKey, ...prev]);
+  const copyMetaMaskAddress = () => {
+    if (!realWalletAddress) return;
+    try {
+      navigator.clipboard.writeText(realWalletAddress);
+      setCopiedAddress(true);
+      addNotification(`MetaMask address ${realWalletAddress.substring(0, 10)}... copied!`, 'info');
+      setTimeout(() => setCopiedAddress(false), 2000);
+    } catch (_) {}
+  };
+
+  // Dedicated 1-Click Real MetaMask Connect Handler
+  const handleConnectMetaMask = async () => {
+    setIsConnectingMetaMask(true);
+    try {
+      if (typeof window !== 'undefined' && window.ethereum) {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (accounts && accounts[0]) {
+          const addr = accounts[0];
+          setRealWalletAddress(addr);
+          
+          // Get Network chainId
+          const chainIdHex = await window.ethereum.request({ method: 'eth_chainId' });
+          const chainId = parseInt(chainIdHex, 16);
+          const netName = chainId === 11155111 ? 'Sepolia Testnet' : chainId === 42161 ? 'Arbitrum One' : chainId === 137 ? 'Polygon Mainnet' : chainId === 56 ? 'BNB Smart Chain' : 'Ethereum Mainnet';
+          setRealWalletNetwork(netName);
+
+          addNotification(`🦊 MetaMask Connected: ${addr.substring(0, 10)}... on ${netName}`, 'success');
+        } else {
+          addNotification('No accounts found in MetaMask extension.', 'warning');
+        }
+      } else {
+        const inputAddr = window.prompt('MetaMask Extension not detected. Enter your EVM address (0x...):', '0x71C7656EC7ab88b098defB751B7401B5f6d7B41');
+        if (inputAddr && inputAddr.startsWith('0x')) {
+          setRealWalletAddress(inputAddr);
+          addNotification(`✅ Wallet Connected: ${inputAddr.substring(0, 10)}...`, 'success');
+        }
+      }
+    } catch (err) {
+      addNotification(`MetaMask error: ${err.message}`, 'warning');
+    } finally {
+      setIsConnectingMetaMask(false);
+    }
+  };
+
+  // Interactive Account Switcher using wallet_requestPermissions
+  const handleSwitchAccount = async () => {
+    setIsConnectingMetaMask(true);
+    try {
+      if (switchRealWalletAccount) {
+        await switchRealWalletAccount();
+      } else if (typeof window !== 'undefined' && window.ethereum) {
+        await window.ethereum.request({
+          method: 'wallet_requestPermissions',
+          params: [{ eth_accounts: {} }]
+        });
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (accounts && accounts[0]) {
+          setRealWalletAddress(accounts[0]);
+          addNotification(`🔄 Switched to MetaMask Account: ${accounts[0].substring(0, 10)}...`, 'success');
+        }
+      }
+    } catch (err) {
+      addNotification(`Switch Account notice: ${err.message}`, 'warning');
+    } finally {
+      setIsConnectingMetaMask(false);
+    }
+  };
+
+  // Disconnect Handler
+  const handleDisconnectMetaMask = () => {
+    setRealWalletAddress('');
+    addNotification('MetaMask account disconnected.', 'info');
   };
 
   return (
@@ -55,8 +144,6 @@ export const AccountSection = () => {
       {/* Dynamic Trader Profile Hero Card */}
       <div className="chainblock-card p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-center space-x-5">
-          
-          {/* Dynamic User Avatar Initials Badge */}
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#facc15] to-[#2dd4bf] text-slate-950 flex items-center justify-center font-extrabold font-mono text-xl shadow-[0_0_25px_rgba(250,204,21,0.35)] shrink-0">
             {initials}
           </div>
@@ -75,7 +162,10 @@ export const AccountSection = () => {
                 <ShieldCheck className="w-3.5 h-3.5" /> {user?.kycStatus || 'KYC LEVEL 3 VERIFIED'}
               </span>
               <span className="text-slate-400">•</span>
-              <span className="text-indigo-400 font-bold">UNLIMITED ARBITRAGE PLAN</span>
+              <span className={`font-bold flex items-center gap-1.5 ${realWalletAddress ? 'text-emerald-400' : 'text-amber-400'}`}>
+                <span className={`w-2 h-2 rounded-full ${realWalletAddress ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                <span>{realWalletAddress ? `METAMASK: ${realWalletAddress.substring(0, 8)}...` : 'METAMASK DISCONNECTED'}</span>
+              </span>
             </div>
           </div>
         </div>
@@ -99,287 +189,155 @@ export const AccountSection = () => {
         </div>
       </div>
 
-      {/* 2 Column Split: Exchange API Keys & Security Safeguards */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      {/* ================= DEDICATED METAMASK WEB3 INTEGRATION & ACCOUNT INFO CARD ================= */}
+      <div className="p-6 rounded-2xl bg-gradient-to-br from-[#0e1626] via-[#0a0d16] to-[#04060a] border border-[#2dd4bf]/40 space-y-5 shadow-[0_0_30px_rgba(45,212,191,0.1)] font-mono text-xs">
         
-        {/* Left Column (8 Cols): Exchange API Key Matrix */}
-        <div className="lg:col-span-8 chainblock-card p-6 space-y-6">
-          <div className="card-header-baseline">
-            <div className="flex items-center space-x-2">
-              <Key className="w-5 h-5 text-[#facc15]" />
-              <h3 className="text-sm font-extrabold text-white font-mono tracking-tight">MULTI-EXCHANGE QUANT API KEYS</h3>
+        {/* Banner Header */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+          <div className="flex items-center space-x-3">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 flex items-center justify-center text-slate-950 font-extrabold text-3xl shadow-lg shrink-0">
+              🦊
             </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <h3 className="text-base font-black text-white uppercase tracking-tight">METAMASK WEB3 INTEGRATION & ACCOUNT CONTROL</h3>
+                <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-950 text-[#2dd4bf] border border-[#2dd4bf]">
+                  EIP-1193 DIRECT PROVIDER
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Full 1-Click MetaMask account connection, account switching, network delegation, and Web3 Terminal access
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            {realWalletAddress ? (
+              <button
+                onClick={handleSwitchAccount}
+                disabled={isConnectingMetaMask}
+                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-300 font-extrabold text-xs flex items-center space-x-1.5 transition"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isConnectingMetaMask ? 'animate-spin' : ''}`} />
+                <span>🔄 Switch MetaMask Account</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleConnectMetaMask}
+                disabled={isConnectingMetaMask}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-slate-950 font-extrabold text-xs uppercase shadow hover:brightness-110 transition flex items-center space-x-1.5"
+              >
+                <span>🦊 CONNECT METAMASK EXTENSION NOW</span>
+              </button>
+            )}
+
             <button
-              onClick={() => openModal('ADD_API_KEY')}
-              className="px-4 py-2 rounded-xl bg-[#facc15] text-slate-950 font-mono text-xs font-extrabold hover:brightness-110 shadow-md transition"
+              onClick={() => setActiveTab('metamaskterminal')}
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-extrabold text-xs uppercase shadow hover:brightness-110 transition flex items-center space-x-1.5"
             >
-              + ADD NEW API KEY
+              <Zap className="w-3.5 h-3.5" />
+              <span>MetaMask Terminal</span>
             </button>
           </div>
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-mono text-xs">
-            {apiConnections.map((api, idx) => (
-              <div key={idx} className={`p-4 rounded-2xl bg-[#0b0c10] border ${api.border} space-y-2`}>
+        {/* METAMASK CONNECTED / DISCONNECTED GRID */}
+        {realWalletAddress ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              
+              {/* 1. Connected Address Card */}
+              <div className="p-4 rounded-xl bg-[#090d16] border border-emerald-500/40 space-y-2">
+                <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase">
+                  <span>CONNECTED METAMASK ADDRESS:</span>
+                  <span className="text-emerald-400 font-bold">CONNECTED 🟢</span>
+                </div>
+
+                <div className="text-xs font-bold text-white font-mono break-all flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  <span>{realWalletAddress}</span>
+                </div>
+
+                <div className="flex items-center space-x-2 pt-2">
+                  <button
+                    onClick={copyMetaMaskAddress}
+                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[#2dd4bf] text-[10px] font-bold border border-slate-700 flex items-center gap-1"
+                  >
+                    {copiedAddress ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedAddress ? 'COPIED' : 'COPY ADDRESS'}</span>
+                  </button>
+
+                  <button
+                    onClick={handleSwitchAccount}
+                    disabled={isConnectingMetaMask}
+                    className="px-3 py-1.5 rounded-lg bg-amber-950/60 hover:bg-amber-900/60 text-amber-300 text-[10px] font-bold border border-amber-500/40 flex items-center gap-1"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isConnectingMetaMask ? 'animate-spin' : ''}`} />
+                    <span>SWITCH ACCOUNT</span>
+                  </button>
+
+                  <button
+                    onClick={handleDisconnectMetaMask}
+                    className="px-2.5 py-1.5 rounded-lg bg-rose-950/60 hover:bg-rose-900/60 text-rose-300 text-[10px] font-bold border border-rose-800"
+                  >
+                    DISCONNECT
+                  </button>
+                </div>
+              </div>
+
+              {/* 2. Network & RPC Status Card */}
+              <div className="p-4 rounded-xl bg-[#090d16] border border-slate-800 space-y-2">
+                <span className="text-[10px] text-slate-400 uppercase font-bold block">ACTIVE EVM DELEGATE NETWORK:</span>
                 <div className="flex items-center justify-between">
-                  <h4 className="font-extrabold text-white text-xs">{api.exchange}</h4>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold bg-slate-900 ${api.color} border border-slate-800`}>
-                    {api.status}
+                  <span className="text-sm font-black text-white">{realWalletNetwork || 'Arbitrum One'}</span>
+                  <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-cyan-950 text-cyan-400 border border-cyan-500">
+                    NETWORK OK 🟢
                   </span>
                 </div>
-                <div className="text-[11px] text-slate-400 space-y-1 pt-1">
-                  <div className="flex justify-between">
-                    <span>Permissions:</span>
-                    <span className="text-white font-bold">{api.permissions}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>IP Lock:</span>
-                    <span className="text-[#2dd4bf] font-bold">{api.ip}</span>
-                  </div>
-                  {api.apiKeyMasked && (
-                    <div className="flex justify-between">
-                      <span>API Key:</span>
-                      <span className="text-[#facc15] font-bold">{api.apiKeyMasked}</span>
-                    </div>
-                  )}
+                <div className="text-[10px] text-slate-400 space-y-0.5 pt-1">
+                  <div>RPC Node: <span className="text-cyan-400 font-mono">https://arb1.arbitrum.io/rpc</span></div>
+                  <div>Gas Token: <span className="text-amber-400 font-mono">{ethBalance} ETH</span></div>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Right Column (4 Cols): Security & Authentication Options */}
-        <div className="lg:col-span-4 chainblock-card p-6 space-y-6 font-mono text-xs">
-          <div className="card-header-baseline">
-            <div className="flex items-center space-x-2">
-              <Lock className="w-5 h-5 text-[#facc15]" />
-              <h3 className="text-sm font-extrabold text-white tracking-tight">SECURITY SAFEGUARDS</h3>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="p-3.5 rounded-xl bg-[#0b0c10] border border-slate-800 flex items-center justify-between">
-              <div>
-                <span className="font-bold text-white block">Two-Factor Auth (2FA)</span>
-                <span className="text-[10px] text-slate-400">Authenticator App / YubiKey</span>
-              </div>
-              <input
-                type="checkbox"
-                checked={twoFactor}
-                onChange={() => setTwoFactor(!twoFactor)}
-                className="w-4 h-4 accent-[#facc15] cursor-pointer"
-              />
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-[#0b0c10] border border-slate-800 flex items-center justify-between">
-              <div>
-                <span className="font-bold text-white block">IP Auto-Lock Guard</span>
-                <span className="text-[10px] text-slate-400">Lock Bot to Verified Subnets</span>
-              </div>
-              <input
-                type="checkbox"
-                checked={ipWhitelist}
-                onChange={() => setIpWhitelist(!ipWhitelist)}
-                className="w-4 h-4 accent-[#facc15] cursor-pointer"
-              />
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-[#0b0c10] border border-slate-800 flex items-center justify-between">
-              <div>
-                <span className="font-bold text-white block">Sound FX Alerts</span>
-                <span className="text-[10px] text-slate-400">Audio trigger on profit settlement</span>
-              </div>
-              <input
-                type="checkbox"
-                checked={soundEnabled}
-                onChange={() => setSoundEnabled(!soundEnabled)}
-                className="w-4 h-4 accent-[#facc15] cursor-pointer"
-              />
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      {/* KYC & Institutional Account Limits Card */}
-      <div className="chainblock-card p-6 space-y-4 font-mono text-xs">
-        <div className="card-header-baseline">
-          <div className="flex items-center space-x-2">
-            <Globe className="w-5 h-5 text-[#facc15]" />
-            <h3 className="text-sm font-extrabold text-white tracking-tight">ACCOUNT COMPLIANCE & OPERATIONAL LIMITS</h3>
-          </div>
-          <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/40 text-[10px]">
-            KYC TIER 3 APPROVED
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl bg-[#0b0c10] border border-slate-800 space-y-1">
-            <span className="text-[10px] text-slate-400 block uppercase">Max Daily Withdrawal</span>
-            <span className="text-base font-extrabold text-white">$5,000,000 USDT</span>
-            <span className="text-[10px] text-emerald-400 block font-bold">Unrestricted Fast-Track</span>
-          </div>
-
-          <div className="p-4 rounded-xl bg-[#0b0c10] border border-slate-800 space-y-1">
-            <span className="text-[10px] text-slate-400 block uppercase">Max Arbitrage Allocation</span>
-            <span className="text-base font-extrabold text-[#facc15]">$1,000,000 USDT</span>
-            <span className="text-[10px] text-slate-400 block">Single Trade Max Cap</span>
-          </div>
-
-          <div className="p-4 rounded-xl bg-[#0b0c10] border border-slate-800 space-y-1">
-            <span className="text-[10px] text-slate-400 block uppercase">Tax & Legal Jurisdiction</span>
-            <span className="text-base font-extrabold text-white">United States (US)</span>
-            <span className="text-[10px] text-slate-400 block">Non-Custodial Account</span>
-          </div>
-
-          <div className="p-4 rounded-xl bg-[#0b0c10] border border-slate-800 space-y-1">
-            <span className="text-[10px] text-slate-400 block uppercase">Registration Timestamp</span>
-            <span className="text-base font-extrabold text-slate-200">2026-01-15</span>
-            <span className="text-[10px] text-indigo-400 block font-bold">Member for 195 Days</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 2-Column Grid: Active Device Sessions & Export Center */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
-        {/* Left: Active Logged In Sessions */}
-        <div className="lg:col-span-7 chainblock-card p-6 space-y-4 font-mono text-xs">
-          <div className="card-header-baseline">
-            <div className="flex items-center space-x-2">
-              <Smartphone className="w-5 h-5 text-[#2dd4bf]" />
-              <h3 className="text-sm font-extrabold text-white tracking-tight">ACTIVE LOGIN SESSIONS & DEVICES</h3>
-            </div>
-            <span className="text-[10px] text-slate-400 font-bold">{activeSessions.length} Active Sessions</span>
-          </div>
-
-          <div className="space-y-3">
-            {activeSessions.map((session) => (
-              <div key={session.id} className="p-3.5 rounded-xl bg-[#0b0c10] border border-slate-800 flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-bold text-white text-xs">{session.device}</span>
-                    {session.isCurrent && (
-                      <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                        THIS DEVICE
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-[10px] text-slate-400">
-                    IP: {session.ip} • {session.location} • <span className="text-slate-300">{session.lastActive}</span>
-                  </div>
+              {/* 3. Non-Custodial Protocol Security Specs */}
+              <div className="p-4 rounded-xl bg-[#090d16] border border-slate-800 space-y-2">
+                <span className="text-[10px] text-slate-400 uppercase font-bold block">EIP-1193 PROTOCOL SECURITY:</span>
+                <div className="flex items-center space-x-2 text-emerald-400 font-bold">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Non-Custodial Keys Protected</span>
                 </div>
-
-                {!session.isCurrent && (
-                  <button
-                    onClick={() => handleRevokeSession(session.id)}
-                    className="px-3 py-1.5 rounded-lg bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 font-bold text-[10px] transition"
-                  >
-                    REVOKE
-                  </button>
-                )}
+                <p className="text-[10px] text-slate-400 leading-relaxed pt-0.5">
+                  Private keys remain 100% encrypted in your local MetaMask browser extension. Trade approvals prompt directly in your extension window.
+                </p>
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Right: Institutional Audit & Tax Report Export Center */}
-        <div className="lg:col-span-5 chainblock-card p-6 space-y-4 font-mono text-xs">
-          <div className="card-header-baseline">
-            <div className="flex items-center space-x-2">
-              <Download className="w-5 h-5 text-[#facc15]" />
-              <h3 className="text-sm font-extrabold text-white tracking-tight">TAX & AUDIT REPORT CENTER</h3>
             </div>
           </div>
+        ) : (
+          /* Disconnected State Hero Action Card */
+          <div className="p-6 rounded-2xl bg-[#070a11] border border-amber-500/30 space-y-4 text-center">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-slate-950 flex items-center justify-center text-3xl font-bold shadow-lg">
+              🦊
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-base font-extrabold text-white uppercase">MetaMask Wallet Disconnected</h4>
+              <p className="text-xs text-slate-400 max-w-md mx-auto">
+                Connect your MetaMask browser extension to enable live Web3 DEX trading, direct SepoliaETH testnet transfers, and Solidity contract deployments.
+              </p>
+            </div>
 
-          <div className="space-y-3">
-            {[
-              { title: 'Annual Tax Statement (1099-B / CSV)', desc: 'Full trade gain/loss CSV for tax filing', icon: FileSpreadsheet, name: 'Tax Statement CSV' },
-              { title: 'Monthly Arbitrage Summary (PDF)', desc: 'Certified monthly profit ledger & fees', icon: FileText, name: 'Monthly Ledger PDF' },
-              { title: 'On-Chain Execution Audit Log', desc: 'Raw Web3 TX hashes & gas logs', icon: ShieldCheck, name: 'On-Chain Audit Log' }
-            ].map((rep, idx) => {
-              const Icon = rep.icon;
-              return (
-                <div key={idx} className="p-3.5 rounded-xl bg-[#0b0c10] border border-slate-800 flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="font-bold text-white flex items-center space-x-1.5">
-                      <Icon className="w-4 h-4 text-[#facc15]" />
-                      <span>{rep.title}</span>
-                    </div>
-                    <div className="text-[10px] text-slate-400">{rep.desc}</div>
-                  </div>
-                  <button
-                    onClick={() => handleDownloadReport(rep.name)}
-                    className="px-3 py-1.5 rounded-lg bg-[#181a20] border border-slate-700 hover:border-[#facc15] text-[#facc15] font-bold text-[10px] transition shrink-0"
-                  >
-                    EXPORT
-                  </button>
-                </div>
-              );
-            })}
+            <button
+              onClick={handleConnectMetaMask}
+              disabled={isConnectingMetaMask}
+              className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-slate-950 font-black text-xs uppercase shadow-[0_0_25px_rgba(245,158,11,0.3)] hover:brightness-110 transition inline-flex items-center space-x-2"
+            >
+              <span>🦊 CONNECT METAMASK EXTENSION NOW</span>
+            </button>
           </div>
-        </div>
+        )}
 
       </div>
-
-      {/* Bot Autopilot Trading Risk Preferences */}
-      <div className="chainblock-card p-6 space-y-4 font-mono text-xs">
-        <div className="card-header-baseline">
-          <div className="flex items-center space-x-2">
-            <Cpu className="w-5 h-5 text-[#facc15]" />
-            <h3 className="text-sm font-extrabold text-white tracking-tight">BOT AUTOPILOT RISK PREFERENCES</h3>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="text-slate-400 block font-bold text-xs">Trading Risk Profile</label>
-            <div className="grid grid-cols-3 gap-3">
-              {['CONSERVATIVE', 'BALANCED', 'AGGRESSIVE'].map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => setRiskProfile(mode)}
-                  className={`py-2.5 rounded-xl font-bold transition border ${
-                    riskProfile === mode
-                      ? 'bg-[#facc15] text-slate-950 border-[#facc15]'
-                      : 'bg-[#0b0c10] text-slate-400 border-slate-800 hover:text-white'
-                  }`}
-                >
-                  {mode}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-slate-400 block font-bold text-xs">Rebalance Frequency</label>
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { id: '1h', label: 'EVERY 1H' },
-                { id: '6h', label: 'EVERY 6H' },
-                { id: 'realtime', label: 'REAL-TIME' }
-              ].map((freq) => (
-                <button
-                  key={freq.id}
-                  type="button"
-                  onClick={() => setRebalanceFreq(freq.id)}
-                  className={`py-2.5 rounded-xl font-bold transition border ${
-                    rebalanceFreq === freq.id
-                      ? 'bg-[#2dd4bf] text-slate-950 border-[#2dd4bf]'
-                      : 'bg-[#0b0c10] text-slate-400 border-slate-800 hover:text-white'
-                  }`}
-                >
-                  {freq.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {activeModal === 'ADD_API_KEY' && (
-        <AddApiKeyModal onAddKey={handleAddNewKey} />
-      )}
 
     </div>
   );

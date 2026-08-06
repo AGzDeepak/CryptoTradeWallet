@@ -4,7 +4,8 @@
 
 @layer base {
   html, body {
-    background-color: #080a10;
+    background: radial-gradient(circle at 50% -20%, #0d1527 0%, #060913 75%, #030408 100%);
+    background-attachment: fixed;
     color: #f8fafc;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     overflow-x: hidden;
@@ -18,35 +19,66 @@
   }
 }
 
-/* Disable All Unnecessary Motion & Floating Keyframes */
-.animate-float-slow,
-.animate-float-fast,
-.animate-float-3d,
-.animate-pulse-radar-3d,
-.animate-radar-pulse {
-  animation: none !important;
-  transform: none !important;
+/* Glass & Neon Micro Animations */
+@keyframes neonPulse {
+  0%, 100% { box-shadow: 0 0 15px rgba(6, 182, 212, 0.3); }
+  50% { box-shadow: 0 0 30px rgba(6, 182, 212, 0.6); }
+}
+
+.glow-cyan {
+  animation: neonPulse 3s infinite ease-in-out;
 }
 
 @layer components {
-  /* Solid Crisp Dark Shell Container */
+  /* Ultra-Premium Glassmorphic Shell Container */
   .chainblock-shell {
-    background: #0f131f;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(145deg, rgba(13, 21, 39, 0.9) 0%, rgba(6, 9, 19, 0.95) 100%);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(56, 189, 248, 0.15);
     border-radius: 1.5rem;
-    box-shadow: 0 15px 40px -10px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.08);
   }
 
-  /* Solid Institutional Dark Card */
+  /* High-Tech Luxury Glass Card */
   .chainblock-card {
-    background: #141926;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(8, 12, 22, 0.95) 100%);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(56, 189, 248, 0.18);
     border-radius: 1.25rem;
     padding: 1.5rem;
-    box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* High Contrast Emerald Action Button */
+  .chainblock-card:hover {
+    border-color: rgba(56, 189, 248, 0.35);
+    box-shadow: 0 15px 35px -5px rgba(6, 182, 212, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* Purple Glass Card Variant */
+  .purple-glass-card {
+    background: linear-gradient(135deg, rgba(30, 27, 75, 0.7) 0%, rgba(13, 16, 30, 0.9) 100%);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(168, 85, 247, 0.25);
+    border-radius: 1.25rem;
+    padding: 1.5rem;
+    box-shadow: 0 10px 30px -5px rgba(124, 58, 237, 0.15);
+  }
+
+  /* Cyber Interactive Card */
+  .cyber-card {
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.9) 0%, rgba(7, 10, 18, 0.95) 100%);
+    border: 1px solid rgba(56, 189, 248, 0.15);
+    border-radius: 1rem;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .cyber-card:hover {
+    border-color: rgba(56, 189, 248, 0.4);
+    transform: translateY(-2px);
+  }
+
+  /* High Contrast Electric Cyan Action Button */
   .chainblock-btn-emerald {
     height: 2.75rem;
     padding-left: 1.25rem;
@@ -58,22 +90,26 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    background: #2dd4bf;
-    color: #04060d;
-    transition: background 0.15s ease;
+    background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+    color: #ffffff;
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.35);
+    transition: all 0.2s ease;
   }
 
   .chainblock-btn-emerald:hover {
-    background: #5eead4;
+    filter: brightness(1.15);
+    box-shadow: 0 0 30px rgba(6, 182, 212, 0.55);
+    transform: translateY(-1px);
   }
 
   /* Sidebar Active Navigation Pill */
   .chainblock-nav-active {
-    background: #1e2638;
-    color: #2dd4bf;
+    background: linear-gradient(90deg, rgba(6, 182, 212, 0.2) 0%, rgba(59, 130, 246, 0.15) 100%);
+    color: #38bdf8;
     font-weight: 800;
     border-radius: 0.75rem;
-    border: 1px solid rgba(45, 212, 191, 0.3);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.15);
   }
 }
 
@@ -84,14 +120,14 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #080a10;
+  background: #04060c;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(56, 189, 248, 0.25);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2dd4bf;
+  background: #38bdf8;
 }

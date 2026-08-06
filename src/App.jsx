@@ -19,10 +19,14 @@ import { AnalyticsSection } from './components/AnalyticsSection';
 import { SettingsModal } from './components/SettingsModal';
 import { GlobalModals } from './components/GlobalModals';
 import { WalletSection } from './components/WalletSection';
+import { RealWallet } from './components/RealWallet';
+import { DecentralizedWalletView } from './components/wallet/DecentralizedWalletView';
 import { AccountSection } from './components/AccountSection';
 import { LiveCryptoNews } from './components/LiveCryptoNews';
 import { SimulationSection } from './components/SimulationSection';
+import { TeamSection } from './components/TeamSection';
 import { MobileBottomNav } from './components/MobileBottomNav';
+import { MetaMaskTradeTerminalSection } from './components/MetaMaskTradeTerminalSection';
 
 const DashboardContent = () => {
   const { activeTab } = useCrypto();
@@ -33,12 +37,12 @@ const DashboardContent = () => {
       {/* Outer Shell Frame */}
       <div className="chainblock-shell p-4 sm:p-6 lg:p-8 space-y-8">
         
-        {/* Master Autopilot Quant Command Deck */}
-        <AutoTraderBar />
-
-        {activeTab === 'dashboard' && (
+        {(activeTab === 'dashboard' || !['team', 'papertrading', 'simulation', 'account', 'wallet', 'realwallet', 'decentralized', 'portfolio', 'metamaskterminal', 'settings'].includes(activeTab)) && (
           <div className="space-y-8">
             
+            {/* Master Autopilot Quant Command Deck (Dashboard Only) */}
+            <AutoTraderBar />
+
             {/* Top Section: TOTAL BALANCE & 4 Asset Cards (Bitcoin, Litecoin, Ethereum, Solana) */}
             <TotalAssetsHero />
 
@@ -62,6 +66,13 @@ const DashboardContent = () => {
             {/* Full Width Trade Audit Log Ledger */}
             <TradeHistory />
 
+          </div>
+        )}
+
+        {/* Dedicated Standalone Team Desk Section */}
+        {activeTab === 'team' && (
+          <div className="space-y-6">
+            <TeamSection />
           </div>
         )}
 
@@ -90,6 +101,24 @@ const DashboardContent = () => {
         {activeTab === 'wallet' && (
           <div className="space-y-6">
             <WalletSection />
+          </div>
+        )}
+
+        {activeTab === 'metamaskterminal' && (
+          <div className="space-y-6">
+            <MetaMaskTradeTerminalSection />
+          </div>
+        )}
+
+        {activeTab === 'realwallet' && (
+          <div className="space-y-6">
+            <RealWallet />
+          </div>
+        )}
+
+        {activeTab === 'decentralized' && (
+          <div className="space-y-6">
+            <DecentralizedWalletView />
           </div>
         )}
 
