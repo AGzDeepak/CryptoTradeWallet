@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { fetchEthBalance, switchToEthereumMainnet, switchToArbitrumMainnet } from '../services/walletService';
+import { fetchEthBalance, switchToEthereumMainnet, switchToSepoliaTestnet } from '../services/walletService';
+import { NetworkSwitcherModal } from './NetworkSwitcherModal';
 import { 
   Zap, 
   ShieldCheck, 
@@ -158,6 +159,7 @@ export const ArbitrageBotTerminal = () => {
   const [accumulatedProfit, setAccumulatedProfit] = useState(412.85);
   const [liveLogs, setLiveLogs] = useState([]);
   const [showCodeModal, setShowCodeModal] = useState(false);
+  const [showNetworkModal, setShowNetworkModal] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
   // Sync Live MetaMask Gas Balance
@@ -358,19 +360,11 @@ export const ArbitrageBotTerminal = () => {
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={async () => {
-                const ok = await switchToEthereumMainnet();
-                if (ok) {
-                  setRealWalletNetwork('Ethereum Mainnet (1)');
-                  addNotification('🌐 Switched MetaMask network to Ethereum Mainnet (Chain ID 1)!', 'success');
-                } else {
-                  addNotification('🌐 Opening MetaMask to select Ethereum Mainnet...', 'info');
-                }
-              }}
-              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-[10px] uppercase tracking-wide hover:brightness-110 transition shadow flex items-center gap-1"
+              onClick={() => setShowNetworkModal(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-slate-950 font-black text-[10px] uppercase tracking-wide hover:brightness-110 transition shadow flex items-center gap-1.5"
             >
               <Globe className="w-3.5 h-3.5" />
-              <span>🌐 SWITCH TO ETHEREUM MAINNET</span>
+              <span>🌐 / 🧪 SWITCH NETWORK (MAINNET ↔ TESTNET)</span>
             </button>
 
             {realWalletAddress ? (
@@ -649,10 +643,15 @@ export const ArbitrageBotTerminal = () => {
                 {pythonScriptCode}
               </pre>
             </div>
-
           </div>
         </div>
       )}
+
+      {/* 7. NETWORK SWITCHER MODAL */}
+      <NetworkSwitcherModal 
+        isOpen={showNetworkModal} 
+        onClose={() => setShowNetworkModal(false)} 
+      />
 
     </div>
   );

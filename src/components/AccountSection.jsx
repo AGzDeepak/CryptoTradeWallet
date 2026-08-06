@@ -6,7 +6,8 @@ import {
   Wallet, AlertCircle, LogIn 
 } from 'lucide-react';
 import { AddApiKeyModal } from './AddApiKeyModal';
-import { shortAddress, fetchEthBalance, switchToEthereumMainnet } from '../services/walletService';
+import { shortAddress, fetchEthBalance, switchToEthereumMainnet, switchToSepoliaTestnet } from '../services/walletService';
+import { NetworkSwitcherModal } from './NetworkSwitcherModal';
 
 export const AccountSection = () => {
   const { 
@@ -26,6 +27,8 @@ export const AccountSection = () => {
     setActiveTab
   } = useCrypto();
 
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+  const [showNetworkModal, setShowNetworkModal] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [isConnectingMetaMask, setIsConnectingMetaMask] = useState(false);
@@ -214,17 +217,39 @@ export const AccountSection = () => {
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={async () => {
-                const ok = await switchToEthereumMainnet();
-                if (ok) {
-                  setRealWalletNetwork('Ethereum Mainnet (1)');
-                  addNotification('🌐 Switched network to Ethereum Mainnet (Chain ID 1)!', 'success');
-                } else {
-                  addNotification('🌐 Opening MetaMask to switch to Ethereum Mainnet...', 'info');
+                try {
+                  await switchToEthereumMainnet();
+                  setRealWalletNetwork('Ethereum Mainnet');
+                  addNotification('🌐 Switched to Ethereum Mainnet!', 'success');
+                } catch (err) {
+                  addNotification(`Mainnet error: ${err.message}`, 'warning');
                 }
               }}
-              className="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-extrabold text-xs flex items-center space-x-1.5 transition hover:brightness-110 shadow"
+              className="px-3 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-extrabold text-xs flex items-center space-x-1 transition hover:brightness-110 shadow"
             >
-              <span>🌐 ETHEREUM MAINNET</span>
+              <span>🌐 MAINNET</span>
+            </button>
+
+            <button
+              onClick={async () => {
+                try {
+                  await switchToSepoliaTestnet();
+                  setRealWalletNetwork('Sepolia Testnet');
+                  addNotification('🧪 Switched to Sepolia Testnet!', 'success');
+                } catch (err) {
+                  addNotification(`Testnet error: ${err.message}`, 'warning');
+                }
+              }}
+              className="px-3 py-2.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 font-extrabold text-xs flex items-center space-x-1 transition hover:bg-amber-500/30"
+            >
+              <span>🧪 TESTNET</span>
+            </button>
+
+            <button
+              onClick={() => setShowNetworkModal(true)}
+              className="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-cyan-300 font-extrabold text-xs transition flex items-center space-x-1"
+            >
+              <span>⚙️ ALL NETWORKS</span>
             </button>
 
             {realWalletAddress ? (
@@ -353,6 +378,11 @@ export const AccountSection = () => {
         )}
 
       </div>
+
+      <NetworkSwitcherModal 
+        isOpen={showNetworkModal} 
+        onClose={() => setShowNetworkModal(false)} 
+      />
 
     </div>
   );

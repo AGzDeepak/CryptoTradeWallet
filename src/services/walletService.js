@@ -204,37 +204,119 @@ export const switchMetaMaskAccount = async () => {
   return { address, chainId, networkName: getNetworkName(chainId) };
 };
 
-export const switchToEthereumMainnet = async () => {
-  if (typeof window !== 'undefined' && window.ethereum) {
-    try {
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: '0x1' }] // 0x1 = Ethereum Mainnet
-      });
-      return true;
-    } catch (switchError) {
-      console.warn('Switch to Ethereum Mainnet error:', switchError);
-      return false;
-    }
+// ─── Network Configurations (Mainnet & Testnet) ─────────────────────────────
+export const NETWORKS = [
+  {
+    id: 'ethereum-mainnet',
+    name: 'Ethereum Mainnet',
+    type: 'MAINNET',
+    chainId: 1,
+    chainIdHex: '0x1',
+    rpcUrl: 'https://cloudflare-eth.com',
+    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+    blockExplorer: 'https://etherscan.io',
+    icon: '🌐'
+  },
+  {
+    id: 'sepolia-testnet',
+    name: 'Sepolia ETH Testnet',
+    type: 'TESTNET',
+    chainId: 11155111,
+    chainIdHex: '0xaa36a7',
+    rpcUrl: 'https://rpc.sepolia.org',
+    nativeCurrency: { name: 'Sepolia ETH', symbol: 'SEP', decimals: 18 },
+    blockExplorer: 'https://sepolia.etherscan.io',
+    icon: '🧪'
+  },
+  {
+    id: 'arbitrum-mainnet',
+    name: 'Arbitrum One Mainnet',
+    type: 'MAINNET',
+    chainId: 42161,
+    chainIdHex: '0xa4b1',
+    rpcUrl: 'https://arb1.arbitrum.io/rpc',
+    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+    blockExplorer: 'https://arbiscan.io',
+    icon: '⚡'
+  },
+  {
+    id: 'arbitrum-sepolia',
+    name: 'Arbitrum Sepolia Testnet',
+    type: 'TESTNET',
+    chainId: 421614,
+    chainIdHex: '0x66eee',
+    rpcUrl: 'https://sepolia-rollup.arbitrum.io/rpc',
+    nativeCurrency: { name: 'Arbitrum Sepolia ETH', symbol: 'ETH', decimals: 18 },
+    blockExplorer: 'https://sepolia.arbiscan.io',
+    icon: '🧪'
+  },
+  {
+    id: 'polygon-mainnet',
+    name: 'Polygon Mainnet',
+    type: 'MAINNET',
+    chainId: 137,
+    chainIdHex: '0x89',
+    rpcUrl: 'https://polygon-rpc.com',
+    nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
+    blockExplorer: 'https://polygonscan.com',
+    icon: '🟣'
+  },
+  {
+    id: 'polygon-amoy',
+    name: 'Polygon Amoy Testnet',
+    type: 'TESTNET',
+    chainId: 80002,
+    chainIdHex: '0x13882',
+    rpcUrl: 'https://rpc-amoy.polygon.technology',
+    nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
+    blockExplorer: 'https://www.oklink.com/amoy',
+    icon: '🧪'
   }
-  return false;
+];
+
+export const switchMetaMaskNetwork = async (targetNetwork) => {
+  if (typeof window === 'undefined' || !window.ethereum) {
+    throw new Error('MetaMask browser extension not detected.');
+  }
+
+  const net = typeof targetNetwork === 'string'
+    ? NETWORKS.find(n => n.id === targetNetwork || n.chainIdHex === targetNetwork || n.name.toLowerCase().includes(targetNetwork.toLowerCase()))
+    : targetNetwork;
+
+  if (!net) throw new Error('Network configuration not found.');
+
+  try {
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: net.chainIdHex }]
+    });
+    return { success: true, network: net };
+  } catch (switchError) {
+    if (switchError.code === 4902 || switchError?.message?.includes('Unrecognized chain')) {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: net.chainIdHex,
+            chainName: net.name,
+            rpcUrls: [net.rpcUrl],
+            nativeCurrency: net.nativeCurrency,
+            blockExplorerUrls: [net.blockExplorer]
+          }]
+        });
+        return { success: true, network: net };
+      } catch (addError) {
+        throw new Error(`Failed to add ${net.name} to MetaMask: ${addError.message}`);
+      }
+    }
+    throw switchError;
+  }
 };
 
-export const switchToArbitrumMainnet = async () => {
-  if (typeof window !== 'undefined' && window.ethereum) {
-    try {
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: '0xa4b1' }] // 0xa4b1 = Arbitrum One (42161)
-      });
-      return true;
-    } catch (switchError) {
-      console.warn('Switch to Arbitrum Mainnet error:', switchError);
-      return false;
-    }
-  }
-  return false;
-};
+export const switchToEthereumMainnet = async () => switchMetaMaskNetwork('ethereum-mainnet');
+export const switchToSepoliaTestnet = async () => switchMetaMaskNetwork('sepolia-testnet');
+export const switchToArbitrumMainnet = async () => switchMetaMaskNetwork('arbitrum-mainnet');
+export const switchToArbitrumSepolia = async () => switchMetaMaskNetwork('arbitrum-sepolia');
 
 export const onAccountChanged  = (cb) => isMetaMaskAvailable() && window.ethereum.on('accountsChanged', cb);
 export const onNetworkChanged  = (cb) => isMetaMaskAvailable() && window.ethereum.on('chainChanged', cb);
