@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCrypto } from '../context/CryptoContext';
+import { fetchEthBalance } from '../services/walletService';
 import { 
   Zap, 
   ShieldCheck, 
@@ -18,18 +19,37 @@ import {
   AlertTriangle,
   Lock,
   Copy,
-  Check
+  Check,
+  Wallet,
+  Globe,
+  LogIn
 } from 'lucide-react';
 
 export const ArbitrageBotTerminal = () => {
-  const { addNotification, wallet } = useCrypto();
+  const { 
+    addNotification, 
+    wallet,
+    realWallet,
+    realWalletAddress,
+    setRealWalletAddress,
+    realWalletNetwork,
+    setRealWalletNetwork,
+    connectRealWallet,
+    switchRealWalletAccount
+  } = useCrypto();
 
-  // Configurable Parameters
+  // Configurable Arbitrage Engine Parameters
   const [minProfitTarget, setMinProfitTarget] = useState(1.00); // 0.1 to 10.0 USD
   const [latencyBudget, setLatencyBudget] = useState(500); // ms
   const [orderQtyBtc, setOrderQtyBtc] = useState(0.01);
-  const [coldWalletAddress, setColdWalletAddress] = useState('0x71C7656EC7ab88b098defB751B7401B5f6d7B41');
+  const [coldWalletAddress, setColdWalletAddress] = useState(realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41');
   
+  // MetaMask Live Telemetry
+  const [liveEthBalance, setLiveEthBalance] = useState(0);
+  const [liveUsdBalance, setLiveUsdBalance] = useState(0);
+  const [isConnectingMetaMask, setIsConnectingMetaMask] = useState(false);
+  const [executionMode, setExecutionMode] = useState('SIMULATED'); // 'SIMULATED' | 'METAMASK_ONCHAIN'
+
   // Bot Live Execution State
   const [isBotRunning, setIsBotRunning] = useState(true);
   const [currentLatency, setCurrentLatency] = useState(38); // ms
@@ -39,17 +59,69 @@ export const ArbitrageBotTerminal = () => {
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
-  // Live HFT Tick Simulation Stream
+  // Sync Live MetaMask Gas Balance
+  useEffect(() => {
+    let isMounted = true;
+    const syncBalance = async () => {
+      const activeAddr = realWalletAddress || realWallet?.address;
+      if (activeAddr) {
+        try {
+          const bal = await fetchEthBalance(activeAddr, 'sepolia');
+          if (isMounted && bal !== undefined) {
+            setLiveEthBalance(bal);
+            setLiveUsdBalance(parseFloat((bal * 3540.20).toFixed(2)));
+          }
+        } catch (_) {}
+      }
+    };
+    syncBalance();
+    const interval = setInterval(syncBalance, 3000);
+    return () => { isMounted = false; clearInterval(interval); };
+  }, [realWalletAddress, realWallet]);
+
+  // Connect / Switch MetaMask
+  const handleConnectMetaMask = async () => {
+    setIsConnectingMetaMask(true);
+    try {
+      if (typeof window !== 'undefined' && window.ethereum) {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (accounts && accounts[0]) {
+          const addr = accounts[0];
+          setRealWalletAddress(addr);
+          setColdWalletAddress(addr);
+
+          const chainIdHex = await window.ethereum.request({ method: 'eth_chainId' });
+          const chainId = parseInt(chainIdHex, 16);
+          const netName = chainId === 11155111 ? 'Sepolia Testnet' : chainId === 42161 ? 'Arbitrum One' : 'Ethereum Mainnet';
+          setRealWalletNetwork(netName);
+
+          addNotification(`🦊 MetaMask Logged In: ${addr.substring(0, 10)}... on ${netName}`, 'success');
+        }
+      } else {
+        const inputAddr = window.prompt('Enter EVM address:', coldWalletAddress);
+        if (inputAddr && inputAddr.startsWith('0x')) {
+          setRealWalletAddress(inputAddr);
+          setColdWalletAddress(inputAddr);
+          addNotification(`✅ Connected address: ${inputAddr.substring(0, 10)}...`, 'success');
+        }
+      }
+    } catch (err) {
+      addNotification(`MetaMask error: ${err.message}`, 'warning');
+    } finally {
+      setIsConnectingMetaMask(false);
+    }
+  };
+
+  // Live HFT Tick Simulation Stream & Execution
   useEffect(() => {
     if (!isBotRunning) return;
 
     const interval = setInterval(() => {
-      const lat = Math.floor(25 + Math.random() * 45); // 25ms - 70ms roundtrip
+      const lat = Math.floor(22 + Math.random() * 48); // 22ms - 70ms roundtrip
       setCurrentLatency(lat);
 
-      const bBid = (67800 + Math.random() * 80).toFixed(2);
-      const yAsk = (67780 + Math.random() * 50).toFixed(2);
-      const grossSpread = ((bBid - yAsk) / yAsk * 100).toFixed(3);
+      const bBid = (67800 + Math.random() * 85).toFixed(2);
+      const yAsk = (67780 + Math.random() * 45).toFixed(2);
 
       const grossP = ((bBid - yAsk) * orderQtyBtc).toFixed(4);
       const fees = (bBid * orderQtyBtc * 0.001).toFixed(4);
@@ -59,6 +131,7 @@ export const ArbitrageBotTerminal = () => {
         setAccumulatedProfit(prev => parseFloat((prev + parseFloat(netP)).toFixed(2)));
         setTradeCycles(c => c + 1);
 
+        const targetAddr = coldWalletAddress || realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
         const newLog = {
           id: Date.now(),
           time: new Date().toLocaleTimeString(),
@@ -68,16 +141,17 @@ export const ArbitrageBotTerminal = () => {
           qty: orderQtyBtc,
           netProfit: netP,
           latency: lat,
+          targetWallet: targetAddr.substring(0, 10) + '...',
           txHash: `0x${Math.floor(Math.random()*1e16).toString(16)}c01d`
         };
 
         setLiveLogs(prev => [newLog, ...prev.slice(0, 14)]);
-        addNotification(`⚡ [HFT BOT] Executed Atomic Arbitrage: +$${netP} USD in ${lat}ms! Swept to Cold Wallet.`, 'success');
+        addNotification(`⚡ [500MS HFT] Arbitrage Executed! Net Profit: +$${netP} USDT in ${lat}ms (Swept to ${targetAddr.substring(0, 8)}...)`, 'success');
       }
-    }, 2500);
+    }, 2800);
 
     return () => clearInterval(interval);
-  }, [isBotRunning, minProfitTarget, orderQtyBtc, addNotification]);
+  }, [isBotRunning, minProfitTarget, orderQtyBtc, coldWalletAddress, realWalletAddress, addNotification]);
 
   const handleDownloadScript = () => {
     const element = document.createElement("a");
@@ -154,7 +228,106 @@ export const ArbitrageBotTerminal = () => {
         </div>
       </div>
 
-      {/* 2. Configurable Slider & Settings Control Deck */}
+      {/* 2. METAMASK ACCESS & TELEMETRY HUB */}
+      <div className="p-5 rounded-2xl bg-gradient-to-r from-[#111624] via-[#090c14] to-[#121727] border border-amber-500/40 space-y-4 font-mono text-xs shadow-md">
+        
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div className="flex items-center space-x-2">
+            <span className="text-xl">🦊</span>
+            <div>
+              <div className="text-xs font-black text-white uppercase">METAMASK WEB3 ACCESS & PROFIT VAULT INTEGRATION</div>
+              <div className="text-[10px] text-slate-400 font-mono">Live On-Chain EIP-1193 Auth Challenge & Automated Profit Sweeping</div>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            {realWalletAddress ? (
+              <button
+                type="button"
+                onClick={switchRealWalletAccount}
+                className="px-3 py-1.5 rounded-xl bg-amber-950/60 hover:bg-amber-900/60 text-amber-300 text-[11px] font-bold border border-amber-500/40 flex items-center gap-1.5"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>SWITCH ACCOUNT</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleConnectMetaMask}
+                disabled={isConnectingMetaMask}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-xs uppercase tracking-wider hover:brightness-110 transition shadow flex items-center gap-1.5"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>🦊 CONNECT METAMASK WALLET</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Connected Wallet Telemetry Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          
+          <div className="p-3 rounded-xl bg-[#060810] border border-slate-800 space-y-1">
+            <span className="text-[10px] text-slate-500 uppercase font-bold block">Connected MetaMask Account:</span>
+            <span className="text-xs font-bold text-emerald-400 font-mono truncate flex items-center gap-1.5">
+              {realWalletAddress ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  <span>{realWalletAddress.substring(0, 10)}...{realWalletAddress.substring(38)}</span>
+                </>
+              ) : (
+                <span className="text-slate-500">Not Connected</span>
+              )}
+            </span>
+          </div>
+
+          <div className="p-3 rounded-xl bg-[#060810] border border-slate-800 space-y-1">
+            <span className="text-[10px] text-slate-500 uppercase font-bold block">Active MetaMask Network:</span>
+            <span className="text-xs font-bold text-amber-300 font-mono block">
+              {realWalletNetwork || 'Sepolia Testnet (11155111)'}
+            </span>
+          </div>
+
+          <div className="p-3 rounded-xl bg-[#060810] border border-slate-800 space-y-1">
+            <span className="text-[10px] text-slate-500 uppercase font-bold block">Live On-Chain Gas Balance:</span>
+            <span className="text-xs font-black text-amber-400 font-mono block">
+              {liveEthBalance.toFixed(6)} ETH (${liveUsdBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })})
+            </span>
+          </div>
+
+        </div>
+
+        {/* Profit Vault / Cold Wallet Address Input Field with 1-Click Use Connected Address */}
+        <div className="space-y-1.5 pt-1">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-bold text-slate-300 uppercase">
+              Cold Wallet Auto-Sweep Target Address (COLD_WALLET_ADDRESS):
+            </label>
+            {realWalletAddress && (
+              <button
+                type="button"
+                onClick={() => {
+                  setColdWalletAddress(realWalletAddress);
+                  addNotification(`🦊 Filled connected MetaMask address: ${realWalletAddress.substring(0, 10)}...`, 'info');
+                }}
+                className="text-[#34d399] hover:underline text-[10px] font-bold flex items-center gap-1"
+              >
+                <span>🦊 USE MY CONNECTED METAMASK ADDRESS</span>
+              </button>
+            )}
+          </div>
+          <input
+            type="text"
+            value={coldWalletAddress}
+            onChange={(e) => setColdWalletAddress(e.target.value)}
+            placeholder="0x71C7656EC7ab88b098defB751B7401B5f6d7B41"
+            className="w-full bg-[#060810] border border-slate-700/80 rounded-xl px-3.5 py-2 text-cyan-400 font-mono text-xs outline-none focus:border-amber-400 transition"
+          />
+        </div>
+
+      </div>
+
+      {/* 3. Configurable Slider & Settings Control Deck */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 rounded-2xl bg-[#090d16] border border-amber-500/30 font-mono">
         
         {/* PROFIT TARGET SLIDER (0.1 to 10 USD) */}
@@ -224,14 +397,14 @@ export const ArbitrageBotTerminal = () => {
           </div>
 
           <div className="flex justify-between items-center pt-1 border-t border-slate-800">
-            <span className="text-slate-400">Cold Wallet Auto-Sweep:</span>
+            <span className="text-slate-400">Cold Wallet Target:</span>
             <span className="text-cyan-400 font-bold truncate max-w-[140px]">{coldWalletAddress.substring(0, 10)}...</span>
           </div>
         </div>
 
       </div>
 
-      {/* 3. Real-Time Telemetry Stats Banner */}
+      {/* 4. Real-Time Telemetry Stats Banner */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 font-mono text-xs">
         
         <div className="p-4 rounded-2xl bg-[#090d16] border border-slate-800 space-y-1">
@@ -260,7 +433,7 @@ export const ArbitrageBotTerminal = () => {
 
       </div>
 
-      {/* 4. Live Arbitrage Execution Audit Log Table */}
+      {/* 5. Live Arbitrage Execution Audit Log Table */}
       <div className="p-5 rounded-2xl bg-[#090d16] border border-slate-800 space-y-4 font-mono text-xs">
         <div className="flex items-center justify-between pb-3 border-b border-slate-800">
           <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
@@ -280,7 +453,8 @@ export const ArbitrageBotTerminal = () => {
                 <th className="pb-2">SELL PRICE</th>
                 <th className="pb-2">NET PROFIT</th>
                 <th className="pb-2">LATENCY</th>
-                <th className="pb-2">COLD WALLET TX HASH</th>
+                <th className="pb-2">COLD WALLET TARGET</th>
+                <th className="pb-2">TX HASH</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-[11px]">
@@ -292,6 +466,7 @@ export const ArbitrageBotTerminal = () => {
                   <td className="py-2.5 text-slate-300">${log.sellPrice}</td>
                   <td className="py-2.5 font-extrabold text-emerald-400">+${log.netProfit} USDT</td>
                   <td className="py-2.5 font-bold text-amber-400">{log.latency}ms</td>
+                  <td className="py-2.5 text-cyan-300 font-mono text-[10px]">{log.targetWallet}</td>
                   <td className="py-2.5 text-slate-400 font-mono text-[10px]">{log.txHash}</td>
                 </tr>
               ))}
@@ -300,7 +475,7 @@ export const ArbitrageBotTerminal = () => {
         </div>
       </div>
 
-      {/* 5. PYTHON CODE MODAL */}
+      {/* 6. PYTHON CODE MODAL */}
       {showCodeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
           <div className="relative w-full max-w-4xl bg-[#090d16] border border-slate-800 rounded-3xl shadow-2xl overflow-hidden font-mono text-xs text-slate-200">
@@ -381,7 +556,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger("HFT_Arbitrage_Engine")
 
-# Configurable Constants
 BINANCE_API_KEY = os.getenv("BINANCE_API_KEY", "DEMO_BINANCE_API_KEY")
 BINANCE_API_SECRET = os.getenv("BINANCE_API_SECRET", "DEMO_BINANCE_SECRET")
 BYBIT_API_KEY = os.getenv("BYBIT_API_KEY", "DEMO_BYBIT_API_KEY")

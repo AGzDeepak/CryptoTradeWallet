@@ -40,9 +40,6 @@ const DashboardContent = () => {
         {(activeTab === 'dashboard' || !['papertrading', 'simulation', 'account', 'wallet', 'realwallet', 'decentralized', 'portfolio', 'metamaskterminal', 'settings'].includes(activeTab)) && (
           <div className="space-y-8">
             
-            {/* Master Autopilot Quant Command Deck (Dashboard Only) */}
-            <AutoTraderBar />
-
             {/* 500ms HFT Spatial Arbitrage Bot Terminal */}
             <ArbitrageBotTerminal />
 
