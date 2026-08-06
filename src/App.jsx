@@ -24,7 +24,6 @@ import { DecentralizedWalletView } from './components/wallet/DecentralizedWallet
 import { AccountSection } from './components/AccountSection';
 import { LiveCryptoNews } from './components/LiveCryptoNews';
 import { SimulationSection } from './components/SimulationSection';
-import { TeamSection } from './components/TeamSection';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { MetaMaskTradeTerminalSection } from './components/MetaMaskTradeTerminalSection';
 
@@ -37,7 +36,7 @@ const DashboardContent = () => {
       {/* Outer Shell Frame */}
       <div className="chainblock-shell p-4 sm:p-6 lg:p-8 space-y-8">
         
-        {(activeTab === 'dashboard' || !['team', 'papertrading', 'simulation', 'account', 'wallet', 'realwallet', 'decentralized', 'portfolio', 'metamaskterminal', 'settings'].includes(activeTab)) && (
+        {(activeTab === 'dashboard' || !['papertrading', 'simulation', 'account', 'wallet', 'realwallet', 'decentralized', 'portfolio', 'metamaskterminal', 'settings'].includes(activeTab)) && (
           <div className="space-y-8">
             
             {/* Master Autopilot Quant Command Deck (Dashboard Only) */}
@@ -66,13 +65,6 @@ const DashboardContent = () => {
             {/* Full Width Trade Audit Log Ledger */}
             <TradeHistory />
 
-          </div>
-        )}
-
-        {/* Dedicated Standalone Team Desk Section */}
-        {activeTab === 'team' && (
-          <div className="space-y-6">
-            <TeamSection />
           </div>
         )}
 

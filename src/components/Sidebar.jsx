@@ -22,7 +22,6 @@ export const Sidebar = () => {
     { id: 'metamaskterminal', label: 'MetaMask Terminal', icon: Zap },
     { id: 'realwallet',       label: 'Real Wallet',        icon: Gem },
     { id: 'decentralized',    label: 'Vault Wallet',       icon: ShieldCheck },
-    { id: 'team',             label: 'Team Desk',          icon: Users },
     { id: 'papertrading',     label: 'Paper Trading',      icon: ShoppingBag },
     { id: 'account',          label: 'Account',            icon: User },
     { id: 'settings',         label: 'Settings',           icon: Settings }

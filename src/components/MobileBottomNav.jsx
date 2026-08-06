@@ -21,7 +21,7 @@ export const MobileBottomNav = () => {
     { id: 'metamaskterminal', label: 'MetaMask', icon: Zap },
     { id: 'realwallet', label: 'Real Wallet', icon: Gem },
     { id: 'decentralized', label: 'Vault', icon: ShieldCheck },
-    { id: 'team', label: 'Team', icon: Users }
+    { id: 'account', label: 'Account', icon: User }
   ];
 
   return (
