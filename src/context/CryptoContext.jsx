@@ -17,8 +17,8 @@ const INITIAL_COINS = [
 const EXCHANGES = ['Binance', 'Bybit', 'OKX', 'Coinbase'];
 
 const NEW_USER_WALLET = {
-  virtualBalance: 0.00,
-  totalEquity: 0.00,
+  virtualBalance: 100000.00,
+  totalEquity: 100000.00,
   todayProfit: 0.00,
   roiPct: 0.00,
   address: '0x00D3...C43D',
@@ -184,8 +184,17 @@ export const CryptoProvider = ({ children }) => {
   const [maxTradeAllocation, setMaxTradeAllocation] = useState(250.00); // Max USD allocation per trade
   const [autoStopReason, setAutoStopReason] = useState(null); // 'TAKE_PROFIT_TARGET_HIT' | 'STOP_LOSS_LIMIT_HIT'
 
-  // Paper Wallet State
-  const [wallet, setWallet] = useState(NEW_USER_WALLET);
+  // Paper Wallet State ($100k starting balance)
+  const [wallet, setWallet] = useState(() => {
+    try {
+      const saved = localStorage.getItem('chainblock_paper_wallet');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.virtualBalance !== undefined && parsed.virtualBalance > 0) return parsed;
+      }
+    } catch (_) {}
+    return NEW_USER_WALLET;
+  });
 
   // Open Positions, History & Withdrawal Logs
   const [openPositions, setOpenPositions] = useState([]);
@@ -1130,7 +1139,10 @@ export const CryptoProvider = ({ children }) => {
     setWithdrawalHistory([]);
     setTotalBotProfit(0.00);
     setAutoTradeCount(0);
-    addNotification('Wallet reset to $0.00 USDT. Deposit funds to start trading.', 'warning');
+    try {
+      localStorage.setItem('chainblock_paper_wallet', JSON.stringify(NEW_USER_WALLET));
+    } catch (_) {}
+    addNotification('🔄 Demo Paper Wallet reset to $100,000.00 USDT starting balance!', 'success');
   };
 
   const addNotification = (message, type = 'info') => {

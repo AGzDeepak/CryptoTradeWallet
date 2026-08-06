@@ -8,6 +8,7 @@ import { AutoTraderBar } from './components/AutoTraderBar';
 import { TotalAssetsHero } from './components/TotalAssetsHero';
 import { YellowPortfolioCard } from './components/YellowPortfolioCard';
 import { OperationSwapTool } from './components/OperationSwapTool';
+import { MarketGraphPanel } from './components/MarketGraphPanel';
 import { AiStrategyPanel } from './components/AiStrategyPanel';
 import { PaperTradingPanel } from './components/PaperTradingPanel';
 import { LivePositions } from './components/LivePositions';
@@ -41,20 +42,17 @@ const DashboardContent = () => {
             {/* Master Autopilot Quant Command Deck (Dashboard Only) */}
             <AutoTraderBar />
 
-            {/* Top Section: TOTAL BALANCE & 4 Asset Cards (Bitcoin, Litecoin, Ethereum, Solana) */}
-            <TotalAssetsHero />
+            {/* Live Interactive Market Price Chart Graph */}
+            <MarketGraphPanel />
 
-            {/* Bottom Split Section: Left Yellow Portfolio Card (30%) & Right Main Chart (70%) */}
+            {/* Bottom Split Section: Left Buy/Sell Swap Tool (5 Cols) & Right Active Positions (7 Cols) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               
-              {/* Left Column (Yellow My Portfolio Card & Buy/Sell Swap Tool) */}
-              <div className="lg:col-span-4 space-y-6">
-                <YellowPortfolioCard />
+              <div className="lg:col-span-5 space-y-6">
                 <OperationSwapTool />
               </div>
 
-              {/* Right Column (Active Positions) */}
-              <div className="lg:col-span-8 space-y-6">
+              <div className="lg:col-span-7 space-y-6">
                 <LivePositions />
               </div>
 
