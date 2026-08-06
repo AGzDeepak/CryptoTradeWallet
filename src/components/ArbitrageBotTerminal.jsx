@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { fetchEthBalance } from '../services/walletService';
+import { fetchEthBalance, switchToEthereumMainnet, switchToArbitrumMainnet } from '../services/walletService';
 import { 
   Zap, 
   ShieldCheck, 
@@ -240,7 +240,24 @@ export const ArbitrageBotTerminal = () => {
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={async () => {
+                const ok = await switchToEthereumMainnet();
+                if (ok) {
+                  setRealWalletNetwork('Ethereum Mainnet (1)');
+                  addNotification('🌐 Switched MetaMask network to Ethereum Mainnet (Chain ID 1)!', 'success');
+                } else {
+                  addNotification('🌐 Opening MetaMask to select Ethereum Mainnet...', 'info');
+                }
+              }}
+              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-[10px] uppercase tracking-wide hover:brightness-110 transition shadow flex items-center gap-1"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span>🌐 SWITCH TO ETHEREUM MAINNET</span>
+            </button>
+
             {realWalletAddress ? (
               <button
                 type="button"

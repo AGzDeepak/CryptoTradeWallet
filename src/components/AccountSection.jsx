@@ -6,7 +6,7 @@ import {
   Wallet, AlertCircle, LogIn 
 } from 'lucide-react';
 import { AddApiKeyModal } from './AddApiKeyModal';
-import { fetchEthBalance } from '../services/walletService';
+import { shortAddress, fetchEthBalance, switchToEthereumMainnet } from '../services/walletService';
 
 export const AccountSection = () => {
   const { 
@@ -211,26 +211,41 @@ export const AccountSection = () => {
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={async () => {
+                const ok = await switchToEthereumMainnet();
+                if (ok) {
+                  setRealWalletNetwork('Ethereum Mainnet (1)');
+                  addNotification('🌐 Switched network to Ethereum Mainnet (Chain ID 1)!', 'success');
+                } else {
+                  addNotification('🌐 Opening MetaMask to switch to Ethereum Mainnet...', 'info');
+                }
+              }}
+              className="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-extrabold text-xs flex items-center space-x-1.5 transition hover:brightness-110 shadow"
+            >
+              <span>🌐 ETHEREUM MAINNET</span>
+            </button>
+
             {realWalletAddress ? (
               <button
                 onClick={handleSwitchAccount}
                 disabled={isConnectingMetaMask}
                 className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-300 font-extrabold text-xs flex items-center space-x-1.5 transition"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${isConnectingMetaMask ? 'animate-spin' : ''}`} />
-                <span>🔄 Switch MetaMask Account</span>
+                <RefreshCw className="w-4 h-4 text-amber-400" />
+                <span>SWITCH ACCOUNT</span>
               </button>
             ) : (
               <button
                 onClick={handleConnectMetaMask}
                 disabled={isConnectingMetaMask}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-slate-950 font-extrabold text-xs uppercase shadow hover:brightness-110 transition flex items-center space-x-1.5"
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider hover:brightness-110 transition shadow-lg flex items-center space-x-1.5"
               >
-                <span>🦊 CONNECT METAMASK EXTENSION NOW</span>
+                <LogIn className="w-4 h-4" />
+                <span>CONNECT METAMASK</span>
               </button>
             )}
-
             <button
               onClick={() => setActiveTab('metamaskterminal')}
               className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-extrabold text-xs uppercase shadow hover:brightness-110 transition flex items-center space-x-1.5"

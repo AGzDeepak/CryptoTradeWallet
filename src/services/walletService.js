@@ -204,6 +204,38 @@ export const switchMetaMaskAccount = async () => {
   return { address, chainId, networkName: getNetworkName(chainId) };
 };
 
+export const switchToEthereumMainnet = async () => {
+  if (typeof window !== 'undefined' && window.ethereum) {
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x1' }] // 0x1 = Ethereum Mainnet
+      });
+      return true;
+    } catch (switchError) {
+      console.warn('Switch to Ethereum Mainnet error:', switchError);
+      return false;
+    }
+  }
+  return false;
+};
+
+export const switchToArbitrumMainnet = async () => {
+  if (typeof window !== 'undefined' && window.ethereum) {
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0xa4b1' }] // 0xa4b1 = Arbitrum One (42161)
+      });
+      return true;
+    } catch (switchError) {
+      console.warn('Switch to Arbitrum Mainnet error:', switchError);
+      return false;
+    }
+  }
+  return false;
+};
+
 export const onAccountChanged  = (cb) => isMetaMaskAvailable() && window.ethereum.on('accountsChanged', cb);
 export const onNetworkChanged  = (cb) => isMetaMaskAvailable() && window.ethereum.on('chainChanged', cb);
 export const removeMetaMaskListeners = () => {
