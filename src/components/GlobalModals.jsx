@@ -89,6 +89,29 @@ export const GlobalModals = () => {
 
   const handleConfirmWithdrawal = async (e) => {
     e.preventDefault();
+    if (!withdrawAddress || !withdrawAddress.startsWith('0x')) {
+      addNotification('Please enter a valid destination 0x address.', 'warning');
+      return;
+    }
+
+    // Direct MetaMask EIP-1193 transaction authorization
+    if (typeof window !== 'undefined' && window.ethereum && realWalletAddress) {
+      try {
+        addNotification(`🦊 Opening MetaMask extension to authorize withdrawal of ${withdrawAmount} ${withdrawCurrency}...`, 'info');
+        const valWei = '0x' + (Math.floor((parseFloat(withdrawAmount) / 3540.20) * 1e18)).toString(16);
+        await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: realWalletAddress,
+            to: withdrawAddress,
+            value: valWei
+          }]
+        });
+      } catch (ethErr) {
+        console.info('MetaMask withdrawal notice:', ethErr);
+      }
+    }
+
     const success = await withdrawFunds(withdrawAmount, withdrawAddress, withdrawCurrency, withdrawNetwork);
     if (success) {
       setWithdrawSuccess(true);
@@ -498,14 +521,30 @@ export const GlobalModals = () => {
                       </div>
 
                       <div>
-                        <label className="text-slate-400 block mb-1">Destination Web3 Address</label>
-                        <input
-                          type="text"
-                          value={withdrawAddress}
-                          onChange={(e) => setWithdrawAddress(e.target.value)}
-                          placeholder="0x71C765b28F3D140a831C28190d7B41"
-                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-cyan-400 font-mono text-xs outline-none"
-                        />
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-slate-400">Destination Web3 Address (0x...)</label>
+                          {realWalletAddress && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setWithdrawAddress(realWalletAddress);
+                                addNotification(`🦊 Filled connected MetaMask address: ${realWalletAddress.substring(0, 10)}...`, 'info');
+                              }}
+                              className="text-[#34d399] hover:underline text-[10px] font-bold flex items-center gap-1"
+                            >
+                              <span>🦊 USE MY METAMASK ADDRESS</span>
+                            </button>
+                          )}
+                        </div>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={withdrawAddress}
+                            onChange={(e) => setWithdrawAddress(e.target.value)}
+                            placeholder="0x71C7656EC7ab88b098defB751B7401B5f6d7B41"
+                            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-cyan-400 font-mono text-xs outline-none focus:border-cyan-400"
+                          />
+                        </div>
                       </div>
 
                       <div>
