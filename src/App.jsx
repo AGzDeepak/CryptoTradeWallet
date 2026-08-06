@@ -8,7 +8,6 @@ import { AutoTraderBar } from './components/AutoTraderBar';
 import { TotalAssetsHero } from './components/TotalAssetsHero';
 import { YellowPortfolioCard } from './components/YellowPortfolioCard';
 import { OperationSwapTool } from './components/OperationSwapTool';
-import { ArbitragePanel } from './components/ArbitragePanel';
 import { AiStrategyPanel } from './components/AiStrategyPanel';
 import { PaperTradingPanel } from './components/PaperTradingPanel';
 import { LivePositions } from './components/LivePositions';
@@ -54,9 +53,8 @@ const DashboardContent = () => {
                 <OperationSwapTool />
               </div>
 
-              {/* Right Column (Spatial Arbitrage Matrix & Active Positions) */}
+              {/* Right Column (Active Positions) */}
               <div className="lg:col-span-8 space-y-6">
-                <ArbitragePanel />
                 <LivePositions />
               </div>
 
@@ -122,10 +120,7 @@ const DashboardContent = () => {
 
         {activeTab === 'markets' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <div className="lg:col-span-7 space-y-6">
-              <ArbitragePanel />
-            </div>
-            <div className="lg:col-span-5 space-y-6">
+            <div className="lg:col-span-12 space-y-6">
               <TotalAssetsHero />
               <OperationSwapTool />
             </div>
@@ -135,7 +130,6 @@ const DashboardContent = () => {
         {activeTab === 'scanner' && (
           <div className="space-y-6">
             <MarketScanner />
-            <ArbitragePanel />
           </div>
         )}
 
