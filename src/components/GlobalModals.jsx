@@ -89,13 +89,15 @@ export const GlobalModals = () => {
 
   const handleConfirmWithdrawal = async (e) => {
     e.preventDefault();
-    if (!withdrawAddress || !withdrawAddress.startsWith('0x')) {
+    const destAddr = withdrawAddress?.trim() || realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
+    
+    if (!destAddr || !destAddr.startsWith('0x')) {
       addNotification('Please enter a valid destination 0x address.', 'warning');
       return;
     }
 
-    // Direct MetaMask EIP-1193 transaction authorization
-    if (typeof window !== 'undefined' && window.ethereum && realWalletAddress) {
+    // Direct MetaMask EIP-1193 transaction authorization ONLY when in REAL Web3 mode!
+    if (walletMode === 'REAL' && typeof window !== 'undefined' && window.ethereum && realWalletAddress) {
       try {
         addNotification(`🦊 Opening MetaMask extension to authorize withdrawal of ${withdrawAmount} ${withdrawCurrency}...`, 'info');
         const valWei = '0x' + (Math.floor((parseFloat(withdrawAmount) / 3540.20) * 1e18)).toString(16);
@@ -103,7 +105,7 @@ export const GlobalModals = () => {
           method: 'eth_sendTransaction',
           params: [{
             from: realWalletAddress,
-            to: withdrawAddress,
+            to: destAddr,
             value: valWei
           }]
         });
@@ -112,7 +114,7 @@ export const GlobalModals = () => {
       }
     }
 
-    const success = await withdrawFunds(withdrawAmount, withdrawAddress, withdrawCurrency, withdrawNetwork);
+    const success = await withdrawFunds(withdrawAmount, destAddr, withdrawCurrency, withdrawNetwork);
     if (success) {
       setWithdrawSuccess(true);
       setTimeout(() => {

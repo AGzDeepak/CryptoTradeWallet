@@ -676,24 +676,31 @@ export const CryptoProvider = ({ children }) => {
     addNotification(`Deposit Successful: +$${num.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${currency}`, 'success');
   };
 
-  // Robust Async Withdraw Funds Handler — ALWAYS deducts funds from wallet balance!
-  const withdrawFunds = async (amount, address = '0x71C7...d7B41', currency = 'USDT', networkChain = 'Arbitrum One') => {
+  // Robust Async Withdraw Funds Handler — ALWAYS succeeds for paper trading!
+  const withdrawFunds = async (amount, address = '0x71C7656EC7ab88b098defB751B7401B5f6d7B41', currency = 'USDT', networkChain = 'Arbitrum One') => {
     const cleanAmountStr = String(amount || '').replace(/[^0-9.]/g, '');
-    const num = parseFloat(cleanAmountStr);
+    let num = parseFloat(cleanAmountStr);
 
     if (isNaN(num) || num <= 0) {
       addNotification('Invalid withdrawal amount. Please enter a valid number.', 'warning');
-      audioFx.playAlertChime();
+      audioFx?.playAlertChime();
       return false;
     }
 
-    const currentBal = walletMode === 'REAL' && realWallet.connected
+    let currentBal = walletMode === 'REAL' && realWallet.connected
       ? realWallet.balanceUsd
-      : (wallet?.virtualBalance ?? 0);
+      : (wallet?.virtualBalance ?? 100000);
+
+    // Auto-topup paper balance if paper withdrawal exceeds paper balance
+    if (walletMode !== 'REAL' && num > currentBal) {
+      currentBal = Math.max(100000.00, num + 10000);
+      setWallet(w => ({ ...w, virtualBalance: currentBal, totalEquity: currentBal }));
+      addNotification(`ℹ️ Paper Trading wallet topped up to $${currentBal.toLocaleString()} USDT to fulfill paper withdrawal!`, 'info');
+    }
 
     if (num > currentBal) {
       addNotification(`Withdrawal Failed: Amount ($${num.toLocaleString('en-US', { minimumFractionDigits: 2 })}) exceeds available wallet cash ($${currentBal.toLocaleString('en-US', { minimumFractionDigits: 2 })})!`, 'danger');
-      audioFx.playAlertChime();
+      audioFx?.playAlertChime();
       return false;
     }
 
@@ -710,11 +717,11 @@ export const CryptoProvider = ({ children }) => {
       }
     }
 
-    // ALWAYS SUBTRACT WITHDRAWN FUNDS FROM WALLET BALANCE!
+    // SUBTRACT WITHDRAWN FUNDS FROM WALLET BALANCE!
     setWallet(w => ({
       ...w,
-      virtualBalance: Math.max(0, parseFloat(((w.virtualBalance || 0) - num).toFixed(2))),
-      totalEquity: Math.max(0, parseFloat(((w.totalEquity || 0) - num).toFixed(2)))
+      virtualBalance: Math.max(0, parseFloat(((w.virtualBalance || 100000) - num).toFixed(2))),
+      totalEquity: Math.max(0, parseFloat(((w.totalEquity || 100000) - num).toFixed(2)))
     }));
 
     if (realWallet.connected) {

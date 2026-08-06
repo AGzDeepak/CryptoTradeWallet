@@ -22,7 +22,16 @@ import {
 } from 'lucide-react';
 
 export const SimulationSection = () => {
-  const { marketData, exchangePrices, priceFlashMap, addNotification, audioFx } = useCrypto();
+  const { 
+    marketData, 
+    exchangePrices, 
+    priceFlashMap, 
+    addNotification, 
+    audioFx, 
+    openModal, 
+    wallet, 
+    withdrawFunds 
+  } = useCrypto();
 
   const [simActive, setSimActive] = useState(true);
   const [simMode, setSimMode] = useState('Monte Carlo Liquidity Injections');
@@ -243,12 +252,25 @@ export const SimulationSection = () => {
           <span className="text-[10px] text-amber-400/80 block font-semibold">Live Feed Connected</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#0b0c10] border border-slate-800 space-y-1">
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Active Simulations</span>
-          <span className="text-xl font-extrabold text-purple-400 block">
-            {simPositions.length} Positions Active
-          </span>
-          <span className="text-[10px] text-purple-400/80 block font-semibold">True Live Updates</span>
+        <div className="p-4 rounded-2xl bg-[#0b0c10] border border-rose-500/40 flex flex-col justify-between space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-rose-400 uppercase tracking-wider font-extrabold">PAPER WITHDRAWAL VAULT</span>
+            <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse" />
+          </div>
+          <div>
+            <span className="text-xl font-extrabold text-white block">
+              ${(wallet?.virtualBalance ?? simBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            </span>
+            <span className="text-[10px] text-slate-400 block font-semibold">Available Cash-Out Funds</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => openModal('WITHDRAW')}
+            className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-rose-500 to-amber-500 text-slate-950 font-black text-xs uppercase tracking-wide hover:brightness-110 transition shadow flex items-center justify-center space-x-1.5"
+          >
+            <ArrowUpRight className="w-4 h-4 stroke-[3]" />
+            <span>💸 WITHDRAW PAPER FUNDS</span>
+          </button>
         </div>
 
       </div>
