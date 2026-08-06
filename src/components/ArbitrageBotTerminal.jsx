@@ -162,14 +162,16 @@ export const ArbitrageBotTerminal = () => {
   const [showNetworkModal, setShowNetworkModal] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
-  // Sync Live MetaMask Gas Balance
+  // Sync Live MetaMask Gas Balance across Mainnet & Testnet
   useEffect(() => {
     let isMounted = true;
     const syncBalance = async () => {
       const activeAddr = realWalletAddress || realWallet?.address;
       if (activeAddr) {
         try {
-          const bal = await fetchEthBalance(activeAddr, 'sepolia');
+          const isTestnet = realWalletNetwork?.toLowerCase().includes('testnet') || realWalletNetwork?.toLowerCase().includes('sepolia');
+          const netKey = isTestnet ? 'sepolia' : 'ethereum';
+          const bal = await fetchEthBalance(activeAddr, netKey);
           if (isMounted && bal !== undefined) {
             setLiveEthBalance(bal);
             setLiveUsdBalance(parseFloat((bal * 3540.20).toFixed(2)));
@@ -180,7 +182,7 @@ export const ArbitrageBotTerminal = () => {
     syncBalance();
     const interval = setInterval(syncBalance, 3000);
     return () => { isMounted = false; clearInterval(interval); };
-  }, [realWalletAddress, realWallet]);
+  }, [realWalletAddress, realWallet, realWalletNetwork]);
 
   // Connect / Switch MetaMask
   const handleConnectMetaMask = async () => {
@@ -336,17 +338,21 @@ export const ArbitrageBotTerminal = () => {
             <Zap className="w-6 h-6 stroke-[2.5]" />
           </div>
           <div>
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-base sm:text-lg font-black text-white font-mono tracking-tight uppercase">
                 500MS HFT ARBITRAGE ENGINE
               </h2>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono text-[10px] font-bold border border-emerald-500/30 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>AWS US-EAST-1 ACTIVE</span>
+              <span className={`px-2.5 py-0.5 rounded-full font-mono text-[10px] font-bold border flex items-center gap-1 ${
+                realWalletNetwork?.toLowerCase().includes('mainnet')
+                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                  : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+              }`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                <span>{realWalletNetwork?.toUpperCase() || 'ETHEREUM MAINNET'} (EVM AUTO-TRADER)</span>
               </span>
             </div>
             <p className="text-xs text-slate-400 font-mono">
-              Binance vs Bybit BTCUSDT Perpetual Level-2 Atomic Arbitrage Engine
+              Parallel Multi-Asset (BTC & ETH) HFT Arbitrage Bot with Instant MetaMask Settlement (Mainnet & Testnet)
             </p>
           </div>
         </div>
