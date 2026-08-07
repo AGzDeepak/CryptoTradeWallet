@@ -84,7 +84,7 @@ export const TotalAssetsHero = () => {
             {/* Bot Cum Profit Pill */}
             <span className="ml-3 px-3 py-1 rounded-full bg-amber-950/80 border border-[#facc15]/50 text-[#facc15] font-mono text-xs font-bold inline-flex items-center gap-1.5 shadow-sm">
               <Bot className="w-3.5 h-3.5" />
-              <span>BOT PROFIT: +${formatUsd(totalBotProfit || 1248.50)}</span>
+              <span>BOT PROFIT: +${formatUsd(totalBotProfit || 0.00)}</span>
             </span>
           </div>
         </div>

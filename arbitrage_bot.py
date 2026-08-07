@@ -275,6 +275,12 @@ class ArbitrageEngine:
                 if not best_direction:
                     continue
 
+                # STRICT RULE: Exchange price difference MUST be $5.00 USD and above to trade!
+                price_diff = abs(sell_price - buy_price)
+                if price_diff < 5.00:
+                    logger.debug(f"[SPREAD GATE REJECT] Exchange price diff (${price_diff:.2f}) < $5.00 USD threshold. Trade rejected.")
+                    continue
+
                 gross_p = (sell_price - buy_price) * qty
                 total_fees = (buy_price * qty * TAKER_FEE_PCT) + (sell_price * qty * TAKER_FEE_PCT)
                 net_p = gross_p - total_fees

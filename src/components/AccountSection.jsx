@@ -53,16 +53,22 @@ export const AccountSection = () => {
     return () => { isMounted = false; clearInterval(interval); };
   }, [realWalletAddress]);
 
-  const accountName = user?.name || 'Deepak Kumar';
-  const accountEmail = user?.email || 'deepak@chainblock.io';
-  const accountId = user?.id || '#9482-QUANT-PRO';
-  const initials = user?.avatarInitials || (accountName.charAt(0).toUpperCase() || 'D');
+  const activeAddr = realWalletAddress || '';
+  const displayAddressShort = activeAddr ? shortAddress(activeAddr) : '0x...';
+  const accountName = activeAddr ? `MetaMask Account (${displayAddressShort})` : 'MetaMask Wallet';
+  const accountEmail = activeAddr ? `Address: ${activeAddr}` : 'Connect MetaMask extension to view EVM account ID';
+  const accountId = activeAddr ? activeAddr : 'NOT CONNECTED';
+  const initials = activeAddr ? '🦊' : '🦊';
 
   const copyId = () => {
+    if (!activeAddr) {
+      handleConnectMetaMask();
+      return;
+    }
     try {
-      navigator.clipboard.writeText(accountId);
+      navigator.clipboard.writeText(activeAddr);
       setCopiedId(true);
-      addNotification(`Account ID ${accountId} copied to clipboard!`, 'info');
+      addNotification(`MetaMask Account Address ${activeAddr.substring(0, 10)}... copied to clipboard!`, 'info');
       setTimeout(() => setCopiedId(false), 2000);
     } catch (_) {}
   };
@@ -144,43 +150,64 @@ export const AccountSection = () => {
   return (
     <div className="space-y-6 font-sans">
       
-      {/* Dynamic Trader Profile Hero Card */}
+      {/* Dynamic MetaMask Trader Profile Hero Card */}
       <div className="chainblock-card p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-center space-x-5">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#facc15] to-[#2dd4bf] text-slate-950 flex items-center justify-center font-extrabold font-mono text-xl shadow-[0_0_25px_rgba(250,204,21,0.35)] shrink-0">
-            {initials}
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-600 text-slate-950 flex items-center justify-center font-extrabold font-mono text-3xl shadow-[0_0_25px_rgba(245,158,11,0.35)] shrink-0">
+            🦊
           </div>
 
           <div>
             <div className="flex items-center space-x-2">
-              <h2 className="text-xl font-extrabold text-white font-sans tracking-tight">{accountName}</h2>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#facc15] text-slate-950">
-                {user?.tier || 'VIP TIER 4 INSTITUTIONAL'}
+              <h2 className="text-xl font-extrabold text-white font-sans tracking-tight">
+                {realWalletAddress ? `MetaMask Account (${shortAddress(realWalletAddress)})` : 'MetaMask Web3 Account'}
+              </h2>
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-extrabold uppercase ${realWalletAddress ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-300 border border-amber-800'}`}>
+                {realWalletAddress ? `${realWalletNetwork || 'Arbitrum One'} • CONNECTED 🟢` : 'METAMASK DISCONNECTED'}
               </span>
             </div>
-            <p className="text-xs text-slate-400 font-mono mt-0.5">{accountEmail} • ID: {accountId}</p>
             
-            <div className="flex items-center space-x-4 mt-2 text-xs font-mono">
+            <p className="text-xs text-slate-300 font-mono mt-1 break-all">
+              {realWalletAddress ? (
+                <>
+                  <strong className="text-amber-400">METAMASK ID:</strong> <span className="text-white font-bold">{realWalletAddress}</span>
+                </>
+              ) : (
+                <span className="text-slate-400">No MetaMask address linked — click Connect below to import EVM account info.</span>
+              )}
+            </p>
+            
+            <div className="flex flex-wrap items-center gap-3 mt-2 text-xs font-mono">
               <span className="text-[#2dd4bf] font-bold flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5" /> {user?.kycStatus || 'KYC LEVEL 3 VERIFIED'}
+                <ShieldCheck className="w-3.5 h-3.5 text-[#2dd4bf]" /> {realWalletAddress ? 'EIP-1193 SECURE PROVIDER' : 'EVM METAMASK SUPPORTED'}
               </span>
-              <span className="text-slate-400">•</span>
-              <span className={`font-bold flex items-center gap-1.5 ${realWalletAddress ? 'text-emerald-400' : 'text-amber-400'}`}>
-                <span className={`w-2 h-2 rounded-full ${realWalletAddress ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-                <span>{realWalletAddress ? `METAMASK: ${realWalletAddress.substring(0, 8)}...` : 'METAMASK DISCONNECTED'}</span>
+              <span className="text-slate-500">•</span>
+              <span className="text-white font-bold flex items-center gap-1">
+                <span>ON-CHAIN BALANCE:</span>
+                <span className="text-[#facc15] font-extrabold">{ethBalance} ETH</span>
               </span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center space-x-3 font-mono text-xs">
-          <button
-            onClick={copyId}
-            className="px-4 py-2.5 rounded-xl bg-[#0b0c10] border border-slate-700 text-slate-200 font-bold hover:text-[#facc15] hover:border-[#facc15] transition flex items-center gap-1.5"
-          >
-            {copiedId ? <Check className="w-4 h-4 text-[#2dd4bf]" /> : <Copy className="w-4 h-4" />}
-            <span>{copiedId ? 'COPIED ID' : `COPY ID (${accountId})`}</span>
-          </button>
+        <div className="flex flex-wrap items-center gap-3 font-mono text-xs">
+          {realWalletAddress ? (
+            <button
+              onClick={copyId}
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-extrabold hover:brightness-110 transition flex items-center gap-1.5 shadow"
+            >
+              {copiedId ? <Check className="w-4 h-4 text-slate-950" /> : <Copy className="w-4 h-4" />}
+              <span>{copiedId ? 'COPIED METAMASK ID' : `COPY METAMASK ID (${shortAddress(realWalletAddress)})`}</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleConnectMetaMask}
+              disabled={isConnectingMetaMask}
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-slate-950 font-black text-xs uppercase hover:brightness-110 transition shadow-lg flex items-center gap-1.5"
+            >
+              <span>🦊 CONNECT METAMASK ACCOUNT</span>
+            </button>
+          )}
 
           <button
             onClick={logout}

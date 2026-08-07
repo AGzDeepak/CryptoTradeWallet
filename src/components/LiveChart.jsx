@@ -127,57 +127,74 @@ export const LiveChart = () => {
 
   // Custom Candlestick Renderer SVG component
   const CandlestickChartSVG = () => {
-    const minP = Math.min(...candleData.map(c => c.low));
-    const maxP = Math.max(...candleData.map(c => c.high));
+    if (!candleData || candleData.length === 0) return null;
+    const minP = Math.min(...candleData.map(c => c.low)) * 0.998;
+    const maxP = Math.max(...candleData.map(c => c.high)) * 1.002;
     const range = maxP - minP || 1;
 
+    const svgWidth = 800;
+    const svgHeight = 280;
+    const padTop = 20;
+    const padBot = 30;
+    const padLeft = 10;
+    const padRight = 60;
+    const chartW = svgWidth - padLeft - padRight;
+    const chartH = svgHeight - padTop - padBot;
+
+    const getY = (price) => padTop + chartH - ((price - minP) / range) * chartH;
+
     return (
-      <div className="w-full h-full relative flex items-end justify-between gap-1 pt-6 pb-6 px-2 font-mono">
-        {/* Horizontal grid lines */}
-        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20 border-b border-slate-700">
-          <div className="border-b border-slate-700 w-full" />
-          <div className="border-b border-slate-700 w-full" />
-          <div className="border-b border-slate-700 w-full" />
-          <div className="border-b border-slate-700 w-full" />
-        </div>
+      <div className="w-full h-full relative font-mono">
+        <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-full">
+          {/* Horizontal Grid lines */}
+          {[0, 0.25, 0.5, 0.75, 1].map((pct, idx) => {
+            const p = minP + pct * range;
+            const y = getY(p);
+            return (
+              <g key={idx}>
+                <line x1={padLeft} y1={y} x2={svgWidth - padRight} y2={y} stroke="rgba(255, 255, 255, 0.05)" strokeDasharray="3 3" />
+                <text x={svgWidth - padRight + 6} y={y + 4} fill="#64748b" fontSize="10" fontFamily="monospace">
+                  ${p > 1000 ? (p / 1000).toFixed(1) + 'k' : p.toFixed(2)}
+                </text>
+              </g>
+            );
+          })}
 
-        {candleData.map((c, i) => {
-          const topPct = ((maxP - c.high) / range) * 80;
-          const botPct = ((maxP - c.low) / range) * 80;
-          const openPct = ((maxP - c.open) / range) * 80;
-          const closePct = ((maxP - c.close) / range) * 80;
+          {/* Candlesticks */}
+          {candleData.map((c, i) => {
+            const stepX = chartW / candleData.length;
+            const cx = padLeft + (i + 0.5) * stepX;
+            const candleW = Math.max(4, Math.min(14, stepX * 0.65));
 
-          const wickTop = Math.min(topPct, botPct);
-          const wickBottom = Math.max(topPct, botPct);
-          const bodyTop = Math.min(openPct, closePct);
-          const bodyHeight = Math.max(Math.abs(openPct - closePct), 1.5);
+            const yHigh = getY(c.high);
+            const yLow = getY(c.low);
+            const yOpen = getY(c.open);
+            const yClose = getY(c.close);
 
-          return (
-            <div key={i} className="flex-1 h-full relative group flex flex-col items-center justify-end">
-              {/* High-Low Wick Line */}
-              <div 
-                className={`absolute w-[1.5px] ${c.isBullish ? 'bg-emerald-400' : 'bg-rose-400'}`} 
-                style={{ top: `${wickTop}%`, bottom: `${100 - wickBottom}%` }} 
-              />
-              {/* Candle Body */}
-              <div 
-                className={`w-full max-w-[12px] rounded-sm relative z-10 transition-all ${
-                  c.isBullish ? 'bg-emerald-400 border border-emerald-300 shadow-[0_0_8px_rgba(45,212,191,0.4)]' : 'bg-rose-500 border border-rose-400 shadow-[0_0_8px_rgba(244,63,94,0.4)]'
-                }`}
-                style={{ top: `${bodyTop}%`, height: `${bodyHeight}%` }}
-              />
+            const bodyTop = Math.min(yOpen, yClose);
+            const bodyHeight = Math.max(2, Math.abs(yOpen - yClose));
+            const color = c.isBullish ? '#10b981' : '#f43f5e';
+            const strokeColor = c.isBullish ? '#059669' : '#e11d48';
 
-              {/* Tooltip on Hover */}
-              <div className="opacity-0 group-hover:opacity-100 pointer-events-none absolute -top-16 z-50 bg-[#090d16] border border-slate-700 p-2 rounded-xl text-[10px] text-white shadow-2xl whitespace-nowrap transition font-mono">
-                <div className="font-bold text-[#2dd4bf]">{c.time}</div>
-                <div>Open: ${c.open.toLocaleString()}</div>
-                <div>High: ${c.high.toLocaleString()}</div>
-                <div>Low: ${c.low.toLocaleString()}</div>
-                <div>Close: ${c.close.toLocaleString()}</div>
-              </div>
-            </div>
-          );
-        })}
+            return (
+              <g key={i}>
+                {/* Thin Central High-to-Low Wick */}
+                <line x1={cx} y1={yHigh} x2={cx} y2={yLow} stroke={color} strokeWidth={1.5} />
+                {/* Open-to-Close Rectangular Body */}
+                <rect
+                  x={cx - candleW / 2}
+                  y={bodyTop}
+                  width={candleW}
+                  height={bodyHeight}
+                  fill={color}
+                  stroke={strokeColor}
+                  strokeWidth={0.8}
+                  rx={1.5}
+                />
+              </g>
+            );
+          })}
+        </svg>
       </div>
     );
   };

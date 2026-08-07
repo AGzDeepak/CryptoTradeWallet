@@ -40,13 +40,19 @@ const DashboardContent = () => {
         {(activeTab === 'dashboard' || !['papertrading', 'simulation', 'account', 'wallet', 'realwallet', 'decentralized', 'portfolio', 'metamaskterminal', 'settings'].includes(activeTab)) && (
           <div className="space-y-8">
             
-            {/* 500ms HFT Spatial Arbitrage Bot Terminal */}
+            {/* Top Row: Executive Hero & Autopilot Command Deck */}
+            <div className="space-y-6">
+              <TotalAssetsHero />
+              <AutoTraderBar />
+            </div>
+
+            {/* Main HFT Spatial Arbitrage Bot Terminal */}
             <ArbitrageBotTerminal />
 
-            {/* Live Interactive Market Price Chart Graph */}
+            {/* Live Interactive Market Price Chart Graph & Orderbook */}
             <MarketGraphPanel />
 
-            {/* Bottom Split Section: Left Buy/Sell Swap Tool (5 Cols) & Right Active Positions (7 Cols) */}
+            {/* Split Action Deck: Swap Tool (5 Cols) & Active Positions (7 Cols) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               
               <div className="lg:col-span-5 space-y-6">
@@ -59,7 +65,7 @@ const DashboardContent = () => {
 
             </div>
 
-            {/* Full Width Trade Audit Log Ledger */}
+            {/* Full Width Verified Trade Audit Log Ledger */}
             <TradeHistory />
 
           </div>

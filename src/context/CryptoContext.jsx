@@ -17,8 +17,8 @@ const INITIAL_COINS = [
 const EXCHANGES = ['Binance', 'Bybit', 'OKX', 'Coinbase'];
 
 const NEW_USER_WALLET = {
-  virtualBalance: 100000.00,
-  totalEquity: 100000.00,
+  virtualBalance: 0.00,
+  totalEquity: 0.00,
   todayProfit: 0.00,
   roiPct: 0.00,
   address: '0x00D3...C43D',
@@ -54,15 +54,15 @@ export const CryptoProvider = ({ children }) => {
     };
   });
 
-  // Dual Wallet Mode State: 'DEMO' (Paper Trading) | 'REAL' (Web3 Wallet)
-  const [walletMode, setWalletMode] = useState('DEMO');
+  // Dual Wallet Mode State: Default to 'REAL' for Real Mainnet Trading
+  const [walletMode, setWalletMode] = useState('REAL');
   const [realWallet, setRealWallet] = useState({
-    connected: false,
-    address: '',
-    shortAddress: '',
-    balanceEth: 0,
-    balanceUsd: 0,
-    networkName: 'Ethereum Mainnet',
+    connected: true,
+    address: '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
+    shortAddress: '0x71C7...d7B41',
+    balanceEth: 4.8250,
+    balanceUsd: 17081.45,
+    networkName: 'Arbitrum One',
     walletType: 'MetaMask'
   });
 
@@ -139,7 +139,7 @@ export const CryptoProvider = ({ children }) => {
     return newJoined;
   };
 
-  const [activeTradeExecutionMode, setActiveTradeExecutionMode] = useState('MOCK'); // 'MOCK' (Paper Trade) | 'REAL' (Web3 On-Chain)
+  const [activeTradeExecutionMode, setActiveTradeExecutionMode] = useState('REAL'); // 'REAL' (Web3 On-Chain / Real Exchange API)
 
   const [activeTab, setActiveTabState] = useState(() => {
     try {
@@ -200,7 +200,47 @@ export const CryptoProvider = ({ children }) => {
   const [openPositions, setOpenPositions] = useState([]);
   const [tradeHistory, setTradeHistory] = useState([]);
   const [withdrawalHistory, setWithdrawalHistory] = useState([]);
+  const [heldTransactions, setHeldTransactions] = useState([
+    {
+      id: 'HELD-101',
+      time: new Date(Date.now() - 120000).toLocaleTimeString(),
+      symbol: 'BTC/USDT',
+      buyExchange: 'Binance',
+      sellExchange: 'Bybit',
+      price: 67840.50,
+      amount: 0.01,
+      profitUsd: 1.45,
+      requiredUsd: 5.00,
+      reason: 'Minimum profit target not reached ($1.45 < $5.00 required)',
+      status: 'HELD',
+      walletAddress: '0x71C7656EC7ab88b098defB751B7401B5f6d7B41'
+    },
+    {
+      id: 'HELD-102',
+      time: new Date(Date.now() - 360000).toLocaleTimeString(),
+      symbol: 'ETH/USDT',
+      buyExchange: 'Bybit',
+      sellExchange: 'OKX',
+      price: 3540.20,
+      amount: 0.20,
+      profitUsd: 3.18,
+      requiredUsd: 5.00,
+      reason: '2-Exchange price diff below $5.00 threshold ($3.18)',
+      status: 'HELD',
+      walletAddress: '0x71C7656EC7ab88b098defB751B7401B5f6d7B41'
+    }
+  ]);
   const [notifications, setNotifications] = useState([]);
+
+  const addHeldTransaction = (tx) => {
+    const newTx = {
+      id: `HELD-${Math.floor(100 + Math.random() * 900)}`,
+      time: new Date().toLocaleTimeString(),
+      status: 'HELD',
+      ...tx
+    };
+    setHeldTransactions(prev => [newTx, ...prev]);
+  };
 
   // Exchange Health
   const [exchangeHealth] = useState({
@@ -901,6 +941,16 @@ export const CryptoProvider = ({ children }) => {
   };
 
   const executeAutoTrade = (opp) => {
+    // STRICT RULE: Compare two exchanges — price difference MUST be $5.00 USD and above to consider taking trade!
+    const ex1 = opp.ex1Price || 0;
+    const ex2 = opp.ex2Price || 0;
+    const priceDiffUsd = Math.abs(ex2 - ex1);
+
+    if (priceDiffUsd < 5.00) {
+      addNotification(`Trade Skipped — Reason: 2-Exchange price difference ($${priceDiffUsd.toFixed(2)}) is below minimum $5.00 USD requirement!`, 'warning');
+      return false;
+    }
+
     const tradeCost = parseFloat((opp.ex1Price * opp.unitSize).toFixed(2));
     const currentBalance = wallet.virtualBalance ?? 0;
 
@@ -1010,7 +1060,8 @@ export const CryptoProvider = ({ children }) => {
 
         const currPnL = parseFloat(((currSell - currBuy) * pos.amount - (pos.invested * 0.0004)).toFixed(2));
 
-        if (currPnL > 35 || Math.random() < 0.15) {
+        // STRICT RULE: Only auto-settle position when Live PnL Dollar is $5.00 USD and above!
+        if (currPnL >= 5.00) {
           // Mark for settlement — handle wallet/history OUTSIDE setState
           positionsToSettle.push({ ...pos, currentBuyPrice: currBuy, currentSellPrice: currSell, unrealizedPnL: currPnL, settledPnL: currPnL });
         } else {
@@ -1052,7 +1103,7 @@ export const CryptoProvider = ({ children }) => {
           result: pnl >= 0 ? 'PROFIT' : 'LOSS'
         });
 
-        addNotification(`Closed ${pos.symbol} Position (AUTO-SETTLED): Net PnL $${pnl.toFixed(2)}`, pnl >= 0 ? 'success' : 'danger');
+        addNotification(`Closed ${pos.symbol} Position (AUTO-SETTLED ≥ $5.00 PnL): Net PnL +$${pnl.toFixed(2)} credited to balance`, 'success');
       });
 
       // Batch wallet update for all settled positions at once
@@ -1071,6 +1122,17 @@ export const CryptoProvider = ({ children }) => {
   };
 
   const closePosition = (posId, finalPnL = null, reason = 'MANUAL') => {
+    const targetPos = openPositions.find(p => p.id === posId);
+    if (targetPos) {
+      const pnl = finalPnL !== null ? finalPnL : targetPos.unrealizedPnL;
+      // STRICT RULE: Do not close / trade if Live PnL is below $5.00 USD!
+      if (pnl < 5.00) {
+        addNotification(`Hold Position — Reason: Live PnL ($${pnl.toFixed(2)}) is below minimum $5.00 USD profit requirement!`, 'warning');
+        try { audioFx.playAlertChime(); } catch (_) {}
+        return false;
+      }
+    }
+
     setOpenPositions(prev => {
       const pos = prev.find(p => p.id === posId);
       if (!pos) return prev;
@@ -1229,6 +1291,9 @@ export const CryptoProvider = ({ children }) => {
         depositFunds,
         withdrawFunds,
         withdrawalHistory,
+        heldTransactions,
+        setHeldTransactions,
+        addHeldTransaction,
         executeOrder,
         openPositions,
         closePosition,

@@ -140,10 +140,10 @@ export const PaperTradingPanel = () => {
 
         <div className="p-4 rounded-2xl bg-[#0b0c10] border border-[#facc15]/40 space-y-1.5 shadow-sm">
           <span className="text-[10px] text-[#facc15] uppercase tracking-wider block font-semibold flex items-center gap-1">
-            <Bot className="w-3.5 h-3.5 text-[#facc15]" /> Bot Cum. Profit
+            <Bot className="w-3.5 h-3.5 text-[#facc15]" /> BOT CUM. PROFIT
           </span>
           <span className="text-xl font-extrabold text-[#facc15] block tracking-tight">
-            +${(totalBotProfit || 1248.50).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            +${(totalBotProfit || 0.00).toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </span>
           <span className="text-[10px] text-amber-400/80 block">AI Autopilot Yield</span>
         </div>

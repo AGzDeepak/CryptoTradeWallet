@@ -15,7 +15,7 @@ import { SolidityContractSection } from './SolidityContractSection';
 
 export const RealWallet = () => {
   const {
-    addNotification, withdrawFunds, withdrawalHistory,
+    addNotification, withdrawFunds, withdrawalHistory, heldTransactions,
     // ─── Persistent real wallet state from context ───────────────
     realWalletAddress,    setRealWalletAddress,
     realWalletNetwork,    setRealWalletNetwork,
@@ -181,7 +181,8 @@ export const RealWallet = () => {
   const tabs = [
     { id: 'overview', label: 'Overview', icon: <BarChart2 className="w-3.5 h-3.5" /> },
     { id: 'withdraw', label: 'Withdraw', icon: <ArrowUpLeft className="w-3.5 h-3.5" /> },
-    { id: 'history',  label: 'History',  icon: <Clock className="w-3.5 h-3.5" /> },
+    { id: 'history',  label: 'Completed TXs', icon: <Clock className="w-3.5 h-3.5" /> },
+    { id: 'held',     label: '⏸️ Held Transactions', icon: <Lock className="w-3.5 h-3.5 text-amber-400" /> },
   ];
 
   // ─── NOT CONNECTED — Show connect panel ───────────────────────────
@@ -632,6 +633,91 @@ export const RealWallet = () => {
                       <Clock className="w-8 h-8 text-slate-700" /> No transactions yet.
                     </div>
                   </td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════
+          TAB: HELD TRANSACTIONS HISTORY
+      ════════════════════════════════════════════════════ */}
+      {activeTab === 'held' && (
+        <div className="p-6 rounded-2xl bg-[#0b0c10] border border-amber-500/40 font-mono space-y-4 shadow-xl">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold">
+                <Lock className="w-5 h-5 stroke-[2.5]" />
+              </div>
+              <div>
+                <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+                  <span>HELD TRANSACTIONS HISTORY</span>
+                  <span className="px-2 py-0.5 rounded text-[10px] bg-amber-950 text-amber-400 border border-amber-800 font-extrabold">
+                    THRESHOLD GATE PROTECTED
+                  </span>
+                </h3>
+                <p className="text-[10px] text-slate-400">
+                  Transactions held open because realized profit or 2-exchange price difference was below the mandatory $5.00 USD target requirement.
+                </p>
+              </div>
+            </div>
+            <span className="px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-300 border border-amber-500/30 text-xs font-bold">
+              {heldTransactions?.length ?? 0} HELD RECORDS
+            </span>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-slate-800 bg-[#060810]">
+            <table className="w-full text-left text-xs min-w-[700px]">
+              <thead className="bg-[#090d16] border-b border-slate-800 text-[10px] uppercase text-slate-400">
+                <tr>
+                  <th className="py-3 px-4">HELD ID</th>
+                  <th className="py-3 px-4">Pair / Exchanges</th>
+                  <th className="py-3 px-4">Price / Amount</th>
+                  <th className="py-3 px-4">Profit vs Target</th>
+                  <th className="py-3 px-4">Hold Reason</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Time</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60 bg-[#14161d]">
+                {heldTransactions?.length > 0 ? (
+                  heldTransactions.map((h, i) => (
+                    <tr key={h.id || i} className="hover:bg-[#181a24] transition">
+                      <td className="py-3 px-4 font-bold text-white">{h.id || `HELD-${i + 1}`}</td>
+                      <td className="py-3 px-4">
+                        <span className="font-extrabold text-[#2dd4bf] block">{h.symbol}</span>
+                        <span className="text-[10px] text-slate-400">{h.buyExchange} ➔ {h.sellExchange}</span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="font-bold text-white block">${h.price?.toLocaleString()}</span>
+                        <span className="text-[10px] text-slate-400">{h.amount} units</span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="font-extrabold text-amber-400 block">+${h.profitUsd} USD</span>
+                        <span className="text-[10px] text-slate-500 font-bold">Required: ${h.requiredUsd || '5.00'}</span>
+                      </td>
+                      <td className="py-3 px-4 text-slate-300 text-[11px]">
+                        <span className="text-amber-300 font-bold">{h.reason}</span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-950 text-amber-400 border border-amber-800 flex items-center gap-1 w-fit">
+                          <Lock className="w-3 h-3 text-amber-400" />
+                          <span>HELD</span>
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right text-slate-400 text-[10px]">{h.time || 'Just now'}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-slate-500">
+                      <div className="flex flex-col items-center gap-2">
+                        <Lock className="w-8 h-8 text-amber-500/40" />
+                        <span>No held transactions currently. All trade executions meet the minimum $5.00 USD target threshold!</span>
+                      </div>
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
