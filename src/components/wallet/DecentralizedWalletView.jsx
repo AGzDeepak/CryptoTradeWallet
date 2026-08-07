@@ -118,7 +118,7 @@ contract SimpleStorage {
   const [isFetchingNumber, setIsFetchingNumber] = useState(false);
 
   // ================= SEPOLIA ETH TRANSFER STATE =================
-  const [recipientAddress, setRecipientAddress] = useState('0x3C44CdD45919c509D68c52016571569NDeA');
+  const [recipientAddress, setRecipientAddress] = useState('');
   const [transferAsset, setTransferAsset] = useState('SepoliaETH');
   const [transferAmount, setTransferAmount] = useState('0.1');
   const [transferNote, setTransferNote] = useState('Payment for Sepolia smart contract deployment');
@@ -731,15 +731,17 @@ contract SimpleStorage {
                       value={recipientAddress}
                       onChange={e => setRecipientAddress(e.target.value)}
                       placeholder="0x... Enter receiver's 0x wallet address"
-                      className="w-full bg-[#060810] border border-slate-800 rounded-xl p-3.5 text-white font-mono font-bold text-xs outline-none focus:border-[#2dd4bf]"
+                      className="w-full bg-[#060810] border border-slate-800 rounded-xl p-3.5 pr-28 text-white font-mono font-bold text-xs outline-none focus:border-[#2dd4bf]"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setRecipientAddress('0x3C44CdD45919c509D68c52016571569NDeA')}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 rounded-lg bg-slate-800 text-cyan-400 text-[9px] font-bold border border-slate-700"
-                    >
-                      SAMPLE RECEIVER
-                    </button>
+                    {realWalletAddress && (
+                      <button
+                        type="button"
+                        onClick={() => setRecipientAddress(realWalletAddress)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 rounded-lg bg-slate-800 text-[#2dd4bf] text-[9px] font-bold border border-slate-700 hover:border-[#2dd4bf] transition"
+                      >
+                        MY WALLET
+                      </button>
+                    )}
                   </div>
                 </div>
 
