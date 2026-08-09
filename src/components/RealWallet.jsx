@@ -15,7 +15,7 @@ import { SolidityContractSection } from './SolidityContractSection';
 
 export const RealWallet = () => {
   const {
-    addNotification, withdrawFunds, withdrawalHistory, heldTransactions,
+    addNotification, withdrawFunds, withdrawalHistory, depositHistory, heldTransactions,
     // ─── Persistent real wallet state from context ───────────────
     realWalletAddress,    setRealWalletAddress,
     realWalletNetwork,    setRealWalletNetwork,
@@ -29,6 +29,7 @@ export const RealWallet = () => {
   const [isFetching, setIsFetching]       = useState(false);
   const [isConnecting, setIsConnecting]   = useState(false);
   const [activeTab, setActiveTab]         = useState('overview');
+  const [heldFilter, setHeldFilter]       = useState('ALL'); // 'ALL' | 'DEPOSITS' | 'TRANSFERS' | 'HELD'
 
   // ─── Withdraw form ────────────────────────────────────────────
   const [withdrawAmount, setWithdrawAmount]     = useState('');
@@ -641,84 +642,153 @@ export const RealWallet = () => {
       )}
 
       {/* ════════════════════════════════════════════════════
-          TAB: HELD TRANSACTIONS HISTORY
+          TAB: HELD & ALL ACCOUNT TRANSACTIONS (DEPOSITS & TRANSFERS)
       ════════════════════════════════════════════════════ */}
       {activeTab === 'held' && (
-        <div className="p-6 rounded-2xl bg-[#0b0c10] border border-amber-500/40 font-mono space-y-4 shadow-xl">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
-            <div className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold">
+        <div className="p-6 rounded-2xl bg-[#0b0c10] border border-amber-500/40 font-mono space-y-5 shadow-xl">
+          
+          {/* Header Card */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center font-bold">
                 <Lock className="w-5 h-5 stroke-[2.5]" />
               </div>
               <div>
                 <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
-                  <span>HELD TRANSACTIONS HISTORY</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] bg-amber-950 text-amber-400 border border-amber-800 font-extrabold">
-                    THRESHOLD GATE PROTECTED
-                  </span>
+                  <span>ACCOUNT TRANSACTIONS & DEPOSIT / TRANSFER LEDGER</span>
                 </h3>
                 <p className="text-[10px] text-slate-400">
-                  Transactions held open because realized profit or 2-exchange price difference was below the mandatory $5.00 USD target requirement.
+                  Comprehensive audit ledger tracking all incoming deposits, outgoing transfers, and held threshold transactions.
                 </p>
               </div>
             </div>
-            <span className="px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-300 border border-amber-500/30 text-xs font-bold">
-              {heldTransactions?.length ?? 0} HELD RECORDS
-            </span>
+
+            <div className="flex items-center gap-2 font-mono text-[10px]">
+              <span className="px-3 py-1.5 rounded-xl bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">
+                📥 {(depositHistory || []).length} DEPOSITS
+              </span>
+              <span className="px-3 py-1.5 rounded-xl bg-rose-950 text-rose-400 border border-rose-800 font-bold">
+                📤 {(withdrawalHistory || []).length} TRANSFERS
+              </span>
+              <span className="px-3 py-1.5 rounded-xl bg-amber-950 text-amber-400 border border-amber-800 font-bold">
+                🔒 {(heldTransactions || []).length} HELD
+              </span>
+            </div>
           </div>
 
+          {/* Sub-Filter Selector Bar */}
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {[
+              { id: 'ALL', label: 'ALL ACCOUNT TRANSACTIONS', icon: Activity },
+              { id: 'DEPOSITS', label: '📥 DEPOSITS & CREDITS', icon: ArrowDownLeft },
+              { id: 'TRANSFERS', label: '📤 TRANSFERS & WITHDRAWALS', icon: ArrowUpLeft },
+              { id: 'HELD', label: '🔒 HELD THRESHOLD GATE', icon: Lock }
+            ].map(f => {
+              const Icon = f.icon;
+              const isActive = heldFilter === f.id;
+              return (
+                <button
+                  key={f.id}
+                  onClick={() => setHeldFilter(f.id)}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 border ${
+                    isActive
+                      ? 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-[0_0_15px_rgba(245,158,11,0.3)]'
+                      : 'bg-[#14161d] text-slate-400 border-slate-800 hover:text-white'
+                  }`}
+                >
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-slate-950' : 'text-amber-400'}`} />
+                  <span>{f.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Combined Transactions Table */}
           <div className="overflow-x-auto rounded-xl border border-slate-800 bg-[#060810]">
-            <table className="w-full text-left text-xs min-w-[700px]">
+            <table className="w-full text-left text-xs min-w-[750px]">
               <thead className="bg-[#090d16] border-b border-slate-800 text-[10px] uppercase text-slate-400">
                 <tr>
-                  <th className="py-3 px-4">HELD ID</th>
-                  <th className="py-3 px-4">Pair / Exchanges</th>
-                  <th className="py-3 px-4">Price / Amount</th>
-                  <th className="py-3 px-4">Profit vs Target</th>
-                  <th className="py-3 px-4">Hold Reason</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Time</th>
+                  <th className="py-3 px-4">TX TYPE</th>
+                  <th className="py-3 px-4">TRANSACTION ID</th>
+                  <th className="py-3 px-4">AMOUNT</th>
+                  <th className="py-3 px-4">ADDRESS / SOURCE</th>
+                  <th className="py-3 px-4">NETWORK</th>
+                  <th className="py-3 px-4">STATUS</th>
+                  <th className="py-3 px-4 text-right">TIME</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 bg-[#14161d]">
-                {heldTransactions?.length > 0 ? (
-                  heldTransactions.map((h, i) => (
-                    <tr key={h.id || i} className="hover:bg-[#181a24] transition">
-                      <td className="py-3 px-4 font-bold text-white">{h.id || `HELD-${i + 1}`}</td>
-                      <td className="py-3 px-4">
-                        <span className="font-extrabold text-[#2dd4bf] block">{h.symbol}</span>
-                        <span className="text-[10px] text-slate-400">{h.buyExchange} ➔ {h.sellExchange}</span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="font-bold text-white block">${h.price?.toLocaleString()}</span>
-                        <span className="text-[10px] text-slate-400">{h.amount} units</span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="font-extrabold text-amber-400 block">+${h.profitUsd} USD</span>
-                        <span className="text-[10px] text-slate-500 font-bold">Required: ${h.requiredUsd || '5.00'}</span>
-                      </td>
-                      <td className="py-3 px-4 text-slate-300 text-[11px]">
-                        <span className="text-amber-300 font-bold">{h.reason}</span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-950 text-amber-400 border border-amber-800 flex items-center gap-1 w-fit">
-                          <Lock className="w-3 h-3 text-amber-400" />
-                          <span>HELD</span>
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right text-slate-400 text-[10px]">{h.time || 'Just now'}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={7} className="py-12 text-center text-slate-500">
-                      <div className="flex flex-col items-center gap-2">
-                        <Lock className="w-8 h-8 text-amber-500/40" />
-                        <span>No held transactions currently. All trade executions meet the minimum $5.00 USD target threshold!</span>
-                      </div>
+                {/* 1. Deposits */}
+                {(heldFilter === 'ALL' || heldFilter === 'DEPOSITS') && (depositHistory || []).map((dep, idx) => (
+                  <tr key={`dep-${dep.id || idx}`} className="hover:bg-[#181a24] transition">
+                    <td className="py-3 px-4">
+                      <span className="px-2 py-0.5 rounded text-[9px] font-black bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center gap-1 w-fit">
+                        <ArrowDownLeft className="w-3 h-3 text-emerald-400" /> DEPOSIT
+                      </span>
                     </td>
+                    <td className="py-3 px-4 font-mono font-bold text-white">{dep.id}</td>
+                    <td className="py-3 px-4 font-mono font-black text-emerald-400">+${dep.amount?.toFixed(2)} {dep.currency}</td>
+                    <td className="py-3 px-4 text-slate-300 text-[10px]">
+                      <span className="font-bold block text-white">{dep.source}</span>
+                      <span className="text-slate-400">{shortAddress(dep.address)}</span>
+                    </td>
+                    <td className="py-3 px-4 text-cyan-400 font-bold">{dep.network}</td>
+                    <td className="py-3 px-4">
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
+                        {dep.status || 'CONFIRMED 🟢'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right text-slate-400 text-[10px]">{dep.time || 'Just now'}</td>
                   </tr>
-                )}
+                ))}
+
+                {/* 2. Transfers / Withdrawals */}
+                {(heldFilter === 'ALL' || heldFilter === 'TRANSFERS') && (withdrawalHistory || []).map((wth, idx) => (
+                  <tr key={`wth-${wth.id || idx}`} className="hover:bg-[#181a24] transition">
+                    <td className="py-3 px-4">
+                      <span className="px-2 py-0.5 rounded text-[9px] font-black bg-rose-950 text-rose-400 border border-rose-800 flex items-center gap-1 w-fit">
+                        <ArrowUpLeft className="w-3 h-3 text-rose-400" /> TRANSFER
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 font-mono font-bold text-white">{wth.id || `WTH-${idx + 1}`}</td>
+                    <td className="py-3 px-4 font-mono font-black text-rose-400">-${wth.amount?.toFixed ? wth.amount.toFixed(2) : wth.amount} {wth.currency || 'USDT'}</td>
+                    <td className="py-3 px-4 text-slate-300 text-[10px]">
+                      <span className="font-bold block text-white">{wth.source || 'MetaMask Sweep'}</span>
+                      <span className="text-slate-400">{shortAddress(wth.destinationAddress || wth.address || '')}</span>
+                    </td>
+                    <td className="py-3 px-4 text-indigo-400 font-bold">{wth.network || wth.networkChain || 'Arbitrum One'}</td>
+                    <td className="py-3 px-4">
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
+                        {wth.status || 'CONFIRMED 🟢'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right text-slate-400 text-[10px]">{wth.time || 'Just now'}</td>
+                  </tr>
+                ))}
+
+                {/* 3. Held Transactions */}
+                {(heldFilter === 'ALL' || heldFilter === 'HELD') && (heldTransactions || []).map((h, idx) => (
+                  <tr key={`held-${h.id || idx}`} className="hover:bg-[#181a24] transition">
+                    <td className="py-3 px-4">
+                      <span className="px-2 py-0.5 rounded text-[9px] font-black bg-amber-950 text-amber-400 border border-amber-800 flex items-center gap-1 w-fit">
+                        <Lock className="w-3 h-3 text-amber-400" /> HELD
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 font-mono font-bold text-white">{h.id || `HELD-${idx + 1}`}</td>
+                    <td className="py-3 px-4 font-mono font-bold text-amber-400">+${h.profitUsd} USD PnL</td>
+                    <td className="py-3 px-4 text-slate-300 text-[10px]">
+                      <span className="font-bold block text-white">{h.symbol}</span>
+                      <span className="text-slate-400">{h.buyExchange} ➔ {h.sellExchange}</span>
+                    </td>
+                    <td className="py-3 px-4 text-slate-400 font-bold">Arbitrage Engine</td>
+                    <td className="py-3 px-4">
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-950 text-amber-400 border border-amber-800">
+                        HELD (&lt; $5.00)
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right text-slate-400 text-[10px]">{h.time || 'Just now'}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

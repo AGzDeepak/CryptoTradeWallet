@@ -185,13 +185,13 @@ export const AutoTraderBar = memo(() => {
             <span className="flex items-center gap-1">
               <Sliders className="w-3 h-3 text-[#facc15]" /> Min Profit Target
             </span>
-            <span className="text-[#facc15] font-extrabold text-xs font-mono">{minProfitThreshold}%</span>
+            <span className="text-[#facc15] font-extrabold text-xs font-mono">{minProfitThreshold.toFixed(2)}%</span>
           </div>
           <input
             type="range"
             min="0.10"
-            max="1.00"
-            step="0.05"
+            max="5.00"
+            step="0.10"
             value={minProfitThreshold}
             onChange={(e) => setMinProfitThreshold(parseFloat(e.target.value))}
             className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-[#facc15] my-auto"

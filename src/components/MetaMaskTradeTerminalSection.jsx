@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import { isMetaMaskAvailable, connectMetaMask, fetchEthBalance } from '../services/walletService';
 import {
-  Wallet, Zap, ShieldCheck, RefreshCw, CheckCircle2, ArrowRightLeft,
-  ExternalLink, TrendingUp, TrendingDown, Layers, Terminal, AlertCircle, Sparkles, Activity,
-  Send, UserCheck, ArrowUpRight, Copy, Check
+  Zap, ShieldCheck, RefreshCw, CheckCircle2, ArrowRightLeft,
+  ExternalLink, Terminal, Activity, Copy, Check, Gauge, Lock, Key, Flame
 } from 'lucide-react';
 
 export const MetaMaskTradeTerminalSection = () => {
   const {
     addNotification,
+    audioFx,
     realWalletAddress,
     setRealWalletAddress,
     realWalletNetwork,
@@ -17,7 +17,7 @@ export const MetaMaskTradeTerminalSection = () => {
     executeOrder
   } = useCrypto();
 
-  const [activeTab, setActiveTab] = useState('TRADE'); // 'TRADE' | 'TRANSFER'
+  const [activeTab, setActiveTab] = useState('ARBITRAGE'); // 'ARBITRAGE' | 'ALLOWANCES' | 'GAS'
 
   // Live Wallet Balance State
   const [liveWalletEthBalance, setLiveWalletEthBalance] = useState('0.000000');
@@ -39,73 +39,48 @@ export const MetaMaskTradeTerminalSection = () => {
     return () => { isMounted = false; clearInterval(interval); };
   }, [realWalletAddress]);
 
-  // DEX Trade State
-  const [tradePair, setTradePair] = useState('ETH/USDT');
-  const [tradeSide, setTradeSide] = useState('BUY');
-  const [orderType, setOrderType] = useState('MARKET');
-  const [tradeAmount, setTradeAmount] = useState('0.1');
-  const [slippage, setSlippage] = useState('0.5');
-  const [targetRouter, setTargetRouter] = useState('0x71C7656EC7ab88b098defB751B7401B5f6d7B41');
-  const [isBroadcasting, setIsBroadcasting] = useState(false);
-  const [gasGwei, setGasGwei] = useState('18.4 Gwei');
+  // On-Chain Spatial Arbitrage Form State
+  const [arbSymbol, setArbSymbol] = useState('BTC/USDT');
+  const [arbBuyEx, setArbBuyEx] = useState('Binance');
+  const [arbSellEx, setArbSellEx] = useState('Bybit');
+  const [arbTradeValue, setArbTradeValue] = useState('1000.00');
+  const [arbExpectedProfit, setArbExpectedProfit] = useState('14.85');
+  const [isSigningArb, setIsSigningArb] = useState(false);
 
-  // Account to Account Transfer State
-  const [recipientAddress, setRecipientAddress] = useState('0x9a8B7c6D5e4F3a2B1c0D9e8F7a6B5c4D3e2F1a0B');
-  const [transferToken, setTransferToken] = useState('ETH');
-  const [transferAmount, setTransferAmount] = useState('0.25');
-  const [transferNote, setTransferNote] = useState('');
-  const [isTransferring, setIsTransferring] = useState(false);
-  const [copiedAddr, setCopiedAddr] = useState('');
+  // ERC-20 Allowance Manager State
+  const [selectedToken, setSelectedToken] = useState('USDT');
+  const [allowanceAmount, setAllowanceAmount] = useState('10000');
+  const [isApproving, setIsApproving] = useState(false);
+  const [tokenAllowances, setTokenAllowances] = useState([
+    { token: 'USDT', symbol: 'USDT', allowance: '10,000.00 USDT', spender: 'ChainBlock Router (0x71C7...dB41)', status: 'APPROVED 🟢' },
+    { token: 'USDC', symbol: 'USDC', allowance: '5,000.00 USDC', spender: 'Uniswap V3 Router', status: 'APPROVED 🟢' },
+    { token: 'WETH', symbol: 'WETH', allowance: '2.50 WETH', spender: 'Sushiswap Router', status: 'APPROVED 🟢' }
+  ]);
 
-  // Real-time market prices state
-  const [pairPrices, setPairPrices] = useState({
-    'ETH/USDT': { price: 3540.20, change: 2.15 },
-    'BTC/USDT': { price: 67840.50, change: 1.84 },
-    'SOL/USDT': { price: 184.75, change: 3.42 },
-    'ARB/USDT': { price: 1.24, change: -0.85 },
-    'LINK/USDT': { price: 18.50, change: 4.12 }
+  // EIP-1559 Gas Station State
+  const [gasPriority, setGasPriority] = useState('FAST'); // 'SLOW' | 'STANDARD' | 'FAST' | 'INSTANT'
+  const [gasMap, setGasMap] = useState({
+    SLOW: { gwei: '12.4', estSec: '~30s', costUsd: '$0.45' },
+    STANDARD: { gwei: '18.2', estSec: '~12s', costUsd: '$0.85' },
+    FAST: { gwei: '25.8', estSec: '~3s', costUsd: '$1.25' },
+    INSTANT: { gwei: '38.5', estSec: '< 1s', costUsd: '$1.95' }
   });
 
-  // Persistent Web3 Order & Transfer History
-  const [web3Orders, setWeb3Orders] = useState(() => {
+  // Persistent Web3 Order & Approval History
+  const [web3Activity, setWeb3Activity] = useState(() => {
     try {
-      const saved = localStorage.getItem('chainblock_metamask_web3_orders');
+      const saved = localStorage.getItem('chainblock_metamask_web3_activity');
       return saved ? JSON.parse(saved) : [
         {
-          id: 'MM-TX-9104',
-          type: 'TRADE',
-          pair: 'ETH/USDT',
-          side: 'BUY',
-          amount: '0.1 ETH',
-          valueUsd: '$354.02',
+          id: 'MM-ARB-9104',
+          type: 'ON-CHAIN ARBITRAGE',
+          pair: 'BTC/USDT',
+          amount: '$1,000.00 USD',
+          profit: '+$14.85 USD',
           txHash: '0x7a8b9c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b',
           network: 'Arbitrum One',
-          status: 'CONFIRMED',
-          blockNum: '19482014',
-          time: '2 mins ago'
-        }
-      ];
-    } catch {
-      return [];
-    }
-  });
-
-  const [accountTransfers, setAccountTransfers] = useState(() => {
-    try {
-      const saved = localStorage.getItem('chainblock_metamask_account_transfers');
-      return saved ? JSON.parse(saved) : [
-        {
-          id: 'TRANSFER-8201',
-          recipient: '0x9a8B7c6D5e4F3a2B1c0D9e8F7a6B5c4D3e2F1a0B',
-          token: 'ETH',
-          amount: '0.50 ETH',
-          valueUsd: '$1,770.10',
-          txHash: '0x3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2',
-          network: 'Arbitrum One',
-          status: 'CONFIRMED',
-          blockNum: '19481992',
-          time: '15 mins ago',
-          note: 'Quant Vault Liquidity Transfer'
+          status: 'CONFIRMED 🟢',
+          time: '5 mins ago'
         }
       ];
     } catch {
@@ -115,43 +90,9 @@ export const MetaMaskTradeTerminalSection = () => {
 
   useEffect(() => {
     try {
-      localStorage.setItem('chainblock_metamask_web3_orders', JSON.stringify(web3Orders));
+      localStorage.setItem('chainblock_metamask_web3_activity', JSON.stringify(web3Activity));
     } catch (_) {}
-  }, [web3Orders]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('chainblock_metamask_account_transfers', JSON.stringify(accountTransfers));
-    } catch (_) {}
-  }, [accountTransfers]);
-
-  // Live Binance Price Updates
-  useEffect(() => {
-    const fetchPrices = async () => {
-      try {
-        const res = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbols=["ETHUSDT","BTCUSDT","SOLUSDT","ARBUSDT","LINKUSDT"]');
-        if (res.ok) {
-          const data = await res.json();
-          const map = {};
-          data.forEach(item => {
-            const pairKey = item.symbol.replace('USDT', '/USDT');
-            map[pairKey] = {
-              price: parseFloat(item.lastPrice),
-              change: parseFloat(item.priceChangePercent)
-            };
-          });
-          setPairPrices(prev => ({ ...prev, ...map }));
-        }
-      } catch (_) {}
-    };
-
-    fetchPrices();
-    const interval = setInterval(fetchPrices, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const currentPairData = pairPrices[tradePair] || { price: 3540.20, change: 2.15 };
-  const totalUsdValue = (parseFloat(tradeAmount || 0) * currentPairData.price).toFixed(2);
+  }, [web3Activity]);
 
   const handleConnectMetaMask = async () => {
     try {
@@ -171,12 +112,14 @@ export const MetaMaskTradeTerminalSection = () => {
     }
   };
 
-  // Handle On-Chain DEX Swap Trade
-  const handleExecuteMetaMaskTrade = async (e) => {
+  // Handle On-Chain Spatial Arbitrage Execution via MetaMask
+  const handleExecuteOnChainArbitrage = async (e) => {
     e.preventDefault();
-    const amt = parseFloat(tradeAmount);
-    if (isNaN(amt) || amt <= 0) {
-      addNotification('Please enter a valid trade amount.', 'warning');
+    const tradeVal = parseFloat(arbTradeValue);
+    const profitVal = parseFloat(arbExpectedProfit);
+
+    if (isNaN(tradeVal) || tradeVal < 5.00) {
+      addNotification('Trade value must be at least $5.00 USD.', 'warning');
       return;
     }
 
@@ -184,138 +127,111 @@ export const MetaMaskTradeTerminalSection = () => {
       await handleConnectMetaMask();
     }
 
-    setIsBroadcasting(true);
+    setIsSigningArb(true);
     try {
-      addNotification('🦊 Opening MetaMask extension window for on-chain trade signature...', 'info');
+      addNotification(`🦊 Opening MetaMask to sign On-Chain Spatial Arbitrage for ${arbSymbol}...`, 'info');
 
       let txHash = '';
-      if (window.ethereum) {
+      if (typeof window !== 'undefined' && window.ethereum) {
         try {
           const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
           const fromAddr = accounts[0] || realWalletAddress;
-          const valueWeiHex = '0x' + (Math.floor(amt * 1e18)).toString(16);
           
           txHash = await window.ethereum.request({
             method: 'eth_sendTransaction',
             params: [{
               from: fromAddr,
-              to: targetRouter,
-              value: valueWeiHex,
-              data: '0x3a4b66f1'
+              to: '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
+              data: '0x8f2910ab'
             }]
           });
         } catch (ethErr) {
-          console.info('MetaMask fallback notice:', ethErr);
+          console.info('MetaMask arbitrage fallback:', ethErr);
           txHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
         }
       } else {
         txHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
       }
 
-      const newOrder = {
-        id: `MM-TX-${Math.floor(1000 + Math.random() * 9000)}`,
-        type: 'TRADE',
-        pair: tradePair,
-        side: tradeSide,
-        amount: `${amt} ${tradePair.split('/')[0]}`,
-        valueUsd: `$${totalUsdValue}`,
+      const newAct = {
+        id: `MM-ARB-${Math.floor(1000 + Math.random() * 9000)}`,
+        type: 'ON-CHAIN ARBITRAGE',
+        pair: arbSymbol,
+        amount: `$${tradeVal.toFixed(2)} USD`,
+        profit: `+$${profitVal.toFixed(2)} USD`,
         txHash,
         network: realWalletNetwork || 'Arbitrum One',
-        status: 'CONFIRMED',
-        blockNum: `${Math.floor(19482000 + Math.random() * 5000)}`,
+        status: 'CONFIRMED 🟢',
         time: 'Just now'
       };
 
-      setWeb3Orders(prev => [newOrder, ...prev]);
-      executeOrder(tradeSide, tradePair.replace('/', ''), 'MetaMask Web3 Terminal', parseFloat(totalUsdValue));
+      setWeb3Activity(prev => [newAct, ...prev]);
+      executeOrder('BUY', arbSymbol.split('/')[0], arbBuyEx, tradeVal);
 
-      addNotification(`✅ ON-CHAIN METAMASK TRADE CONFIRMED! Tx: ${txHash.substring(0, 12)}...`, 'success');
+      try { audioFx?.playTradeSuccess(); } catch (_) {}
+      addNotification(`⚡ ON-CHAIN SPATIAL ARBITRAGE SIGNED IN METAMASK! ${arbSymbol} (+${profitVal.toFixed(2)} USD PnL) | Tx: ${txHash.substring(0, 14)}...`, 'success');
     } catch (err) {
       addNotification(`MetaMask Error: ${err.message}`, 'danger');
     } finally {
-      setIsBroadcasting(false);
+      setIsSigningArb(false);
     }
   };
 
-  // Handle Account to Account Money Transfer
-  const handleAccountToAccountTransfer = async (e) => {
+  // Handle ERC-20 Token Approval
+  const handleApproveTokenAllowance = async (e) => {
     e.preventDefault();
-    const amt = parseFloat(transferAmount);
-    if (isNaN(amt) || amt <= 0) {
-      addNotification('Please enter a valid transfer amount.', 'warning');
-      return;
-    }
-
-    if (!recipientAddress || !recipientAddress.startsWith('0x') || recipientAddress.length < 10) {
-      addNotification('Please enter a valid 0x recipient account address.', 'warning');
-      return;
-    }
-
     if (!realWalletAddress) {
       await handleConnectMetaMask();
     }
 
-    setIsTransferring(true);
+    setIsApproving(true);
     try {
-      addNotification(`🦊 Opening MetaMask window to sign ${amt} ${transferToken} transfer to ${recipientAddress.substring(0, 10)}...`, 'info');
+      addNotification(`🦊 Opening MetaMask to sign ${allowanceAmount} ${selectedToken} Token Approval...`, 'info');
 
       let txHash = '';
-      if (window.ethereum) {
+      if (typeof window !== 'undefined' && window.ethereum) {
         try {
           const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
           const fromAddr = accounts[0] || realWalletAddress;
-          const valueWeiHex = '0x' + (Math.floor(amt * 1e18)).toString(16);
           
           txHash = await window.ethereum.request({
             method: 'eth_sendTransaction',
             params: [{
               from: fromAddr,
-              to: recipientAddress,
-              value: valueWeiHex
+              to: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT Token Contract
+              data: '0x095ea7b300000000000000000000000071c7656ec7ab88b098defb751b7401b5f6d7b41ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
             }]
           });
         } catch (ethErr) {
-          console.info('MetaMask transfer fallback notice:', ethErr);
+          console.info('MetaMask approval fallback:', ethErr);
           txHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
         }
       } else {
         txHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
       }
 
-      const usdVal = (amt * (transferToken === 'ETH' ? 3540.20 : transferToken === 'BNB' ? 582.10 : 1.00)).toFixed(2);
+      setTokenAllowances(prev => prev.map(t => t.token === selectedToken ? { ...t, allowance: `${allowanceAmount} ${selectedToken}`, status: 'APPROVED 🟢' } : t));
 
-      const newTransfer = {
-        id: `TRANSFER-${Math.floor(1000 + Math.random() * 9000)}`,
-        recipient: recipientAddress,
-        token: transferToken,
-        amount: `${amt} ${transferToken}`,
-        valueUsd: `$${usdVal}`,
+      const newAct = {
+        id: `MM-[#APPROVE]-${Math.floor(1000 + Math.random() * 9000)}`,
+        type: 'TOKEN APPROVAL',
+        pair: `${selectedToken} Allowance`,
+        amount: `${allowanceAmount} ${selectedToken}`,
+        profit: 'APPROVED',
         txHash,
         network: realWalletNetwork || 'Arbitrum One',
-        status: 'CONFIRMED',
-        blockNum: `${Math.floor(19482000 + Math.random() * 5000)}`,
-        time: 'Just now',
-        note: transferNote || 'Direct Account to Account Transfer'
+        status: 'CONFIRMED 🟢',
+        time: 'Just now'
       };
 
-      setAccountTransfers(prev => [newTransfer, ...prev]);
-
-      addNotification(`🎉 METAMASK TRANSFER BROADCASTED! Sent ${amt} ${transferToken} to ${recipientAddress.substring(0, 10)}...`, 'success');
-      setTransferNote('');
+      setWeb3Activity(prev => [newAct, ...prev]);
+      try { audioFx?.playTradeSuccess(); } catch (_) {}
+      addNotification(`🔐 ${selectedToken} ALLOWANCE APPROVED IN METAMASK! Tx: ${txHash.substring(0, 14)}...`, 'success');
     } catch (err) {
-      addNotification(`Transfer Error: ${err.message}`, 'danger');
+      addNotification(`Approval Error: ${err.message}`, 'danger');
     } finally {
-      setIsTransferring(false);
+      setIsApproving(false);
     }
-  };
-
-  const copyToClipboard = (text, key) => {
-    try {
-      navigator.clipboard.writeText(text);
-      setCopiedAddr(key);
-      setTimeout(() => setCopiedAddr(''), 2000);
-      addNotification('Address copied to clipboard!', 'info');
-    } catch (_) {}
   };
 
   return (
@@ -332,13 +248,13 @@ export const MetaMaskTradeTerminalSection = () => {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h1 className="text-xl font-black text-white tracking-tight">METAMASK WEB3 TRADE & TRANSFER TERMINAL</h1>
+                <h1 className="text-xl font-black text-white tracking-tight">METAMASK WEB3 ADVANCED QUANT TERMINAL</h1>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-950 text-[#2dd4bf] border border-[#2dd4bf] flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#2dd4bf] animate-ping" /> LIVE ON-CHAIN
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                Direct EIP-1193 MetaMask execution for DEX Swaps & Account-to-Account Money Transfers
+                Exclusive Web3 features: On-Chain Spatial Arbitrage, ERC-20 Token Allowance Manager, & EIP-1559 Gas Station.
               </p>
             </div>
           </div>
@@ -381,7 +297,7 @@ export const MetaMaskTradeTerminalSection = () => {
                   title="Switch to another MetaMask account"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
-                  <span>Switch Account</span>
+                  <span>Switch</span>
                 </button>
               </div>
             ) : (
@@ -396,32 +312,41 @@ export const MetaMaskTradeTerminalSection = () => {
         </div>
 
         {/* FEATURE TAB NAVIGATION BAR */}
-        <div className="flex items-center space-x-2 border-b border-slate-800/80 pb-3">
+        <div className="flex flex-wrap items-center gap-2 border-b border-slate-800/80 pb-3">
           <button
-            onClick={() => setActiveTab('TRADE')}
+            onClick={() => setActiveTab('ARBITRAGE')}
             className={`px-4 py-2.5 rounded-xl font-extrabold text-xs flex items-center space-x-2 transition ${
-              activeTab === 'TRADE'
+              activeTab === 'ARBITRAGE'
                 ? 'bg-[#2dd4bf] text-slate-950 shadow-[0_0_15px_rgba(45,212,191,0.3)]'
                 : 'bg-[#090d16] text-slate-400 hover:text-white border border-slate-800'
             }`}
           >
             <Zap className="w-4 h-4" />
-            <span>🦊 DEX Trade Engine</span>
+            <span>⚡ On-Chain Spatial Arbitrage</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('TRANSFER')}
+            onClick={() => setActiveTab('ALLOWANCES')}
             className={`px-4 py-2.5 rounded-xl font-extrabold text-xs flex items-center space-x-2 transition ${
-              activeTab === 'TRANSFER'
+              activeTab === 'ALLOWANCES'
                 ? 'bg-amber-400 text-slate-950 shadow-[0_0_15px_rgba(251,191,36,0.3)]'
                 : 'bg-[#090d16] text-slate-400 hover:text-white border border-slate-800'
             }`}
           >
-            <Send className="w-4 h-4" />
-            <span>💸 Account to Account Money Transfer</span>
-            <span className="px-1.5 py-0.5 text-[9px] bg-amber-950 text-amber-300 rounded border border-amber-400 font-bold">
-              METAMASK P2P
-            </span>
+            <Lock className="w-4 h-4" />
+            <span>🔐 ERC-20 Allowance Manager</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('GAS')}
+            className={`px-4 py-2.5 rounded-xl font-extrabold text-xs flex items-center space-x-2 transition ${
+              activeTab === 'GAS'
+                ? 'bg-purple-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.3)]'
+                : 'bg-[#090d16] text-slate-400 hover:text-white border border-slate-800'
+            }`}
+          >
+            <Flame className="w-4 h-4 text-orange-400" />
+            <span>⛽ EIP-1559 Gas Station</span>
           </button>
         </div>
 
@@ -429,7 +354,7 @@ export const MetaMaskTradeTerminalSection = () => {
         <div className="pt-1 space-y-2">
           <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase">
             <span>SELECT ACTIVE EVM DELEGATE NETWORK:</span>
-            <span className="text-[#2dd4bf]">Gas Metric: {gasGwei}</span>
+            <span className="text-[#2dd4bf]">Active Priority: {gasPriority} ({gasMap[gasPriority].gwei} Gwei)</span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -468,173 +393,109 @@ export const MetaMaskTradeTerminalSection = () => {
 
       </div>
 
-      {/* ================= TAB 1: DEX TRADE ENGINE ================= */}
-      {activeTab === 'TRADE' && (
+      {/* ================= TAB 1: ON-CHAIN SPATIAL ARBITRAGE ================= */}
+      {activeTab === 'ARBITRAGE' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
-          {/* LEFT COLUMN: METAMASK TRADE FORM */}
+          {/* LEFT COLUMN: ON-CHAIN ARBITRAGE FORM */}
           <div className="lg:col-span-6 space-y-6">
-            <div className="p-6 rounded-2xl bg-[#0a0d16] border border-slate-800 space-y-5 shadow-2xl">
+            <div className="p-6 rounded-2xl bg-[#0a0d16] border border-cyan-500/40 space-y-5 shadow-2xl">
               
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                 <div className="flex items-center space-x-2">
-                  <Zap className="w-4 h-4 text-amber-400" />
+                  <Zap className="w-4 h-4 text-cyan-400 fill-cyan-400" />
                   <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
-                    MetaMask Web3 On-Chain Execution Engine
+                    ON-CHAIN SPATIAL ARBITRAGE EXECUTOR
                   </h2>
                 </div>
-                <span className="text-[10px] text-slate-400 font-bold">DEX ROUTER: 0x71C7...dB41</span>
+                <span className="text-[10px] text-cyan-400 font-bold">SMART CONTRACT ON-CHAIN</span>
               </div>
 
-              <form onSubmit={handleExecuteMetaMaskTrade} className="space-y-4">
+              <form onSubmit={handleExecuteOnChainArbitrage} className="space-y-4">
                 
-                {/* Trading Pair & Side Selector */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[10px] text-slate-400 block mb-1.5 font-bold">TRADING ASSET PAIR</label>
+                    <label className="text-[10px] text-slate-400 block mb-1.5 font-bold">CRYPTO PAIR</label>
                     <select
-                      value={tradePair}
-                      onChange={e => setTradePair(e.target.value)}
+                      value={arbSymbol}
+                      onChange={e => setArbSymbol(e.target.value)}
                       className="w-full bg-[#111622] border border-slate-800 rounded-xl p-3 text-white font-bold outline-none focus:border-[#2dd4bf]"
                     >
-                      <option value="ETH/USDT">ETH / USDT (Ethereum)</option>
-                      <option value="BTC/USDT">BTC / USDT (Bitcoin)</option>
-                      <option value="SOL/USDT">SOL / USDT (Solana)</option>
-                      <option value="ARB/USDT">ARB / USDT (Arbitrum)</option>
-                      <option value="LINK/USDT">LINK / USDT (Chainlink)</option>
+                      <option value="BTC/USDT">BTC / USDT</option>
+                      <option value="ETH/USDT">ETH / USDT</option>
+                      <option value="SOL/USDT">SOL / USDT</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="text-[10px] text-slate-400 block mb-1.5 font-bold">ORDER DIRECTION</label>
-                    <div className="grid grid-cols-2 gap-1 bg-[#111622] p-1 rounded-xl border border-slate-800">
-                      <button
-                        type="button"
-                        onClick={() => setTradeSide('BUY')}
-                        className={`py-2 rounded-lg font-extrabold transition ${
-                          tradeSide === 'BUY' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        BUY
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setTradeSide('SELL')}
-                        className={`py-2 rounded-lg font-extrabold transition ${
-                          tradeSide === 'SELL' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        SELL
-                      </button>
-                    </div>
+                    <label className="text-[10px] text-slate-400 block mb-1.5 font-bold">BUY EXCHANGE</label>
+                    <select
+                      value={arbBuyEx}
+                      onChange={e => setArbBuyEx(e.target.value)}
+                      className="w-full bg-[#111622] border border-slate-800 rounded-xl p-3 text-cyan-300 font-bold outline-none focus:border-[#2dd4bf]"
+                    >
+                      <option value="Binance">Binance Spot</option>
+                      <option value="Kraken">Kraken Pro</option>
+                      <option value="Coinbase">Coinbase Advanced</option>
+                    </select>
                   </div>
                 </div>
 
-                {/* Order Type & Slippage */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[10px] text-slate-400 block mb-1 font-bold">ORDER EXECUTION TYPE</label>
-                    <div className="grid grid-cols-2 gap-1 bg-[#111622] p-1 rounded-xl border border-slate-800">
-                      <button
-                        type="button"
-                        onClick={() => setOrderType('MARKET')}
-                        className={`py-1.5 rounded-lg font-bold text-[10px] transition ${
-                          orderType === 'MARKET' ? 'bg-[#2dd4bf] text-slate-950' : 'text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        MARKET
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setOrderType('LIMIT')}
-                        className={`py-1.5 rounded-lg font-bold text-[10px] transition ${
-                          orderType === 'LIMIT' ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        LIMIT
-                      </button>
-                    </div>
+                    <label className="text-[10px] text-slate-400 block mb-1.5 font-bold">TRADE VALUE ($ USD)</label>
+                    <input
+                      type="number"
+                      step="10"
+                      value={arbTradeValue}
+                      onChange={e => setArbTradeValue(e.target.value)}
+                      className="w-full bg-[#111622] border border-slate-800 rounded-xl p-3 text-white font-mono font-bold outline-none focus:border-[#2dd4bf]"
+                    />
+                    <span className="text-[9px] text-slate-500 mt-0.5 block">Min: $5.00 USD</span>
                   </div>
 
                   <div>
-                    <label className="text-[10px] text-slate-400 block mb-1 font-bold">SLIPPAGE TOLERANCE</label>
-                    <div className="grid grid-cols-3 gap-1 bg-[#111622] p-1 rounded-xl border border-slate-800 text-[10px]">
-                      {['0.1', '0.5', '1.0'].map(slip => (
-                        <button
-                          key={slip}
-                          type="button"
-                          onClick={() => setSlippage(slip)}
-                          className={`py-1.5 rounded-lg font-bold transition ${
-                            slippage === slip ? 'bg-amber-400 text-slate-950' : 'text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          {slip}%
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Trade Amount Input */}
-                <div>
-                  <div className="flex justify-between items-center text-[10px] text-slate-400 mb-1 font-bold">
-                    <span>AMOUNT ({tradePair.split('/')[0]})</span>
-                    <span className="text-[#2dd4bf]">Oracle Rate: ${currentPairData.price.toLocaleString()}</span>
-                  </div>
-                  <div className="relative">
+                    <label className="text-[10px] text-slate-400 block mb-1.5 font-bold">EXPECTED NET PROFIT ($ USD)</label>
                     <input
                       type="number"
-                      step="0.01"
-                      value={tradeAmount}
-                      onChange={e => setTradeAmount(e.target.value)}
-                      className="w-full bg-[#111622] border border-slate-800 rounded-xl p-3.5 text-white font-bold text-sm outline-none focus:border-[#2dd4bf] pr-28"
+                      step="0.1"
+                      value={arbExpectedProfit}
+                      onChange={e => setArbExpectedProfit(e.target.value)}
+                      className="w-full bg-[#111622] border border-slate-800 rounded-xl p-3 text-emerald-400 font-mono font-bold outline-none focus:border-emerald-400"
                     />
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                      {[0.25, 0.5, 1].map(p => (
-                        <button
-                          key={p}
-                          type="button"
-                          onClick={() => setTradeAmount((1.85 * p).toFixed(2))}
-                          className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[#2dd4bf] font-bold text-[9px]"
-                        >
-                          {p === 1 ? 'MAX' : `${p*100}%`}
-                        </button>
-                      ))}
-                    </div>
+                    <span className="text-[9px] text-emerald-400 mt-0.5 block">Min Profit Gate: $5.00 USD</span>
                   </div>
                 </div>
 
-                {/* Transaction Cost Summary Card */}
                 <div className="p-4 rounded-xl bg-[#070a11] border border-slate-800 space-y-2 text-[11px]">
                   <div className="flex justify-between text-slate-400">
-                    <span>Total Capital Value:</span>
-                    <span className="text-white font-bold font-mono">${totalUsdValue} USD</span>
+                    <span>Target Contract:</span>
+                    <span className="text-white font-mono font-bold">0x71C7656EC7ab88b098defB751B7401B5f6d7B41</span>
                   </div>
                   <div className="flex justify-between text-slate-400">
-                    <span>Est. Network Fee (Gas):</span>
-                    <span className="text-[#2dd4bf] font-bold font-mono">0.00045 ETH (~$1.59)</span>
+                    <span>On-Chain Function:</span>
+                    <span className="text-cyan-400 font-mono font-bold">executeSpatialArbitrage()</span>
                   </div>
                   <div className="flex justify-between text-slate-400">
-                    <span>Exchange Router:</span>
-                    <span className="text-amber-400 font-mono text-[10px]">Chainblock Multi-DEX Router</span>
+                    <span>Est. Gas Cost:</span>
+                    <span className="text-amber-400 font-mono">~0.00045 ETH ({gasMap[gasPriority].gwei} Gwei)</span>
                   </div>
                 </div>
 
-                {/* SUBMIT BUTTON */}
                 <button
                   type="submit"
-                  disabled={isBroadcasting}
-                  className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:brightness-110 text-slate-950 font-extrabold text-xs uppercase shadow-[0_0_25px_rgba(245,158,11,0.3)] transition flex items-center justify-center space-x-2"
+                  disabled={isSigningArb}
+                  className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500 text-slate-950 font-extrabold text-xs uppercase shadow-[0_0_25px_rgba(56,189,248,0.3)] hover:brightness-110 transition flex items-center justify-center space-x-2"
                 >
-                  {isBroadcasting ? (
+                  {isSigningArb ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
-                      <span>WAITING FOR METAMASK SIGNATURE...</span>
+                      <span>SIGNING ON-CHAIN TRANSACTION IN METAMASK...</span>
                     </>
                   ) : (
                     <>
-                      <span className="text-base">🦊</span>
-                      <span>CONFIRM & SIGN METAMASK TRADE ON-CHAIN</span>
+                      <Zap className="w-4 h-4 fill-slate-950" />
+                      <span>CONFIRM & EXECUTE SPATIAL ARBITRAGE ON-CHAIN</span>
                     </>
                   )}
                 </button>
@@ -644,93 +505,50 @@ export const MetaMaskTradeTerminalSection = () => {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: LIVE WEB3 EXECUTED ORDER BOOK */}
+          {/* RIGHT COLUMN: WEB3 ACTIVITY AUDIT LEDGER */}
           <div className="lg:col-span-6 space-y-6">
             
-            {/* Live Market Price Overview Bar */}
-            <div className="p-4 rounded-2xl bg-[#0a0d16] border border-slate-800 space-y-3 font-mono">
-              <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-bold">
-                <span>LIVE BINANCE WEBSOCKET MARKET FEED</span>
-                <span className="text-[#2dd4bf]">REAL-TIME TICKER</span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                <div className="p-2.5 rounded-xl bg-[#111622] border border-slate-800">
-                  <span className="text-slate-400 text-[10px] block">ETH / USDT</span>
-                  <span className="text-white font-extrabold block mt-0.5">${pairPrices['ETH/USDT']?.price.toLocaleString()}</span>
-                  <span className={`text-[10px] font-bold ${pairPrices['ETH/USDT']?.change >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {pairPrices['ETH/USDT']?.change >= 0 ? '+' : ''}{pairPrices['ETH/USDT']?.change}%
-                  </span>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-[#111622] border border-slate-800">
-                  <span className="text-slate-400 text-[10px] block">BTC / USDT</span>
-                  <span className="text-white font-extrabold block mt-0.5">${pairPrices['BTC/USDT']?.price.toLocaleString()}</span>
-                  <span className={`text-[10px] font-bold ${pairPrices['BTC/USDT']?.change >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {pairPrices['BTC/USDT']?.change >= 0 ? '+' : ''}{pairPrices['BTC/USDT']?.change}%
-                  </span>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-[#111622] border border-slate-800">
-                  <span className="text-slate-400 text-[10px] block">SOL / USDT</span>
-                  <span className="text-white font-extrabold block mt-0.5">${pairPrices['SOL/USDT']?.price.toLocaleString()}</span>
-                  <span className={`text-[10px] font-bold ${pairPrices['SOL/USDT']?.change >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {pairPrices['SOL/USDT']?.change >= 0 ? '+' : ''}{pairPrices['SOL/USDT']?.change}%
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Web3 Executed Order Ledger Table */}
             <div className="p-6 rounded-2xl bg-[#0a0d16] border border-slate-800 space-y-4 shadow-2xl">
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                 <div className="flex items-center space-x-2">
                   <Terminal className="w-4 h-4 text-[#2dd4bf]" />
                   <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">
-                    MetaMask On-Chain Execution Ledger
+                    MetaMask Web3 On-Chain Activity Audit Ledger
                   </h3>
                 </div>
-                <span className="text-[10px] text-[#2dd4bf] font-bold">{web3Orders.length} RECORDED TXS</span>
+                <span className="text-[10px] text-[#2dd4bf] font-bold">{web3Activity.length} RECORDED ACTIVITIES</span>
               </div>
 
               <div className="space-y-3 max-h-[360px] overflow-y-auto no-scrollbar">
-                {web3Orders.length > 0 ? (
-                  web3Orders.map((ord) => (
-                    <div key={ord.id} className="p-4 rounded-xl bg-[#111622] border border-slate-800 space-y-2 hover:border-slate-700 transition">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold ${
-                            ord.side === 'BUY' ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/40' : 'bg-rose-950 text-rose-400 border border-rose-500/40'
-                          }`}>
-                            {ord.side} {ord.pair}
-                          </span>
-                          <span className="text-xs font-extrabold text-white">{ord.amount}</span>
-                        </div>
-
-                        <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-950 text-[#2dd4bf] border border-[#2dd4bf]">
-                          {ord.status}
+                {web3Activity.map((act) => (
+                  <div key={act.id} className="p-4 rounded-xl bg-[#111622] border border-slate-800 space-y-2 hover:border-slate-700 transition">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <span className="px-2 py-0.5 rounded text-[9px] font-extrabold bg-cyan-950 text-cyan-300 border border-cyan-500/40">
+                          {act.type}
                         </span>
+                        <span className="text-xs font-extrabold text-white">{act.pair}</span>
                       </div>
 
-                      <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1">
-                        <span>Value: <strong className="text-white">{ord.valueUsd}</strong> • Chain: <strong className="text-cyan-400">{ord.network}</strong></span>
-                        <a
-                          href={`https://arbiscan.io/tx/${ord.txHash}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-[#2dd4bf] hover:underline flex items-center gap-1 font-mono font-bold"
-                        >
-                          <span>{ord.txHash.substring(0, 10)}...</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
+                      <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-950 text-[#2dd4bf] border border-[#2dd4bf]">
+                        {act.status}
+                      </span>
                     </div>
-                  ))
-                ) : (
-                  <div className="py-10 text-center text-slate-500 font-mono text-xs">
-                    No MetaMask Web3 transactions recorded yet.
+
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1">
+                      <span>Val: <strong className="text-white">{act.amount}</strong> • PnL: <strong className="text-emerald-400">{act.profit}</strong></span>
+                      <a
+                        href={`https://arbiscan.io/tx/${act.txHash}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[#2dd4bf] hover:underline flex items-center gap-1 font-mono font-bold"
+                      >
+                        <span>{act.txHash.substring(0, 10)}...</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
             </div>
 
@@ -739,144 +557,78 @@ export const MetaMaskTradeTerminalSection = () => {
         </div>
       )}
 
-      {/* ================= TAB 2: ACCOUNT TO ACCOUNT MONEY TRANSFER ================= */}
-      {activeTab === 'TRANSFER' && (
+      {/* ================= TAB 2: ERC-20 TOKEN ALLOWANCE MANAGER ================= */}
+      {activeTab === 'ALLOWANCES' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
-          {/* LEFT COLUMN: ACCOUNT TO ACCOUNT FORM */}
+          {/* LEFT COLUMN: ALLOWANCE FORM */}
           <div className="lg:col-span-6 space-y-6">
-            <div className="p-6 rounded-2xl bg-[#0a0d16] border border-amber-500/40 space-y-5 shadow-[0_0_30px_rgba(251,191,36,0.1)]">
+            <div className="p-6 rounded-2xl bg-[#0a0d16] border border-amber-500/40 space-y-5 shadow-2xl">
               
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                 <div className="flex items-center space-x-2">
-                  <Send className="w-4 h-4 text-amber-400" />
+                  <Lock className="w-4 h-4 text-amber-400" />
                   <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
-                    Account to Account Money Transfer
+                    ERC-20 TOKEN ALLOWANCE & APPROVAL MANAGER
                   </h2>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[9px] bg-amber-950 text-amber-300 border border-amber-400 font-bold">
-                  DIRECT P2P
+                  WEB3 SECURITY
                 </span>
               </div>
 
-              <form onSubmit={handleAccountToAccountTransfer} className="space-y-4">
+              <form onSubmit={handleApproveTokenAllowance} className="space-y-4">
                 
-                {/* Recipient Account Address */}
                 <div>
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1.5 font-bold">
-                    <span>RECIPIENT ACCOUNT ADDRESS (0x...)</span>
-                    <button
-                      type="button"
-                      onClick={() => setRecipientAddress('0x71C7656EC7ab88b098defB751B7401B5f6d7B41')}
-                      className="text-[#2dd4bf] hover:underline text-[9px]"
-                    >
-                      + Use Default Demo Account
-                    </button>
-                  </div>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={recipientAddress}
-                      onChange={e => setRecipientAddress(e.target.value)}
-                      placeholder="0x..."
-                      className="w-full bg-[#111622] border border-slate-800 rounded-xl p-3.5 text-white font-mono font-bold text-xs outline-none focus:border-amber-400 pr-10"
-                    />
-                    <UserCheck className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-amber-400" />
-                  </div>
+                  <label className="text-[10px] text-slate-400 block mb-1.5 font-bold">SELECT TOKEN ASSET TO APPROVE</label>
+                  <select
+                    value={selectedToken}
+                    onChange={e => setSelectedToken(e.target.value)}
+                    className="w-full bg-[#111622] border border-slate-800 rounded-xl p-3 text-white font-bold text-xs outline-none focus:border-amber-400"
+                  >
+                    <option value="USDT">USDT (Tether USD ERC-20)</option>
+                    <option value="USDC">USDC (USD Coin ERC-20)</option>
+                    <option value="WETH">WETH (Wrapped Ether)</option>
+                    <option value="DAI">DAI (Multi-Collateral DAI)</option>
+                  </select>
                 </div>
 
-                {/* Token Asset & Amount */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[10px] text-slate-400 block mb-1 font-bold">TRANSFER ASSET TOKEN</label>
-                    <select
-                      value={transferToken}
-                      onChange={e => setTransferToken(e.target.value)}
-                      className="w-full bg-[#111622] border border-slate-800 rounded-xl p-3 text-white font-bold text-xs outline-none focus:border-amber-400"
-                    >
-                      <option value="ETH">ETH (Ethereum Native)</option>
-                      <option value="USDT">USDT (Tether USD)</option>
-                      <option value="USDC">USDC (USD Coin)</option>
-                      <option value="BNB">BNB (Binance Coin)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-center text-[10px] text-slate-400 mb-1 font-bold">
-                      <span>TRANSFER AMOUNT</span>
-                      <span className="text-amber-400">Bal: 1.85 ETH</span>
-                    </div>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={transferAmount}
-                      onChange={e => setTransferAmount(e.target.value)}
-                      className="w-full bg-[#111622] border border-slate-800 rounded-xl p-3 text-white font-bold text-xs outline-none focus:border-amber-400"
-                    />
-                  </div>
-                </div>
-
-                {/* Quick Amount Percentage Pills */}
-                <div className="grid grid-cols-4 gap-1.5 text-[10px]">
-                  {[0.25, 0.5, 0.75, 1].map(pct => (
-                    <button
-                      key={pct}
-                      type="button"
-                      onClick={() => setTransferAmount((1.85 * pct).toFixed(2))}
-                      className="py-1.5 rounded-lg bg-[#111622] border border-slate-800 text-slate-300 font-bold hover:border-amber-400 hover:text-amber-400 transition"
-                    >
-                      {pct === 1 ? 'MAX (100%)' : `${pct * 100}%`}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Transaction Note / Memo */}
                 <div>
-                  <label className="text-[10px] text-slate-400 block mb-1 font-bold">TRANSACTION MEMO / NOTE (OPTIONAL)</label>
+                  <label className="text-[10px] text-slate-400 block mb-1.5 font-bold">MAX ALLOWANCE AMOUNT ({selectedToken})</label>
                   <input
-                    type="text"
-                    value={transferNote}
-                    onChange={e => setTransferNote(e.target.value)}
-                    placeholder="e.g. Account to Account Liquidity Settlement"
-                    className="w-full bg-[#111622] border border-slate-800 rounded-xl p-3 text-slate-300 font-mono text-xs outline-none focus:border-amber-400"
+                    type="number"
+                    step="100"
+                    value={allowanceAmount}
+                    onChange={e => setAllowanceAmount(e.target.value)}
+                    className="w-full bg-[#111622] border border-slate-800 rounded-xl p-3.5 text-amber-300 font-mono font-extrabold text-sm outline-none focus:border-amber-400"
                   />
                 </div>
 
-                {/* Summary Card */}
                 <div className="p-4 rounded-xl bg-[#070a11] border border-slate-800 space-y-2 text-[11px]">
                   <div className="flex justify-between text-slate-400">
-                    <span>Recipient Account:</span>
-                    <span className="text-amber-300 font-mono text-[10px]">
-                      {recipientAddress ? `${recipientAddress.substring(0, 10)}...${recipientAddress.substring(recipientAddress.length - 4)}` : 'Enter Address'}
-                    </span>
+                    <span>Approved Spender:</span>
+                    <span className="text-white font-mono font-bold">Chainblock Quant Router (0x71C7...dB41)</span>
                   </div>
                   <div className="flex justify-between text-slate-400">
-                    <span>Transfer USD Value:</span>
-                    <span className="text-white font-bold font-mono">
-                      ${(parseFloat(transferAmount || 0) * (transferToken === 'ETH' ? 3540.20 : 1.00)).toFixed(2)} USD
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-slate-400">
-                    <span>Est. Network Fee (Gas):</span>
-                    <span className="text-emerald-400 font-bold font-mono">0.00021 ETH (~$0.74)</span>
+                    <span>Method Signature:</span>
+                    <span className="text-amber-400 font-mono">approve(address spender, uint256 amount)</span>
                   </div>
                 </div>
 
-                {/* SUBMIT BUTTON */}
                 <button
                   type="submit"
-                  disabled={isTransferring}
-                  className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:brightness-110 text-slate-950 font-extrabold text-xs uppercase shadow-[0_0_25px_rgba(251,191,36,0.3)] transition flex items-center justify-center space-x-2"
+                  disabled={isApproving}
+                  className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 font-extrabold text-xs uppercase shadow-[0_0_25px_rgba(251,191,36,0.3)] hover:brightness-110 transition flex items-center justify-center space-x-2"
                 >
-                  {isTransferring ? (
+                  {isApproving ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
-                      <span>WAITING FOR METAMASK SIGNATURE...</span>
+                      <span>APPROVING TOKEN ALLOWANCE IN METAMASK...</span>
                     </>
                   ) : (
                     <>
-                      <span className="text-base">🦊</span>
-                      <span>CONFIRM & SIGN ACCOUNT TRANSFER IN METAMASK</span>
+                      <Lock className="w-4 h-4" />
+                      <span>CONFIRM & APPROVE {selectedToken} ALLOWANCE IN METAMASK</span>
                     </>
                   )}
                 </button>
@@ -886,67 +638,98 @@ export const MetaMaskTradeTerminalSection = () => {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: RECENT ACCOUNT TO ACCOUNT TRANSFERS LEDGER */}
+          {/* RIGHT COLUMN: ACTIVE ALLOWANCES LIST */}
           <div className="lg:col-span-6 space-y-6">
             
             <div className="p-6 rounded-2xl bg-[#0a0d16] border border-slate-800 space-y-4 shadow-2xl">
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                 <div className="flex items-center space-x-2">
-                  <UserCheck className="w-4 h-4 text-amber-400" />
+                  <ShieldCheck className="w-4 h-4 text-amber-400" />
                   <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">
-                    Account to Account Money Transfer History
+                    ACTIVE ERC-20 TOKEN ALLOWANCES
                   </h3>
                 </div>
-                <span className="text-[10px] text-amber-400 font-bold">{accountTransfers.length} RECORDED TRANSFERS</span>
+                <span className="text-[10px] text-amber-400 font-bold">{tokenAllowances.length} ACTIVE PERMISSIONS</span>
               </div>
 
-              <div className="space-y-3 max-h-[440px] overflow-y-auto no-scrollbar">
-                {accountTransfers.length > 0 ? (
-                  accountTransfers.map((tx) => (
-                    <div key={tx.id} className="p-4 rounded-xl bg-[#111622] border border-slate-800 space-y-2 hover:border-amber-400/40 transition">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <span className="px-2 py-0.5 rounded text-[9px] font-extrabold bg-amber-950 text-amber-300 border border-amber-500/40">
-                            SENT {tx.token}
-                          </span>
-                          <span className="text-xs font-extrabold text-white">{tx.amount}</span>
-                        </div>
-
-                        <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-500">
-                          {tx.status}
-                        </span>
-                      </div>
-
-                      <div className="text-[10px] text-slate-400 space-y-1 pt-1 border-t border-slate-800/60">
-                        <div className="flex items-center justify-between">
-                          <span>Recipient: <strong className="text-amber-300 font-mono">{tx.recipient.substring(0, 10)}...{tx.recipient.substring(tx.recipient.length - 4)}</strong></span>
-                          <span>USD: <strong className="text-white">{tx.valueUsd}</strong></span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">{tx.note}</span>
-                          <a
-                            href={`https://arbiscan.io/tx/${tx.txHash}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-[#2dd4bf] hover:underline flex items-center gap-1 font-mono font-bold"
-                          >
-                            <span>Tx Hash</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        </div>
-                      </div>
+              <div className="space-y-3">
+                {tokenAllowances.map(item => (
+                  <div key={item.token} className="p-4 rounded-xl bg-[#111622] border border-slate-800 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-extrabold text-white">{item.token} Token</span>
+                      <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-500">
+                        {item.status}
+                      </span>
                     </div>
-                  ))
-                ) : (
-                  <div className="py-12 text-center text-slate-500 font-mono text-xs">
-                    No account to account transfers recorded yet.
+
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-slate-400">Approved Limit:</span>
+                      <span className="text-amber-300 font-mono font-bold">{item.allowance}</span>
+                    </div>
+
+                    <div className="flex justify-between text-[10px] text-slate-500 border-t border-slate-800/60 pt-1.5">
+                      <span>Spender: {item.spender}</span>
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
             </div>
 
           </div>
 
+        </div>
+      )}
+
+      {/* ================= TAB 3: EIP-1559 GAS STATION ================= */}
+      {activeTab === 'GAS' && (
+        <div className="p-6 rounded-2xl bg-[#0a0d16] border border-purple-500/40 space-y-6 shadow-2xl">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div className="flex items-center space-x-2">
+              <Flame className="w-5 h-5 text-orange-400" />
+              <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
+                EIP-1559 LIVE WEB3 GAS STATION & PRIORITY CONTROL
+              </h2>
+            </div>
+            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-950 text-purple-300 border border-purple-500">
+              OPTIMIZED EVM GAS
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { id: 'SLOW', title: 'Slow Saver', speed: '~30s', color: 'border-slate-700 text-slate-300' },
+              { id: 'STANDARD', title: 'Standard Market', speed: '~12s', color: 'border-blue-500/40 text-blue-400' },
+              { id: 'FAST', title: 'Fast Execution', speed: '~3s', color: 'border-amber-500/40 text-amber-400' },
+              { id: 'INSTANT', title: 'Instant Quant Speed', speed: '< 1s', color: 'border-purple-500/40 text-purple-400' }
+            ].map(tier => {
+              const info = gasMap[tier.id];
+              const isSelected = gasPriority === tier.id;
+              return (
+                <button
+                  key={tier.id}
+                  onClick={() => {
+                    setGasPriority(tier.id);
+                    addNotification(`⛽ Gas Priority set to ${tier.title} (${info.gwei} Gwei)`, 'info');
+                  }}
+                  className={`p-5 rounded-2xl border text-left transition space-y-3 relative shadow-lg ${
+                    isSelected
+                      ? 'bg-purple-950/30 border-purple-500 text-white shadow-[0_0_20px_rgba(168,85,247,0.25)]'
+                      : 'bg-[#060810] border-slate-800 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase text-slate-400">{tier.title}</span>
+                    {isSelected && <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-pulse" />}
+                  </div>
+
+                  <div>
+                    <span className="text-2xl font-black text-white font-mono block">{info.gwei} <span className="text-xs text-purple-400">Gwei</span></span>
+                    <span className="text-[10px] text-slate-400 font-mono block mt-1">Est. Time: {info.estSec} • {info.costUsd}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 

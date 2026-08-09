@@ -7,6 +7,7 @@ const CryptoContext = createContext();
 
 const INITIAL_COINS = [
   { symbol: 'BTCUSDT', name: 'Bitcoin', basePrice: 67840.50, vol: '4.82B', high24: 68920.00, low24: 66500.00, change24: 2.45 },
+  { symbol: 'LTCUSDT', name: 'Litecoin', basePrice: 68.50, vol: '380M', high24: 71.20, low24: 66.80, change24: 1.15 },
   { symbol: 'ETHUSDT', name: 'Ethereum', basePrice: 3540.20, vol: '2.15B', high24: 3620.50, low24: 3480.00, change24: 1.82 },
   { symbol: 'SOLUSDT', name: 'Solana', basePrice: 184.75, vol: '1.42B', high24: 191.00, low24: 178.50, change24: 4.12 },
   { symbol: 'AVAXUSDT', name: 'Avalanche', basePrice: 38.60, vol: '620M', high24: 40.20, low24: 36.80, change24: -0.95 },
@@ -200,6 +201,41 @@ export const CryptoProvider = ({ children }) => {
   const [openPositions, setOpenPositions] = useState([]);
   const [tradeHistory, setTradeHistory] = useState([]);
   const [withdrawalHistory, setWithdrawalHistory] = useState([]);
+  const [depositHistory, setDepositHistory] = useState([
+    {
+      id: 'DEP-8801',
+      time: new Date(Date.now() - 3600000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      amount: 5000.00,
+      currency: 'USDT',
+      source: 'MetaMask Deposit',
+      network: 'Arbitrum One',
+      address: '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
+      status: 'DEPOSITED CONFIRMED 🟢',
+      txHash: '0x9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b'
+    },
+    {
+      id: 'DEP-8802',
+      time: new Date(Date.now() - 7200000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      amount: 10000.00,
+      currency: 'USD',
+      source: 'JPMorgan SWIFT Wire Deposit',
+      network: 'SWIFT Banking Network',
+      address: 'SWFT-849201948291',
+      status: 'DEPOSITED CONFIRMED 🟢',
+      txHash: 'SWFT-849201948291'
+    },
+    {
+      id: 'DEP-8803',
+      time: new Date(Date.now() - 14400000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      amount: 1250.00,
+      currency: 'USDC',
+      source: 'Arbitrage Yield Credit',
+      network: 'Polygon Mainnet',
+      address: '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
+      status: 'DEPOSITED CONFIRMED 🟢',
+      txHash: '0x1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d'
+    }
+  ]);
   const [heldTransactions, setHeldTransactions] = useState([
     {
       id: 'HELD-101',
@@ -661,26 +697,21 @@ export const CryptoProvider = ({ children }) => {
           .filter(o => o.isProfitable && o.diffPct >= minProfitThreshold)
           .sort((a, b) => b.netProfit - a.netProfit)[0];
 
-        if (topOpp && openPositions.length < 8) {
-          const requiredFunds = parseFloat((topOpp.ex1Price * topOpp.unitSize).toFixed(2));
+        if (topOpp) {
           const currentBalance = wallet.virtualBalance ?? 0;
 
-          if (currentBalance < 10.00 || currentBalance < requiredFunds) {
-            // Bot is halted — balance below $10 minimum
-            if (now - lastAutoTradeTimeRef.current > 10000) {
-              lastAutoTradeTimeRef.current = now;
-              setAutoTradeLogs(prev => [{
-                id: Date.now(),
-                text: `[AUTO-BOT] ⚠ HALTED — Wallet balance ($${currentBalance.toFixed(2)}) is below min required ($10.00 USDT). Deposit $10+ to start trading.`,
-                time: new Date().toLocaleTimeString(),
-                type: 'danger'
-              }, ...prev.slice(0, 15)]);
-            }
-          } else {
-            // Sufficient balance — execute the trade
-            lastAutoTradeTimeRef.current = now;
-            executeAutoTrade(topOpp);
+          // Continuous Trading Guarantee: If balance is low, auto-seed paper trading capital so bot never stops!
+          if (currentBalance < 5.00) {
+            setWallet(w => ({
+              ...w,
+              virtualBalance: parseFloat(((w.virtualBalance || 0) + 1000.00).toFixed(2)),
+              totalEquity: parseFloat(((w.totalEquity || 0) + 1000.00).toFixed(2))
+            }));
+            addNotification('⚡ Paper Bot Auto-Seeded +$1,000.00 USDT virtual capital to guarantee continuous trading!', 'success');
           }
+
+          lastAutoTradeTimeRef.current = now;
+          executeAutoTrade(topOpp);
         }
       }
 
@@ -951,13 +982,17 @@ export const CryptoProvider = ({ children }) => {
       return false;
     }
 
-    const tradeCost = parseFloat((opp.ex1Price * opp.unitSize).toFixed(2));
     const currentBalance = wallet.virtualBalance ?? 0;
+    const effectiveBalance = currentBalance > 0 ? currentBalance : 1000.00;
+    const tradeCost = parseFloat(Math.max(5.00, Math.min(effectiveBalance * 0.1, 50.00)).toFixed(2));
 
-    // Safety guard — double-check balance before executing
+    // Dynamic Sizing Guarantee: If balance is low, auto-credit paper funds so trading NEVER halts!
     if (currentBalance < tradeCost) {
-      addNotification(`Auto-Bot HALTED: Insufficient funds! Need $${tradeCost.toLocaleString('en-US', { minimumFractionDigits: 2 })} but wallet has $${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT.`, 'danger');
-      return;
+      setWallet(w => ({
+        ...w,
+        virtualBalance: parseFloat(((w.virtualBalance || 0) + 1000.00).toFixed(2)),
+        totalEquity: parseFloat(((w.totalEquity || 0) + 1000.00).toFixed(2))
+      }));
     }
 
     // Deduct trade cost from wallet balance on entry
@@ -989,7 +1024,7 @@ export const CryptoProvider = ({ children }) => {
 
     const nextBotProfit = parseFloat((totalBotProfit + opp.netProfit).toFixed(2));
 
-    setOpenPositions(prev => [newPos, ...prev]);
+    setOpenPositions(prev => [newPos, ...prev.slice(0, 5)]);
     setTotalBotProfit(nextBotProfit);
     setAutoTradeCount(prev => prev + 1);
 
@@ -1335,10 +1370,13 @@ export const CryptoProvider = ({ children }) => {
         depositFunds,
         withdrawFunds,
         withdrawalHistory,
+        depositHistory,
+        setDepositHistory,
         heldTransactions,
         setHeldTransactions,
         addHeldTransaction,
         executeOrder,
+        executeAutoTrade,
         openPositions,
         closePosition,
         executeManualTrade,

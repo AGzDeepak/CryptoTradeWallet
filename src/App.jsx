@@ -27,6 +27,8 @@ import { LiveCryptoNews } from './components/LiveCryptoNews';
 import { SimulationSection } from './components/SimulationSection';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { MetaMaskTradeTerminalSection } from './components/MetaMaskTradeTerminalSection';
+import { ContractProcessSection } from './components/ContractProcessSection';
+import { BankToBankTransferSection } from './components/BankToBankTransferSection';
 
 const DashboardContent = () => {
   const { activeTab } = useCrypto();
@@ -37,7 +39,7 @@ const DashboardContent = () => {
       {/* Outer Shell Frame */}
       <div className="chainblock-shell p-4 sm:p-6 lg:p-8 space-y-8">
         
-        {(activeTab === 'dashboard' || !['papertrading', 'simulation', 'account', 'wallet', 'realwallet', 'decentralized', 'portfolio', 'metamaskterminal', 'settings'].includes(activeTab)) && (
+        {(activeTab === 'dashboard' || !['papertrading', 'simulation', 'account', 'wallet', 'realwallet', 'decentralized', 'contractprocess', 'banktransfer', 'portfolio', 'metamaskterminal', 'settings'].includes(activeTab)) && (
           <div className="space-y-8">
             
             {/* Top Row: Executive Hero & Autopilot Command Deck */}
@@ -114,6 +116,18 @@ const DashboardContent = () => {
         {activeTab === 'decentralized' && (
           <div className="space-y-6">
             <DecentralizedWalletView />
+          </div>
+        )}
+
+        {activeTab === 'contractprocess' && (
+          <div className="space-y-6">
+            <ContractProcessSection />
+          </div>
+        )}
+
+        {activeTab === 'banktransfer' && (
+          <div className="space-y-6">
+            <BankToBankTransferSection />
           </div>
         )}
 

@@ -4,7 +4,7 @@ import { ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { ArrowUpRight, ArrowDownRight, Bot } from 'lucide-react';
 
 export const TotalAssetsHero = () => {
-  const { wallet, totalBotProfit } = useCrypto();
+  const { wallet, totalBotProfit, marketData } = useCrypto();
 
   const currentBalance = wallet?.virtualBalance ?? 0.00;
 
@@ -15,54 +15,90 @@ export const TotalAssetsHero = () => {
     });
   };
 
+  const getCoinData = (sym) => {
+    return marketData?.find(c => c.symbol === `${sym}USDT` || c.symbol.startsWith(sym)) || {
+      basePrice: sym === 'BTC' ? 67840.50 : sym === 'LTC' ? 68.50 : sym === 'ETH' ? 3540.20 : 184.75,
+      change24: 1.25
+    };
+  };
+
+  const btcData = getCoinData('BTC');
+  const ltcData = getCoinData('LTC');
+  const ethData = getCoinData('ETH');
+  const solData = getCoinData('SOL');
+
   const assetCards = [
     {
       name: 'Bitcoin',
       symbol: 'BTC',
-      price: '$52,291',
-      change: '+0.25%',
-      isUp: true,
+      price: `$${btcData.basePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      change: `${btcData.change24 >= 0 ? '+' : ''}${btcData.change24.toFixed(2)}%`,
+      isUp: btcData.change24 >= 0,
       icon: '₿',
       iconBg: 'bg-amber-500/20 text-amber-400',
-      arrowBg: 'bg-[#2dd4bf] text-slate-950',
+      arrowBg: btcData.change24 >= 0 ? 'bg-[#2dd4bf] text-slate-950' : 'bg-orange-500 text-slate-950',
       stroke: '#facc15',
-      data: [{ v: 48000 }, { v: 51000 }, { v: 49500 }, { v: 53200 }, { v: 52291 }]
+      data: [
+        { v: btcData.basePrice * 0.95 },
+        { v: btcData.basePrice * 0.98 },
+        { v: btcData.basePrice * 0.96 },
+        { v: btcData.basePrice * 1.01 },
+        { v: btcData.basePrice }
+      ]
     },
     {
       name: 'Litecoin',
       symbol: 'LTC',
-      price: '$8,291',
-      change: '+0.25%',
-      isUp: true,
+      price: `$${ltcData.basePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      change: `${ltcData.change24 >= 0 ? '+' : ''}${ltcData.change24.toFixed(2)}%`,
+      isUp: ltcData.change24 >= 0,
       icon: 'Ł',
       iconBg: 'bg-slate-700/40 text-slate-300',
-      arrowBg: 'bg-[#2dd4bf] text-slate-950',
+      arrowBg: ltcData.change24 >= 0 ? 'bg-[#2dd4bf] text-slate-950' : 'bg-orange-500 text-slate-950',
       stroke: '#94a3b8',
-      data: [{ v: 7800 }, { v: 8100 }, { v: 7900 }, { v: 8400 }, { v: 8291 }]
+      data: [
+        { v: ltcData.basePrice * 0.96 },
+        { v: ltcData.basePrice * 0.99 },
+        { v: ltcData.basePrice * 0.97 },
+        { v: ltcData.basePrice * 1.02 },
+        { v: ltcData.basePrice }
+      ]
     },
     {
       name: 'Ethereum',
       symbol: 'ETH',
-      price: '$28,291',
-      change: '+0.25%',
-      isUp: true,
+      price: `$${ethData.basePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      change: `${ethData.change24 >= 0 ? '+' : ''}${ethData.change24.toFixed(2)}%`,
+      isUp: ethData.change24 >= 0,
       icon: 'Ξ',
       iconBg: 'bg-indigo-500/20 text-indigo-400',
-      arrowBg: 'bg-[#2dd4bf] text-slate-950',
+      arrowBg: ethData.change24 >= 0 ? 'bg-[#2dd4bf] text-slate-950' : 'bg-orange-500 text-slate-950',
       stroke: '#38bdf8',
-      data: [{ v: 26000 }, { v: 27500 }, { v: 27000 }, { v: 28900 }, { v: 28291 }]
+      data: [
+        { v: ethData.basePrice * 0.94 },
+        { v: ethData.basePrice * 0.97 },
+        { v: ethData.basePrice * 0.95 },
+        { v: ethData.basePrice * 1.01 },
+        { v: ethData.basePrice }
+      ]
     },
     {
       name: 'Solana',
       symbol: 'SOL',
-      price: '$14,291',
-      change: '-0.25%',
-      isUp: false,
+      price: `$${solData.basePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      change: `${solData.change24 >= 0 ? '+' : ''}${solData.change24.toFixed(2)}%`,
+      isUp: solData.change24 >= 0,
       icon: '≡',
       iconBg: 'bg-[#2dd4bf]/20 text-[#2dd4bf]',
-      arrowBg: 'bg-orange-500 text-slate-950',
+      arrowBg: solData.change24 >= 0 ? 'bg-[#2dd4bf] text-slate-950' : 'bg-orange-500 text-slate-950',
       stroke: '#4ade80',
-      data: [{ v: 15200 }, { v: 14800 }, { v: 15000 }, { v: 14100 }, { v: 14291 }]
+      data: [
+        { v: solData.basePrice * 0.97 },
+        { v: solData.basePrice * 0.95 },
+        { v: solData.basePrice * 0.98 },
+        { v: solData.basePrice * 0.94 },
+        { v: solData.basePrice }
+      ]
     }
   ];
 

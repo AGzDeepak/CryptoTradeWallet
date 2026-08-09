@@ -55,12 +55,22 @@ export const LiveMarketCards = memo(() => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 font-sans">
       {cardsData.map((card, idx) => {
-        const coin = marketData[idx] || marketData[0];
-        const flashClass = priceFlashMap[coin.symbol] === 'up'
+        const coin = marketData.find(c => c.symbol === `${card.symbol}USDT` || c.symbol.startsWith(card.symbol)) || marketData[idx] || marketData[0];
+        const isUp = (coin?.change24 ?? 0) >= 0;
+        const changeStr = `${isUp ? '+' : ''}${(coin?.change24 ?? 0).toFixed(2)}%`;
+        const flashClass = priceFlashMap[coin?.symbol] === 'up'
           ? 'price-up'
-          : priceFlashMap[coin.symbol] === 'down'
+          : priceFlashMap[coin?.symbol] === 'down'
           ? 'price-down'
           : '';
+
+        const sparklineData = [
+          { v: coin.basePrice * 0.96 },
+          { v: coin.basePrice * 0.99 },
+          { v: coin.basePrice * 0.97 },
+          { v: coin.basePrice * 1.01 },
+          { v: coin.basePrice }
+        ];
 
         return (
           <div
@@ -81,17 +91,17 @@ export const LiveMarketCards = memo(() => {
             {/* Middle Price & Percentage */}
             <div className="my-2 z-10">
               <div className="text-xl font-extrabold font-mono text-white tracking-tight">
-                ${coin.basePrice ? Math.round(coin.basePrice).toLocaleString() : card.price}
+                ${coin.basePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
-              <span className={`text-[11px] font-mono font-bold block mt-0.5 ${card.isUp ? 'text-emerald-400' : 'text-rose-400'}`}>
-                {card.change}
+              <span className={`text-[11px] font-mono font-bold block mt-0.5 ${isUp ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {changeStr}
               </span>
             </div>
 
             {/* Blue Line Sparkline Chart */}
             <div className="h-10 w-full -mb-1 z-0 opacity-70 group-hover:opacity-100 transition">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={card.data}>
+                <AreaChart data={sparklineData}>
                   <defs>
                     <linearGradient id={`grad-card-${idx}`} x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={card.lineColor} stopOpacity={0.4} />

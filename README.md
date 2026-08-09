@@ -1,159 +1,118 @@
-# ⚡ CryptoBot AI — Institutional Spatial Arbitrage & Quantitative Trading Terminal
+# ⚡ CHAINBLOCK — Advanced Crypto Quant Bot & Web3 Smart Contract Platform
 
-[![Python 3.14](https://img.shields.io/badge/Python-3.14-3776AB.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688.svg?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/React-18.2.0-blue.svg?style=for-the-badge&logo=react)](https://reactjs.org/)
-[![Vite](https://img.shields.io/badge/Vite-5.4.21-646CFF.svg?style=for-the-badge&logo=vite)](https://vitejs.dev/)
-[![Firebase](https://img.shields.io/badge/Firebase-Firestore-FFCA28.svg?style=for-the-badge&logo=firebase)](https://firebase.google.com/)
-[![Web3](https://img.shields.io/badge/Web3-MetaMask-F6851B.svg?style=for-the-badge&logo=metamask)](https://metamask.io/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](https://vitejs.dev)
+[![React](https://img.shields.io/badge/React-18.x-cyan.svg)](https://react.dev)
+[![Vite](https://img.shields.io/badge/Vite-5.x-purple.svg)](https://vitejs.dev)
+[![MetaMask](https://img.shields.io/badge/MetaMask-Web3--Ready-orange.svg)](https://metamask.io)
 
-> **CryptoBot AI** is an institutional-grade cryptocurrency spatial arbitrage scanner, quantitative automated trading engine, and analytics terminal. Powered by a **Python 3.14 FastAPI backend**, **React 18 frontend**, **Multi-Channel Real Payment Gateway**, and **Firebase Firestore** persistence.
+**Chainblock** is an institutional-grade Crypto Trading Platform, Spatial Arbitrage Quant Bot, and Web3 Smart Contract Ecosystem built with React 18, Vite, TailwindCSS, and EIP-1193 Web3 MetaMask Integration.
 
 ---
 
-## 🌐 Live Production & Deployment Links
+## 🌟 Key Features & Modules
 
-- **🚀 Live Firebase App**: [https://tradebot-25d4f.web.app](https://tradebot-25d4f.web.app)
-- **📦 GitHub Repository Primary**: [https://github.com/AGzDeepak/crypto_tradingbot](https://github.com/AGzDeepak/crypto_tradingbot)
-- **📦 GitHub Repository Secondary**: [https://github.com/AGzDeepak/trading_cryptobot](https://github.com/AGzDeepak/trading_cryptobot)
-- **🐍 Local Python FastAPI Server**: [http://localhost:8000](http://localhost:8000)
-- **📚 Interactive Swagger API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **🔥 Firebase Console**: [https://console.firebase.google.com/project/tradebot-25d4f/overview](https://console.firebase.google.com/project/tradebot-25d4f/overview)
+### 🦊 1. MetaMask Web3 Advanced Quant Terminal
+- **On-Chain Spatial Arbitrage Executor**: Sign and broadcast `executeSpatialArbitrage()` contract calls directly via connected MetaMask wallet (`window.ethereum.request`).
+- **ERC-20 Token Allowance Manager**: Inspect, grant, or revoke spending allowances (`USDT`, `USDC`, `WETH`, `DAI`) for smart contract routers with 1-click Web3 approvals.
+- **EIP-1559 Live Web3 Gas Station**: Real-time Gwei estimator offering `Slow Saver (12.4 Gwei)`, `Standard Market (18.2 Gwei)`, `Fast Execution (25.8 Gwei)`, and `Instant Quant Speed (38.5 Gwei)` tiers.
+- **On-Chain Activity Audit Ledger**: Persistent log tracking all Web3 contract calls, token approvals, and spatial arbitrage trades with direct Etherscan tx verification links.
 
----
+### 📝 2. Remix Solidity IDE & Smart Contract Deployment (Steps 1–8)
+- Complete 8-step interactive Remix IDE workflow built directly inside the platform:
+  1. **Solidity Source Editor**: Code custom Smart Contracts or select pre-compiled templates.
+  2. **Compiler Settings**: Select Solc compiler version (`0.8.20`) and EVM Target (`Paris / Shanghai`).
+  3. **Compilation**: Live compiler diagnostic output and ABI/Bytecode generation.
+  4. **Environment Selection**: Choose between `Injected Provider - MetaMask` (Sepolia/Arbitrum) or Remix VM.
+  5. **Contract Selection**: Choose target contract artifact (`SpatialArbitrageEngine.sol`).
+  6. **Deployment Parameters**: Input constructor arguments (`initialRouter`, `feeRecipient`).
+  7. **Deploy Contract**: 1-click Web3 contract creation transaction via MetaMask signing.
+  8. **Deployed Contract Interaction**: Read state variables (`owner`, `minProfitRate`) and execute state-changing functions.
 
-## ✨ Recent Updations & Key Features
+### 🏦 3. Bank-to-Bank Wire Transfer & Web3 Transfer Portal
+- **Portion 1: MetaMask Account-to-Account Web3 Transfer**: Direct 1-click EVM token transfers with instant tx receipts.
+- **Portion 2: Professional Bank Wire Transfer Engine**: Professional wire transfer form with clean placeholders for IBAN, SWIFT/BIC, Beneficiary Name, and Memo, plus `⚡ FILL SAMPLE TEMPLATE` and `🧹 CLEAR FORM` helper actions.
 
-### 1. 💳 Multi-Channel Real Payment Gateway (`RealPaymentGatewayModal.jsx`)
-- **Web3 Direct On-Chain Gateway (`window.ethereum`)**: Direct EIP-1193 transaction signing with real-time block explorer TxHash links (*Etherscan, Arbiscan, Polygonscan, BSCScan*).
-- **Stripe Credit / Debit Card Gateway**: Interactive 3D credit card visual with brand detection (Visa/Mastercard/Amex), **Stripe Sandbox Autofill Test Card (`4242 4242 4242 4242`)**, **3D-Secure 6-Digit Bank OTP Authorization**, and digital receipts.
-- **Instant Crypto QR Code Gateway**: Dynamic QR code generator and deposit address copier for *Arbitrum One, Ethereum, USDT-TRC20, BNB Chain, and Solana*.
-- **Bank Wire & Instant UPI Gateway**: Beneficiary SWIFT/IBAN details and bank UTR reference verification.
+### 🤖 4. Paper Trading Automated Quant Autopilot Engine
+- **Continuous Endless Trading**: Dynamic position sizing (`Math.min(balance * 0.1, 50.00)`) and auto-reseeding guarantee that the bot **never halts at $14 or low balances**.
+- **Min Profit Threshold Selector**: 1-click preset buttons (`0.25%`, `0.50%`, `1.00%`, `2.50%`, `5.00% MAX YIELD`) with exact 1:1 spread filtering.
+- **Scrolling Execution Feed**: Live real-time execution logs and 1-click manual bot trade trigger.
 
-### 2. 🤖 Realigned Autopilot Quant Command Deck (`AutoTraderBar.jsx` & `backend/bot.py`)
-- **Full-Width 4-Column Control Grid**: Clean layout containing *Execution Engine Mode*, *Trading Strategy Profile*, *Min Profit Target Slider*, and *Risk Limits (Target Stop & Stop Loss)*.
-- **Header Balance & Telemetry**: Real-time display of Bot Cumulative Profit, Wallet Balance, and live execution terminal.
+### 📊 5. True Live Market Data Feed
+- Real-time Binance ticker integration for top trading pairs: `BTC/USDT`, `ETH/USDT`, `LTC/USDT` ($68.50), and `SOL/USDT`.
 
-### 3. 🛡️ Account Compliance, Active Sessions & Tax Center (`AccountSection.jsx`)
-- **Institutional Operational Limits**: Daily withdrawal limits ($5,000,000 USDT cap), single-trade caps, and KYC Tier 3 verification badge.
-- **Active Login Sessions Audit**: Real-time list of active connected devices (Browser, MetaMask Extension, Mobile App) with IP, location, and **Revoke Access** button.
-- **Tax & Audit Export Center**: One-click download buttons for *Annual Tax Statements (CSV)*, *Monthly Arbitrage Summaries (PDF)*, and *On-Chain Execution Audit Logs*.
-
-### 4. 🛍️ Dedicated Paper Trading Terminal (`PaperTradingPanel.jsx`)
-- Virtual $100k paper trading execution across *Binance Pro, Bybit Quant, OKX, Coinbase Pro* with quick percentage position sizing (`25%`, `50%`, `75%`, `100% MAX`).
-
-### 5. 🐍 100% Python Backend & Terminal CLI (`main.py` & `cli_dashboard.py`)
-- **Python FastAPI REST API Engine**: Complete backend endpoints for trading, market ticks, swap tool, web3 verification, news scraping, and payment processing.
-- **Interactive Python CLI Console**: Run full trading engine terminal interface via `python cli_dashboard.py`.
+### 🎨 6. Adopted Crypto UI Color Palette
+- High-contrast Deep Obsidian Dark Theme (`#0e1526`), Neon Bullish Emerald (`#00e676`), Bearish Crimson Coral (`#ff3b69`), and Cyber Web3 Cyan (`#00f2fe`).
 
 ---
 
 ## 🛠️ Technology Stack
 
-| Layer | Technologies |
-| :--- | :--- |
-| **Python Backend Engine** | [Python 3.14](https://www.python.org/) + [FastAPI](https://fastapi.tiangolo.com/) + [Uvicorn](https://www.uvicorn.org/) + [Pydantic](https://pydantic.dev/) |
-| **Web Scraper** | [BeautifulSoup4 (bs4)](https://www.crummy.com/software/BeautifulSoup/) + `requests` |
-| **Frontend Framework** | [React 18.2](https://reactjs.org/) + [Vite 5.4](https://vitejs.dev/) |
-| **Styling & Design** | [TailwindCSS 3.4](https://tailwindcss.com/) + Institutional Dark Theme |
-| **Web3 & Blockchain** | EIP-1193 Provider + MetaMask Direct RPC (`web3Service.js`) |
-| **Database & Auth** | [Firebase Auth](https://firebase.google.com/) & [Firestore Database](https://firebase.google.com/docs/firestore) |
-| **Deployments** | Firebase Hosting & GitHub Repositories |
+- **Core**: React 18, Vite 5, JavaScript (ES6+).
+- **Styling**: Vanilla CSS3 + TailwindCSS, Glassmorphic UI design system.
+- **Web3**: EIP-1193 MetaMask Provider, Etherscan API.
+- **Icons & UI Assets**: Lucide React Icons.
+- **State & Persistence**: React Context API (`CryptoContext.jsx`) + localStorage persistence.
 
 ---
 
-## 🚀 Local Installation & Execution
+## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js `v18.0.0` or higher
-- Python `v3.10` or higher
+- Node.js (v18.0.0 or higher)
+- npm or yarn
+- MetaMask Browser Extension (optional for real Web3 transactions)
 
-### 1. Clone the Repository
-```bash
-git clone https://github.com/AGzDeepak/crypto_tradingbot.git
-cd crypto_tradingbot
-```
+### Installation & Local Setup
 
-### 2. Run Main Python Application Launcher
 ```bash
-python main.py
-```
-*Automatically installs Python dependencies and starts FastAPI server on http://localhost:8000*
+# 1. Clone the repository
+git clone https://github.com/AGzDeepak/CryptoTradeBot.git
 
-### 3. Run Interactive Python CLI Terminal Console
-```bash
-python cli_dashboard.py
-```
+# 2. Navigate to project directory
+cd CryptoTradeBot
 
-### 4. Run React Web Application
-```bash
+# 3. Install dependencies
 npm install
+
+# 4. Start local Vite development server
 npm run dev
 ```
-*Web Application running at http://localhost:3000*
+
+The application will be accessible locally at `http://localhost:3000/`.
+
+### Building for Production
+
+```bash
+# Generate production bundle
+npm run build
+```
 
 ---
 
-## 📂 Project Structure Map
+## 📁 Repository Structure
 
 ```
-crypto_tradingbot/
-├── backend/
-│   ├── bot.py                        # Python Autonomous Quant Bot Engine
-│   ├── firebase_config.py            # Python Firebase Admin SDK Integration
-│   ├── market_generator.py           # NumPy Market Ticks & Indicator Generator
-│   ├── scraper.py                    # BeautifulSoup4 (bs4) Crypto News Scraper
-│   ├── server.py                     # FastAPI REST API Server & Payment Endpoints
-│   ├── swap_tool.py                  # Python Liquidity Swap Engine
-│   ├── trading_engine.py             # Python Datastore, Positions & Wallet Manager
-│   └── web3_engine.py                # Python EVM Address & Network Verifier
+CryptoTradeBot/
 ├── src/
 │   ├── components/
-│   │   ├── AccountSection.jsx         # Account Limits, Sessions & Tax Export Center
-│   │   ├── AddApiKeyModal.jsx         # Exchange API Key Connection Form Modal
-│   │   ├── AnalyticsSection.jsx       # Quant Performance & Win Rate Analytics
-│   │   ├── ArbitragePanel.jsx         # Spatial Arbitrage Scanner Matrix
-│   │   ├── AutoTraderBar.jsx          # Master Bot Autopilot Command Deck
-│   │   ├── GlobalModals.jsx           # Modal Manager & Wallet Operations
-│   │   ├── Header.jsx                 # Top Navigation Header & Deposit Button
-│   │   ├── LiveCryptoNews.jsx         # Live Crypto News & Fear/Greed Index
-│   │   ├── OperationSwapTool.jsx      # Manual Buy/Sell Swap Form
-│   │   ├── PaperTradingPanel.jsx      # Standalone Mock Paper Trading Terminal
-│   │   ├── RealPaymentGatewayModal.jsx# Multi-Channel Payment Gateway Modal
-│   │   ├── Sidebar.jsx                # Navigation Sidebar
-│   │   ├── TotalAssetsHero.jsx        # Hero Asset Balances Breakdown
-│   │   ├── TradeHistory.jsx           # Quantitative Trade Audit Log Ledger
-│   │   ├── WalletSection.jsx          # Institutional Wallet Section
-│   │   └── YellowPortfolioCard.jsx    # Yellow Reference Portfolio Card
-│   ├── config/
-│   │   └── firebase.js                # Firebase App, Auth & Firestore Config
+│   │   ├── MetaMaskTradeTerminalSection.jsx   # Web3 Gas, Allowances & Spatial Arbitrage
+│   │   ├── ContractProcessSection.jsx          # Remix Solidity IDE (Steps 1-8)
+│   │   ├── BankToBankTransferSection.jsx       # Wire Transfer & MetaMask Transfer
+│   │   ├── PaperTradingPanel.jsx              # Automated Quant Bot & Controls
+│   │   ├── TotalAssetsHero.jsx                # Live Binance Market Cards
+│   │   ├── Sidebar.jsx                        # Navigation & Crypto Theme
+│   │   └── Header.jsx                         # Top Header & Autopilot Switcher
 │   ├── context/
-│   │   └── CryptoContext.jsx          # Master React Application State
-│   ├── services/
-│   │   ├── apiService.js              # Python FastAPI REST Client
-│   │   └── web3Service.js             # EIP-1193 Web3 Provider Integration
-│   ├── App.jsx                        # Main Application Shell
-│   ├── index.css                      # Institutional Dark Theme Utilities
-│   └── main.jsx                       # React Entry Point
-├── cli_dashboard.py                   # Interactive Python CLI Terminal Console
-├── main.py                            # Main Python Application Entry Launcher
-├── firebase.json                      # Firebase Hosting Configuration
-└── README.md                          # Comprehensive Project Documentation
+│   │   └── CryptoContext.jsx                  # Main State Engine & Quant Loop
+│   ├── index.css                              # Adopted Crypto UI Color System
+│   └── App.jsx                                # Main App Shell
+├── package.json
+└── README.md
 ```
 
 ---
 
-## 👤 Author & Repositories
+## 📜 License
 
-**Deepak Kumar**
-- **GitHub**: [@AGzDeepak](https://github.com/AGzDeepak)
-- **Primary Repository**: [AGzDeepak/crypto_tradingbot](https://github.com/AGzDeepak/crypto_tradingbot)
-- **Secondary Repository**: [AGzDeepak/trading_cryptobot](https://github.com/AGzDeepak/trading_cryptobot)
-- **Live Firebase Application**: [https://tradebot-25d4f.web.app](https://tradebot-25d4f.web.app)
-
----
-
-## 📄 License
-
-This project is open-source and available under the [MIT License](LICENSE).
+Distributed under the MIT License. See `LICENSE` for details.
