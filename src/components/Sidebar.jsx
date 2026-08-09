@@ -32,19 +32,19 @@ export const Sidebar = () => {
   ];
 
   return (
-    <aside className="hidden lg:flex w-64 bg-gradient-to-b from-[#0a0f1d] via-[#070913] to-[#030408] border-r border-[#00f2fe]/20 flex-col justify-between p-6 z-30 shrink-0 h-full overflow-y-auto no-scrollbar font-sans shadow-2xl">
+    <aside className="hidden lg:flex w-64 bg-gradient-to-b from-[#0b1624] via-[#07101a] to-[#03070d] border-r border-[#68a7ca]/30 flex-col justify-between p-6 z-30 shrink-0 h-full overflow-y-auto no-scrollbar font-sans shadow-2xl">
       <div className="space-y-8">
         
         {/* Brand Emblem */}
         <div className="flex items-center space-x-3 cursor-pointer pl-2" onClick={() => setActiveTab('dashboard')}>
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#00f2fe] via-[#00c6ff] to-[#0072ff] flex items-center justify-center shadow-[0_0_25px_rgba(0,242,254,0.45)] transition hover:scale-105">
-            <div className="w-6 h-6 rounded-xl bg-[#060812] flex items-center justify-center">
-              <div className="w-3.5 h-3.5 rounded-lg bg-gradient-to-br from-[#00e676] to-[#00f2fe] animate-pulse" />
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#4390bc] via-[#68a7ca] to-[#8dbdd8] flex items-center justify-center shadow-[0_0_25px_rgba(67,144,188,0.5)] transition hover:scale-105">
+            <div className="w-6 h-6 rounded-xl bg-[#07101a] flex items-center justify-center">
+              <div className="w-3.5 h-3.5 rounded-lg bg-gradient-to-br from-[#8dbdd8] to-[#dbe9f3] animate-pulse" />
             </div>
           </div>
           <div>
             <h1 className="text-xs font-black text-white tracking-tight uppercase font-mono">CryptoTradewallet</h1>
-            <span className="text-[10px] text-[#00f2fe] font-mono font-bold tracking-widest block -mt-0.5">QUANT TERMINAL</span>
+            <span className="text-[10px] text-[#8dbdd8] font-mono font-bold tracking-widest block -mt-0.5">QUANT TERMINAL</span>
           </div>
         </div>
 
@@ -61,23 +61,23 @@ export const Sidebar = () => {
                 className={`w-full flex items-center space-x-3.5 px-4 py-3 rounded-2xl text-xs font-semibold transition ${
                   isActive
                     ? 'chainblock-nav-active'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+                    : 'text-slate-400 hover:text-[#dbe9f3] hover:bg-[#101f30]/60'
                 }`}
               >
                 <Icon className={`w-4 h-4 ${
                   isActive
-                    ? 'text-[#00f2fe]'
-                    : 'text-slate-500'
+                    ? 'text-[#dbe9f3]'
+                    : 'text-[#68a7ca]'
                 }`} />
                 <span>{item.label}</span>
                 {item.id === 'metamaskterminal' && (
                   <span className={`ml-auto text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${
-                    isActive ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' : 'bg-slate-800 text-slate-500'
+                    isActive ? 'bg-[#4390bc]/30 text-[#dbe9f3] border border-[#8dbdd8]/50' : 'bg-slate-800 text-slate-400'
                   }`}>WEB3</span>
                 )}
                 {isRealWallet && (
                   <span className={`ml-auto text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${
-                    isActive ? 'bg-[#00e676]/20 text-[#00e676]' : 'bg-slate-800 text-slate-500'
+                    isActive ? 'bg-[#00e676]/20 text-[#00e676]' : 'bg-slate-800 text-slate-400'
                   }`}>LIVE</span>
                 )}
               </button>

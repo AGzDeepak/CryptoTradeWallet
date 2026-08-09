@@ -2,9 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-ocean-blue: #4390bc;
+  --color-sky-blue: #68a7ca;
+  --color-ice-blue: #8dbdd8;
+  --color-frost-blue: #b2d3e6;
+  --color-crystal-ice: #dbe9f3;
+}
+
 @layer base {
   html, body {
-    background: radial-gradient(ellipse at 50% -20%, #0e1526 0%, #070a13 60%, #030408 100%);
+    background: radial-gradient(ellipse at 50% -20%, #0f1c2b 0%, #08101a 60%, #03060a 100%);
     background-attachment: fixed;
     color: #f8fafc;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -19,99 +27,103 @@
   }
 }
 
-/* Glass & Neon Crypto Micro Animations */
+/* Glass & Neon Micro Animations for Ocean Steel & Crystal Ice Palette */
 @keyframes neonPulse {
-  0%, 100% { box-shadow: 0 0 15px rgba(0, 242, 254, 0.35); }
-  50% { box-shadow: 0 0 30px rgba(0, 242, 254, 0.65); }
+  0%, 100% { box-shadow: 0 0 15px rgba(67, 144, 188, 0.4); }
+  50% { box-shadow: 0 0 30px rgba(104, 167, 202, 0.7); }
 }
 
-@keyframes cryptoGreenGlow {
-  0%, 100% { box-shadow: 0 0 15px rgba(0, 230, 118, 0.3); }
-  50% { box-shadow: 0 0 25px rgba(0, 230, 118, 0.6); }
+@keyframes oceanGreenGlow {
+  0%, 100% { box-shadow: 0 0 15px rgba(0, 230, 118, 0.35); }
+  50% { box-shadow: 0 0 25px rgba(0, 230, 118, 0.65); }
 }
 
-@keyframes cryptoRedGlow {
-  0%, 100% { box-shadow: 0 0 15px rgba(255, 59, 105, 0.3); }
-  50% { box-shadow: 0 0 25px rgba(255, 59, 105, 0.6); }
+@keyframes oceanRedGlow {
+  0%, 100% { box-shadow: 0 0 15px rgba(255, 59, 105, 0.35); }
+  50% { box-shadow: 0 0 25px rgba(255, 59, 105, 0.65); }
 }
 
 .glow-cyan {
   animation: neonPulse 3s infinite ease-in-out;
 }
 
+.glow-ocean {
+  animation: neonPulse 3s infinite ease-in-out;
+}
+
 .glow-green {
-  animation: cryptoGreenGlow 3s infinite ease-in-out;
+  animation: oceanGreenGlow 3s infinite ease-in-out;
 }
 
 .glow-red {
-  animation: cryptoRedGlow 3s infinite ease-in-out;
+  animation: oceanRedGlow 3s infinite ease-in-out;
 }
 
 @layer components {
-  /* Ultra-Premium Glassmorphic Crypto Shell Container */
+  /* Ultra-Premium Glassmorphic Shell Container */
   .chainblock-shell {
-    background: linear-gradient(145deg, rgba(14, 21, 35, 0.95) 0%, rgba(7, 10, 18, 0.98) 100%);
+    background: linear-gradient(145deg, rgba(15, 28, 43, 0.95) 0%, rgba(8, 16, 26, 0.98) 100%);
     backdrop-filter: blur(24px);
-    border: 1px solid rgba(0, 242, 254, 0.2);
+    border: 1px solid rgba(67, 144, 188, 0.35);
     border-radius: 1.5rem;
-    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.85), inset 0 1px 1px rgba(219, 233, 243, 0.15);
   }
 
-  /* High-Tech Luxury Adopted Crypto Glass Card */
+  /* High-Tech Luxury Adopted Glass Card with #4390bc & #68a7ca Theme */
   .chainblock-card {
-    background: linear-gradient(135deg, rgba(13, 19, 31, 0.92) 0%, rgba(8, 11, 19, 0.98) 100%);
+    background: linear-gradient(135deg, rgba(16, 31, 48, 0.92) 0%, rgba(9, 17, 27, 0.98) 100%);
     backdrop-filter: blur(18px);
-    border: 1px solid rgba(0, 242, 254, 0.18);
+    border: 1px solid rgba(104, 167, 202, 0.25);
     border-radius: 1.25rem;
     padding: 1.5rem;
-    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(219, 233, 243, 0.08);
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .chainblock-card:hover {
-    border-color: rgba(0, 242, 254, 0.4);
-    box-shadow: 0 15px 35px -5px rgba(0, 242, 254, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    border-color: rgba(141, 189, 216, 0.5);
+    box-shadow: 0 15px 35px -5px rgba(67, 144, 188, 0.3), inset 0 1px 0 rgba(219, 233, 243, 0.18);
   }
 
   /* Adopted Crypto Bullish Green Card */
   .crypto-card-gain {
-    background: linear-gradient(135deg, rgba(0, 230, 118, 0.08) 0%, rgba(6, 12, 18, 0.95) 100%);
-    border: 1px solid rgba(0, 230, 118, 0.35);
-    box-shadow: 0 10px 25px -5px rgba(0, 230, 118, 0.15);
+    background: linear-gradient(135deg, rgba(0, 230, 118, 0.09) 0%, rgba(8, 18, 26, 0.95) 100%);
+    border: 1px solid rgba(0, 230, 118, 0.4);
+    box-shadow: 0 10px 25px -5px rgba(0, 230, 118, 0.2);
   }
 
   /* Adopted Crypto Bearish Red Card */
   .crypto-card-loss {
-    background: linear-gradient(135deg, rgba(255, 59, 105, 0.08) 0%, rgba(16, 8, 14, 0.95) 100%);
-    border: 1px solid rgba(255, 59, 105, 0.35);
-    box-shadow: 0 10px 25px -5px rgba(255, 59, 105, 0.15);
+    background: linear-gradient(135deg, rgba(255, 59, 105, 0.09) 0%, rgba(20, 10, 16, 0.95) 100%);
+    border: 1px solid rgba(255, 59, 105, 0.4);
+    box-shadow: 0 10px 25px -5px rgba(255, 59, 105, 0.2);
   }
 
   /* Purple Web3 Glass Card Variant */
   .purple-glass-card {
     background: linear-gradient(135deg, rgba(30, 27, 75, 0.75) 0%, rgba(13, 16, 30, 0.95) 100%);
     backdrop-filter: blur(16px);
-    border: 1px solid rgba(168, 85, 247, 0.3);
+    border: 1px solid rgba(168, 85, 247, 0.35);
     border-radius: 1.25rem;
     padding: 1.5rem;
-    box-shadow: 0 10px 30px -5px rgba(168, 85, 247, 0.2);
+    box-shadow: 0 10px 30px -5px rgba(168, 85, 247, 0.25);
   }
 
   /* Cyber Interactive Card */
   .cyber-card {
-    background: linear-gradient(145deg, rgba(12, 17, 28, 0.92) 0%, rgba(6, 9, 15, 0.98) 100%);
-    border: 1px solid rgba(0, 242, 254, 0.18);
+    background: linear-gradient(145deg, rgba(14, 27, 42, 0.92) 0%, rgba(7, 14, 23, 0.98) 100%);
+    border: 1px solid rgba(141, 189, 216, 0.25);
     border-radius: 1rem;
     transition: all 0.2s ease-in-out;
   }
 
   .cyber-card:hover {
-    border-color: rgba(0, 242, 254, 0.45);
+    border-color: rgba(178, 211, 230, 0.55);
     transform: translateY(-2px);
-    box-shadow: 0 12px 25px -5px rgba(0, 242, 254, 0.18);
+    box-shadow: 0 12px 25px -5px rgba(67, 144, 188, 0.25);
   }
 
-  /* High Contrast Electric Cyan Adopted Action Button */
+  /* High Contrast Ocean Blue Action Button (#4390bc -> #68a7ca -> #8dbdd8) */
   .chainblock-btn-emerald {
     height: 2.75rem;
     padding-left: 1.25rem;
@@ -123,26 +135,26 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
-    color: #030712;
-    box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
+    background: linear-gradient(135deg, #4390bc 0%, #68a7ca 50%, #8dbdd8 100%);
+    color: #040912;
+    box-shadow: 0 0 25px rgba(67, 144, 188, 0.5);
     transition: all 0.2s ease;
   }
 
   .chainblock-btn-emerald:hover {
     filter: brightness(1.15);
-    box-shadow: 0 0 30px rgba(0, 242, 254, 0.65);
+    box-shadow: 0 0 35px rgba(104, 167, 202, 0.7);
     transform: translateY(-1px);
   }
 
   /* Sidebar Active Navigation Pill */
   .chainblock-nav-active {
-    background: linear-gradient(90deg, rgba(0, 242, 254, 0.2) 0%, rgba(79, 172, 254, 0.15) 100%);
-    color: #00f2fe;
+    background: linear-gradient(90deg, rgba(67, 144, 188, 0.3) 0%, rgba(104, 167, 202, 0.2) 100%);
+    color: #dbe9f3;
     font-weight: 800;
     border-radius: 0.75rem;
-    border: 1px solid rgba(0, 242, 254, 0.45);
-    box-shadow: 0 0 18px rgba(0, 242, 254, 0.25);
+    border: 1px solid rgba(141, 189, 216, 0.5);
+    box-shadow: 0 0 20px rgba(67, 144, 188, 0.35);
   }
 }
 
@@ -153,14 +165,14 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #04060c;
+  background: #04070d;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 242, 254, 0.3);
+  background: rgba(104, 167, 202, 0.35);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #00f2fe;
+  background: #68a7ca;
 }

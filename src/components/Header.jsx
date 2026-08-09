@@ -29,21 +29,21 @@ export const Header = () => {
   };
 
   return (
-    <header className="bg-[#080b13] border-b border-[#00f2fe]/20 px-6 sm:px-8 h-20 flex items-center justify-between gap-6 z-40 shrink-0 font-sans">
+    <header className="bg-[#0a1422] border-b border-[#68a7ca]/30 px-6 sm:px-8 h-20 flex items-center justify-between gap-6 z-40 shrink-0 font-sans">
       
       {/* Left: Dynamic Header Title & Mobile Brand Icon */}
       <div className="flex items-center shrink-0 mr-2 space-x-3">
         {/* Mobile Brand emblem icon (visible on mobile/tablet) */}
         <div 
-          className="lg:hidden w-8 h-8 rounded-full bg-[#00f2fe] flex items-center justify-center shadow-[0_0_12px_rgba(0,242,254,0.45)] cursor-pointer"
+          className="lg:hidden w-8 h-8 rounded-full bg-gradient-to-r from-[#4390bc] to-[#68a7ca] flex items-center justify-center shadow-[0_0_12px_rgba(67,144,188,0.5)] cursor-pointer"
           onClick={() => setActiveTab('dashboard')}
         >
-          <div className="w-5 h-5 rounded-full bg-[#0b0c10] flex items-center justify-center">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#00e676]" />
+          <div className="w-5 h-5 rounded-full bg-[#0a1422] flex items-center justify-center">
+            <div className="w-2.5 h-2.5 rounded-full bg-[#dbe9f3]" />
           </div>
         </div>
 
-        <h1 className="text-base sm:text-2xl font-extrabold text-[#00f2fe] tracking-tight whitespace-nowrap">
+        <h1 className="text-base sm:text-2xl font-extrabold text-[#dbe9f3] tracking-tight whitespace-nowrap">
           {getTitle()}
         </h1>
       </div>
