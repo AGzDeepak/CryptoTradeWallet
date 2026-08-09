@@ -241,7 +241,7 @@ export const GlobalModals = () => {
             {activeModal === 'NOTIFICATIONS' && 'SYSTEM NOTIFICATIONS LOG'}
             {activeModal === 'LOGOUT' && 'CONFIRM LOGOUT'}
             {activeModal === 'CONFIG_STRATEGY' && `CONFIGURE MODEL: ${modalData?.name || 'STRATEGY'}`}
-            {activeModal === 'AI_SUPPORT' && 'CHAINBLOCK AI SUPPORT DESK'}
+            {activeModal === 'AI_SUPPORT' && 'CRYPTOTRADEWALLET AI SUPPORT DESK'}
             {activeModal === 'FEEDBACK' && 'SUBMIT PLATFORM FEEDBACK'}
           </h3>
 

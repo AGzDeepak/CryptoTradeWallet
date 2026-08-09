@@ -43,7 +43,7 @@ export const Sidebar = () => {
             </div>
           </div>
           <div>
-            <h1 className="text-sm font-black text-white tracking-tight uppercase font-mono">CHAINBLOCK</h1>
+            <h1 className="text-xs font-black text-white tracking-tight uppercase font-mono">CryptoTradewallet</h1>
             <span className="text-[10px] text-[#00f2fe] font-mono font-bold tracking-widest block -mt-0.5">QUANT TERMINAL</span>
           </div>
         </div>
