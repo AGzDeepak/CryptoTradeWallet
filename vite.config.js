@@ -2,8 +2,8 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 // https://vitejs.dev/config/
-export default defineConfig(({ command }) => ({
-  base: command === 'build' ? '/CryptoTradeBot/' : '/',
+export default defineConfig({
+  base: './',
   plugins: [react()],
   server: {
     port: 3000,
@@ -20,5 +20,4 @@ export default defineConfig(({ command }) => ({
       },
     },
   },
-}));
-
+});
