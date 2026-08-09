@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "homepage": "https://AGzDeepak.github.io/CryptoTradeBot",
+  "homepage": "https://AGzDeepak.github.io/CryptoTradeWallet",
   "scripts": {
     "dev": "vite",
     "build": "vite build && (copy dist\\index.html dist\\404.html || cp dist/index.html dist/404.html) && (echo > dist\\.nojekyll || touch dist/.nojekyll)",

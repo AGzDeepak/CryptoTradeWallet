@@ -67,10 +67,10 @@
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/AGzDeepak/CryptoTradeBot.git
+git clone https://github.com/AGzDeepak/CryptoTradeWallet.git
 
 # 2. Navigate to project directory
-cd CryptoTradeBot
+cd CryptoTradeWallet
 
 # 3. Install dependencies
 npm install
