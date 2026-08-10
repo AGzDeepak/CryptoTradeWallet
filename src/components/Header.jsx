@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { Search, Mail, Bell, Bot, LogOut, Wallet } from 'lucide-react';
+import { Search, Mail, Bell, Bot, LogOut, Wallet, ChevronDown, Globe } from 'lucide-react';
 
 export const Header = () => {
   const { 
@@ -13,6 +13,7 @@ export const Header = () => {
     walletMode,
     setWalletMode,
     realWallet,
+    realWalletNetwork,
     user
   } = useCrypto();
 
@@ -101,13 +102,20 @@ export const Header = () => {
           </button>
         </div>
 
-        {/* Network Selector Pill */}
+        {/* Premium Active Network Selector Pill */}
         <button
           onClick={() => openModal('NETWORK_SWITCHER')}
-          className="hidden lg:flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-[#181a20] border border-[#68a7ca]/40 text-[#dbe9f3] font-bold text-xs font-mono hover:border-[#68a7ca] transition cursor-pointer shrink-0"
+          className="hidden lg:flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-[#0c1422] border border-[#4390bc]/50 text-[#dbe9f3] font-bold text-xs font-mono hover:border-[#68a7ca] hover:bg-[#121c2e] transition shadow-[0_0_15px_rgba(67,144,188,0.2)] cursor-pointer shrink-0"
+          title="Click to Switch Mainnet & Testnet Networks"
         >
-          <span className="text-sm">🌐</span>
-          <span>NETWORKS</span>
+          <span className="w-2 h-2 rounded-full bg-[#00e676] animate-pulse shrink-0" />
+          <span className="text-sm shrink-0">
+            {realWalletNetwork?.toLowerCase().includes('bitcoin') ? '₿' : realWalletNetwork?.toLowerCase().includes('sepolia') ? '🧪' : realWalletNetwork?.toLowerCase().includes('arbitrum') ? '⚡' : realWalletNetwork?.toLowerCase().includes('polygon') ? '🟣' : '🌐'}
+          </span>
+          <span className="max-w-[140px] truncate uppercase text-[11px] font-extrabold tracking-tight">
+            {realWalletNetwork ? realWalletNetwork.replace(' Mainnet', '').replace(' Testnet', '') : 'Ethereum'}
+          </span>
+          <ChevronDown className="w-3.5 h-3.5 text-[#8dbdd8] shrink-0" />
         </button>
 
         {/* Real Payment Gateway Action Button */}
