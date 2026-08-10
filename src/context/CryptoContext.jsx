@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { audioFx } from '../utils/audio';
 import { recordFirebaseLoginLog, recordFirebaseWithdrawal, recordFirebaseBotTradeLog, sanitizeInput } from '../services/securityService';
-import { connectRealWeb3Wallet, sendRealWeb3Transaction, isWeb3Available } from '../services/web3Service';
+import { connectRealWeb3Wallet, sendRealWeb3Transaction, executeRealBuyEthereumOrder, executeRealSellEthereumOrder, isWeb3Available } from '../services/web3Service';
 
 const CryptoContext = createContext();
 
@@ -1404,7 +1404,9 @@ export const CryptoProvider = ({ children }) => {
         joinTeamViaCode,
         activeTradeExecutionMode,
         setActiveTradeExecutionMode,
-        switchRealWalletAccount
+        switchRealWalletAccount,
+        executeRealBuyEthereumOrder,
+        executeRealSellEthereumOrder
       }}
     >
       {children}

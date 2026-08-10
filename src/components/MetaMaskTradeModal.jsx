@@ -33,7 +33,7 @@ export const MetaMaskTradeModal = () => {
     e.preventDefault();
     const amt = parseFloat(tradeAmountEth);
     if (isNaN(amt) || amt <= 0) {
-      addNotification('Please enter a valid ETH amount.', 'warning');
+      addNotification('Please enter a valid amount.', 'warning');
       return;
     }
 
@@ -46,19 +46,20 @@ export const MetaMaskTradeModal = () => {
     setTxResult(null);
 
     try {
-      addNotification('🦊 Opening MetaMask extension window for on-chain transaction confirmation...', 'info');
+      addNotification(`🦊 Opening MetaMask extension window for ${tradeSide} REAL ETHEREUM transaction authorization...`, 'info');
 
       const userAddr = realWallet.address || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
-      const txRes = await sendRealWeb3Transaction(
-        userAddr,
-        targetRouter,
-        tradeAmountEth,
-        realWallet.chainId || 42161
-      );
+      let txRes;
+
+      if (tradeSide === 'BUY') {
+        txRes = await executeRealBuyEthereumOrder(userAddr, (amt * 3540.20).toFixed(2), targetRouter);
+      } else {
+        txRes = await executeRealSellEthereumOrder(userAddr, tradeAmountEth, targetRouter);
+      }
 
       setTxResult(txRes);
       executeOrder(tradeSide, tradePair, 'MetaMask Web3 DEX', amt * 3540.20);
-      addNotification(`✅ ON-CHAIN METAMASK TRADE BROADCASTED! Tx: ${txRes.txHash.substring(0, 12)}...`, 'success');
+      addNotification(`✅ ON-CHAIN ${tradeSide} REAL ETHEREUM BROADCASTED! Tx: ${txRes.txHash.substring(0, 12)}...`, 'success');
     } catch (err) {
       addNotification(`MetaMask Trade Error: ${err.message}`, 'danger');
     } finally {
