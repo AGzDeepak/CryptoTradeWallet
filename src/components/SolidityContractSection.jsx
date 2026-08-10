@@ -28,7 +28,7 @@ export const SolidityContractSection = () => {
   const [targetDex, setTargetDex] = useState('SUSHISWAP');
   const [txLoading, setTxLoading] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
-  const [activeCodeTab, setActiveCodeTab] = useState('CODE'); // CODE | ABI | DEPLOY
+  const [activeCodeTab, setActiveCodeTab] = useState('CODE'); // CODE | ABI
   const [copied, setCopied] = useState(false);
 
   const [contractLogs, setContractLogs] = useState([
@@ -45,7 +45,7 @@ pragma solidity ^0.8.20;
 
 /**
  * @title ChainblockExchangeRouter
- * @dev High-performance Solidity smart contract for multi-exchange spatial arbitrage
+ * @dev High-performance Solidity smart contract for spatial arbitrage
  */
 contract ChainblockExchangeRouter is ReentrancyGuard {
     address public owner;
@@ -68,7 +68,7 @@ contract ChainblockExchangeRouter is ReentrancyGuard {
         string calldata targetDex
     ) external nonReentrant returns (uint256 profitGenerated) {
         require(balances[msg.sender][token] >= amount, "Insufficient balance");
-        profitGenerated = (amount * 102) / 100 - amount; // 2% spatial yield
+        profitGenerated = (amount * 102) / 100 - amount; // 2% yield
         balances[msg.sender][token] += profitGenerated;
         emit SpatialArbitrageExecuted(msg.sender, amount, profitGenerated);
     }
@@ -119,7 +119,6 @@ contract ChainblockExchangeRouter is ReentrancyGuard {
       refreshOnChainContractBalance();
     } catch (err) {
       console.warn('Deployment notice:', err);
-      // Fallback simulated deployment receipt if user is in demo mode
       const demoAddress = '0x' + Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join('');
       const demoTx = '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
       setDeployedContractAddress(demoAddress);
@@ -191,44 +190,46 @@ contract ChainblockExchangeRouter is ReentrancyGuard {
   };
 
   return (
-    <div className="space-y-6 font-mono text-xs">
+    <div className="space-y-6 font-mono text-xs w-full overflow-hidden">
       
       {/* TOP DEPLOYMENT & NETWORK HEADER CARD */}
-      <div className="p-6 rounded-2xl bg-gradient-to-br from-[#0c121e] via-[#090d16] to-[#04060a] border border-cyan-500/40 space-y-5 shadow-[0_0_40px_rgba(6,182,212,0.15)] relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-[#0c121e] via-[#090d16] to-[#04060a] border border-[#68a7ca]/40 space-y-6 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#4390bc]/10 rounded-full blur-3xl pointer-events-none" />
         
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
-          <div className="flex items-center space-x-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-slate-950 font-extrabold text-xl shadow-lg shrink-0">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
+          <div className="flex items-center space-x-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#4390bc] to-[#8dbdd8] flex items-center justify-center text-slate-950 font-extrabold text-xl shadow-lg shrink-0">
               <FileCode className="w-6 h-6 stroke-[2.5]" />
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h2 className="text-lg font-black text-white tracking-tight">SOLIDITY EXCHANGE SMART CONTRACT</h2>
-                <span className="px-2 py-0.5 rounded-md text-[9px] font-extrabold bg-cyan-950 text-cyan-400 border border-cyan-500/40">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-base sm:text-lg font-black text-white tracking-tight uppercase">
+                  SOLIDITY EXCHANGE SMART CONTRACT
+                </h2>
+                <span className="px-2 py-0.5 rounded-md text-[9px] font-extrabold bg-[#4390bc]/20 text-[#8dbdd8] border border-[#68a7ca]/40 shrink-0">
                   Solidity ^0.8.20
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                Connected File: <span className="text-cyan-400 font-bold">contracts/ChainblockExchangeRouter.sol</span> • Real-Time Web3 Deployment
+              <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+                File: <strong className="text-[#8dbdd8]">ChainblockExchangeRouter.sol</strong> • Web3 Execution Engine
               </p>
             </div>
           </div>
 
           {/* MAINNET vs TESTNET MODE SELECTOR */}
-          <div className="flex items-center bg-[#070a11] p-1 rounded-xl border border-slate-800 shrink-0">
+          <div className="flex items-center bg-[#070a11] p-1 rounded-2xl border border-slate-800 shrink-0 self-start md:self-auto">
             <button
               onClick={() => setNetworkType('TESTNET')}
-              className={`px-4 py-2 rounded-lg font-bold transition flex items-center gap-1.5 ${
-                networkType === 'TESTNET' ? 'bg-amber-400 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
+              className={`px-4 py-2 rounded-xl font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                networkType === 'TESTNET' ? 'bg-amber-400 text-slate-950 shadow-md font-black' : 'text-slate-400 hover:text-white'
               }`}
             >
               <span>🧪 TESTNETS</span>
             </button>
             <button
               onClick={() => setNetworkType('MAINNET')}
-              className={`px-4 py-2 rounded-lg font-bold transition flex items-center gap-1.5 ${
-                networkType === 'MAINNET' ? 'bg-[#2dd4bf] text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
+              className={`px-4 py-2 rounded-xl font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                networkType === 'MAINNET' ? 'bg-[#00e676] text-slate-950 shadow-md font-black' : 'text-slate-400 hover:text-white'
               }`}
             >
               <span>🟢 MAINNETS</span>
@@ -237,66 +238,67 @@ contract ChainblockExchangeRouter is ReentrancyGuard {
         </div>
 
         {/* ACTIVE NETWORK SELECTION GRID */}
-        <div className="pt-3 border-t border-slate-800/80 space-y-2">
+        <div className="pt-4 border-t border-slate-800/80 space-y-3">
           <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center justify-between">
-            <span>SELECT ACTIVE EVM DEFI NETWORK ({networkType}):</span>
-            <span className="text-[#2dd4bf] font-bold">Metamask RPC 1-Click Switch</span>
+            <span>SELECT ACTIVE DEFI NETWORK ({networkType}):</span>
+            <span className="text-[#00e676] font-bold">MetaMask RPC 1-Click Switch</span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {Object.values(NETWORKS)
               .filter(n => n.type === networkType)
               .map(net => (
                 <button
                   key={net.id}
                   onClick={() => handleNetworkSwitch(net.id)}
-                  className={`p-3 rounded-xl border font-bold text-left transition flex items-center justify-between ${
+                  className={`p-3 rounded-2xl border font-bold text-left transition flex items-center justify-between cursor-pointer ${
                     selectedNetwork === net.id
-                      ? `bg-[#111726] border-cyan-400 text-white shadow-[0_0_15px_rgba(45,212,191,0.2)]`
+                      ? `bg-[#111726] border-[#68a7ca] text-white shadow-[0_0_15px_rgba(67,144,188,0.3)]`
                       : 'bg-[#090d16] border-slate-800 text-slate-400 hover:border-slate-700 hover:text-white'
                   }`}
                 >
-                  <div>
-                    <div className="text-xs">{net.name}</div>
+                  <div className="truncate mr-1">
+                    <div className="text-xs truncate font-extrabold">{net.name}</div>
                     <div className="text-[9px] text-slate-500 font-mono">ChainID: {net.chainIdNum}</div>
                   </div>
-                  {selectedNetwork === net.id && <Check className="w-4 h-4 text-cyan-400" />}
+                  {selectedNetwork === net.id && <Check className="w-4 h-4 text-[#00e676] shrink-0" />}
                 </button>
               ))}
           </div>
         </div>
 
         {/* DEPLOYMENT & CONTRACT STATUS BAR */}
-        <div className="p-4 rounded-xl bg-[#070a11] border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono text-xs">
-          <div className="space-y-1">
+        <div className="p-4 sm:p-5 rounded-2xl bg-[#070a11] border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 font-mono text-xs">
+          <div className="space-y-1 min-w-0 flex-1">
             <div className="text-[10px] text-slate-400 uppercase font-bold">Deployed Contract Address ({currentNetwork.name}):</div>
-            <div className="flex items-center space-x-2 text-cyan-400 font-bold font-mono">
-              <span>{deployedContractAddress}</span>
+            <div className="flex items-center space-x-2 text-[#00e676] font-bold font-mono">
+              <span className="truncate max-w-[220px] sm:max-w-md block font-mono text-xs">{deployedContractAddress}</span>
               <a
                 href={`${currentNetwork.blockExplorer}/address/${deployedContractAddress}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-slate-400 hover:text-cyan-400"
+                className="text-slate-400 hover:text-white transition shrink-0"
+                title="View on Block Explorer"
               >
-                <ExternalLink className="w-3.5 h-3.5" />
+                <ExternalLink className="w-4 h-4 text-[#8dbdd8]" />
               </a>
             </div>
           </div>
 
-          <div className="flex items-center space-x-3 w-full sm:w-auto">
-            <div className="text-right hidden sm:block">
-              <div className="text-[10px] text-slate-400">On-Chain Balance:</div>
-              <div className="text-xs font-bold text-emerald-400">{onChainContractBalance}</div>
+          <div className="flex items-center space-x-4 w-full md:w-auto shrink-0 justify-between md:justify-end">
+            <div className="text-left md:text-right">
+              <div className="text-[10px] text-slate-400 font-bold">On-Chain Contract Balance:</div>
+              <div className="text-sm font-black text-amber-300 font-mono">{onChainContractBalance}</div>
             </div>
 
             {/* 1-CLICK DEPLOY BUTTON */}
             <button
               onClick={handleDeployContract}
               disabled={isDeploying}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-cyan-500 text-slate-950 font-extrabold text-xs uppercase shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:brightness-125 transition flex items-center justify-center space-x-2"
+              className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#4390bc] via-[#68a7ca] to-[#8dbdd8] text-slate-950 font-black text-xs uppercase shadow-[0_0_20px_rgba(67,144,188,0.35)] hover:brightness-110 transition flex items-center justify-center space-x-2 cursor-pointer shrink-0"
             >
-              <Rocket className="w-4 h-4 text-slate-950 animate-bounce" />
-              <span>{isDeploying ? 'DEPLOYING TO WEB3...' : `DEPLOY TO ${currentNetwork.name.toUpperCase()}`}</span>
+              <Rocket className="w-4 h-4 text-slate-950 animate-bounce shrink-0" />
+              <span className="whitespace-nowrap">{isDeploying ? 'DEPLOYING TO WEB3...' : `DEPLOY TO ${currentNetwork.name.toUpperCase()}`}</span>
             </button>
           </div>
         </div>
@@ -304,93 +306,94 @@ contract ChainblockExchangeRouter is ReentrancyGuard {
       </div>
 
       {/* CODE INSPECTOR & EXECUTION ENGINE SPLIT GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         
-        {/* LEFT COLUMN: SOLIDITY CONTRACT SOURCE CODE & ABI VIEW */}
-        <div className="lg:col-span-6 space-y-4">
+        {/* LEFT COLUMN: SOLIDITY CONTRACT SOURCE CODE & ABI VIEW (6 COLS) */}
+        <div className="xl:col-span-6 space-y-4">
           
-          <div className="p-6 rounded-2xl bg-[#0a0d16] border border-slate-800 space-y-4">
+          <div className="p-6 rounded-3xl bg-[#080d16] border border-slate-800 space-y-4 shadow-xl overflow-hidden">
             
             {/* CODE / ABI TAB SELECTOR */}
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <div className="flex items-center space-x-2">
-                <Code2 className="w-4 h-4 text-[#2dd4bf]" />
-                <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">
-                  ChainblockExchangeRouter.sol Inspector
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800">
+              <div className="flex items-center space-x-2 shrink-0">
+                <Code2 className="w-4 h-4 text-[#8dbdd8]" />
+                <h3 className="text-xs font-black text-white uppercase tracking-wider font-mono">
+                  Solidity Source Inspector
                 </h3>
               </div>
 
-              <div className="flex items-center space-x-2 text-[10px]">
+              <div className="flex items-center space-x-2 text-[10px] shrink-0">
                 <button
                   onClick={() => setActiveCodeTab('CODE')}
-                  className={`px-3 py-1 rounded-lg font-bold transition ${
-                    activeCodeTab === 'CODE' ? 'bg-[#2dd4bf] text-slate-950' : 'bg-[#111622] text-slate-400 hover:text-white'
+                  className={`px-3 py-1.5 rounded-xl font-extrabold transition cursor-pointer ${
+                    activeCodeTab === 'CODE' ? 'bg-[#4390bc] text-slate-950 shadow' : 'bg-[#111622] text-slate-400 hover:text-white'
                   }`}
                 >
                   SOLIDITY CODE
                 </button>
                 <button
                   onClick={() => setActiveCodeTab('ABI')}
-                  className={`px-3 py-1 rounded-lg font-bold transition ${
-                    activeCodeTab === 'ABI' ? 'bg-cyan-500 text-slate-950' : 'bg-[#111622] text-slate-400 hover:text-white'
+                  className={`px-3 py-1.5 rounded-xl font-extrabold transition cursor-pointer ${
+                    activeCodeTab === 'ABI' ? 'bg-[#68a7ca] text-slate-950 shadow' : 'bg-[#111622] text-slate-400 hover:text-white'
                   }`}
                 >
                   COMPILED ABI
                 </button>
                 <button
                   onClick={copyCode}
-                  className="p-1.5 rounded-lg bg-[#111622] text-slate-400 hover:text-white border border-slate-800"
+                  className="p-1.5 rounded-xl bg-[#111622] text-slate-400 hover:text-white border border-slate-800 cursor-pointer"
+                  title="Copy Source Code"
                 >
-                  {copied ? <Check className="w-3.5 h-3.5 text-[#2dd4bf]" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copied ? <Check className="w-4 h-4 text-[#00e676]" /> : <Copy className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
             {/* SOLIDITY CODE DISPLAY */}
             {activeCodeTab === 'CODE' ? (
-              <pre className="p-4 rounded-xl bg-[#05070c] border border-slate-900 font-mono text-[10px] text-slate-300 overflow-x-auto max-h-[380px] leading-relaxed no-scrollbar select-text">
+              <pre className="p-4 rounded-2xl bg-[#04070d] border border-slate-900 font-mono text-[11px] text-slate-300 overflow-x-auto max-h-[360px] leading-relaxed select-text">
                 {rawSolidityCode}
               </pre>
             ) : (
-              <pre className="p-4 rounded-xl bg-[#05070c] border border-slate-900 font-mono text-[10px] text-cyan-300 overflow-x-auto max-h-[380px] leading-relaxed no-scrollbar select-text">
+              <pre className="p-4 rounded-2xl bg-[#04070d] border border-slate-900 font-mono text-[11px] text-cyan-300 overflow-x-auto max-h-[360px] leading-relaxed select-text">
                 {JSON.stringify(ROUTER_CONTRACT_ABI, null, 2)}
               </pre>
             )}
 
-            <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1">
-              <span>Security: <strong className="text-emerald-400">ReentrancyGuard OpenZeppelin</strong></span>
-              <span>Compiler: <strong className="text-cyan-400">solc 0.8.20+commit.a1b79de6</strong></span>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-400 pt-1 border-t border-slate-800/80 font-mono">
+              <span>Security: <strong className="text-[#00e676]">ReentrancyGuard OpenZeppelin</strong></span>
+              <span>Compiler: <strong className="text-[#8dbdd8]">solc 0.8.20+commit.a1b79de6</strong></span>
             </div>
 
           </div>
 
         </div>
 
-        {/* RIGHT COLUMN: INTERACTIVE CONTRACT EXECUTION & DEPOSIT ENGINE */}
-        <div className="lg:col-span-6 space-y-4">
+        {/* RIGHT COLUMN: INTERACTIVE CONTRACT EXECUTION & DEPOSIT ENGINE (6 COLS) */}
+        <div className="xl:col-span-6 space-y-6">
           
           {/* Spatial Arbitrage On-Chain Execution Card */}
-          <div className="p-6 rounded-2xl bg-[#0a0d16] border border-slate-800 space-y-4">
+          <div className="p-6 rounded-3xl bg-[#080d16] border border-slate-800 space-y-4 shadow-xl overflow-hidden">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center space-x-2">
-                <Zap className="w-4 h-4 text-[#2dd4bf]" />
-                <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">
-                  Execute On-Chain Spatial Arbitrage
+                <Zap className="w-4 h-4 text-[#00e676]" />
+                <h3 className="text-xs font-black text-white uppercase tracking-wider font-mono">
+                  Execute Spatial Arbitrage
                 </h3>
               </div>
-              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/40">
+              <span className="text-[10px] font-extrabold text-[#00e676] bg-emerald-950 px-2.5 py-1 rounded-full border border-[#00e676]/40">
                 METAMASK VERIFIED
               </span>
             </div>
 
-            <div className="space-y-3.5">
-              <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] text-slate-400 block mb-1">Source DEX Exchange</label>
+                  <label className="text-[10px] text-slate-400 block mb-1 font-bold">Source DEX Exchange</label>
                   <select
                     value={sourceDex}
                     onChange={e => setSourceDex(e.target.value)}
-                    className="w-full bg-[#111622] border border-slate-800 rounded-xl p-3 text-white font-bold outline-none focus:border-[#2dd4bf]"
+                    className="w-full bg-[#0d1422] border border-slate-800 rounded-2xl p-3 text-white font-extrabold text-xs outline-none focus:border-[#4390bc]"
                   >
                     <option value="UNISWAP_V3">Uniswap V3</option>
                     <option value="SUSHISWAP">Sushiswap</option>
@@ -400,11 +403,11 @@ contract ChainblockExchangeRouter is ReentrancyGuard {
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-slate-400 block mb-1">Target DEX Exchange</label>
+                  <label className="text-[10px] text-slate-400 block mb-1 font-bold">Target DEX Exchange</label>
                   <select
                     value={targetDex}
                     onChange={e => setTargetDex(e.target.value)}
-                    className="w-full bg-[#111622] border border-slate-800 rounded-xl p-3 text-white font-bold outline-none focus:border-[#2dd4bf]"
+                    className="w-full bg-[#0d1422] border border-slate-800 rounded-2xl p-3 text-white font-extrabold text-xs outline-none focus:border-[#4390bc]"
                   >
                     <option value="SUSHISWAP">Sushiswap</option>
                     <option value="UNISWAP_V3">Uniswap V3</option>
@@ -415,44 +418,44 @@ contract ChainblockExchangeRouter is ReentrancyGuard {
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 block mb-1">Trade Capital ($ USD)</label>
+                <label className="text-[10px] text-slate-400 block mb-1 font-bold">Trade Capital ($ USD)</label>
                 <input
                   type="number"
                   value={arbitrageAmount}
                   onChange={e => setArbitrageAmount(e.target.value)}
-                  className="w-full bg-[#111622] border border-slate-800 rounded-xl p-3 text-white font-bold text-sm outline-none focus:border-[#2dd4bf]"
+                  className="w-full bg-[#0d1422] border border-slate-800 rounded-2xl p-3.5 text-white font-mono text-sm font-extrabold outline-none focus:border-[#4390bc]"
                 />
               </div>
 
               <button
                 onClick={handleExecuteContractArbitrage}
                 disabled={txLoading}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#2dd4bf] to-cyan-500 text-slate-950 font-extrabold text-xs uppercase tracking-wider shadow-[0_0_25px_rgba(45,212,191,0.3)] hover:brightness-110 transition flex items-center justify-center space-x-2"
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#4390bc] via-[#68a7ca] to-[#8dbdd8] text-slate-950 font-black text-xs uppercase tracking-wider shadow-[0_0_25px_rgba(67,144,188,0.35)] hover:brightness-110 transition flex items-center justify-center space-x-2 cursor-pointer"
               >
-                <Zap className="w-4 h-4" />
+                <Zap className="w-4 h-4 text-slate-950 fill-current" />
                 <span>{txLoading ? 'EXECUTING ON-CHAIN...' : 'EXECUTE SOLIDITY ARBITRAGE'}</span>
               </button>
             </div>
           </div>
 
           {/* ETH Deposit Gateway Card */}
-          <div className="p-6 rounded-2xl bg-[#0a0d16] border border-slate-800 space-y-3.5">
-            <h3 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
+          <div className="p-6 rounded-3xl bg-[#080d16] border border-slate-800 space-y-4 shadow-xl overflow-hidden">
+            <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2 font-mono">
               <ArrowDownLeft className="w-4 h-4 text-amber-400" /> On-Chain Contract Liquidity Deposit
             </h3>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch gap-3">
               <input
                 type="number"
                 value={depositAmount}
                 onChange={e => setDepositAmount(e.target.value)}
-                className="flex-1 bg-[#111622] border border-slate-800 rounded-xl p-3 text-white font-bold outline-none focus:border-amber-400"
+                className="flex-1 bg-[#0d1422] border border-slate-800 rounded-2xl p-3.5 text-white font-mono text-sm font-extrabold outline-none focus:border-amber-400"
                 placeholder="ETH Amount"
               />
               <button
                 onClick={handleDepositToContract}
                 disabled={txLoading}
-                className="px-6 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs uppercase shadow-md transition"
+                className="px-6 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs uppercase shadow-md transition cursor-pointer whitespace-nowrap shrink-0"
               >
                 DEPOSIT ETH
               </button>
@@ -460,19 +463,19 @@ contract ChainblockExchangeRouter is ReentrancyGuard {
           </div>
 
           {/* On-Chain Telemetry Terminal Log Card */}
-          <div className="p-6 rounded-2xl bg-[#070a11] border border-slate-800 space-y-2.5">
-            <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-bold">
-              <div className="flex items-center space-x-1.5">
-                <Terminal className="w-3.5 h-3.5 text-[#2dd4bf]" />
+          <div className="p-6 rounded-3xl bg-[#080d16] border border-slate-800 space-y-3 shadow-xl overflow-hidden">
+            <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-bold font-mono">
+              <div className="flex items-center space-x-2">
+                <Terminal className="w-4 h-4 text-[#8dbdd8]" />
                 <span>On-Chain Telemetry Log</span>
               </div>
-              <span className="text-[#2dd4bf]">REAL-TIME</span>
+              <span className="text-[#00e676] font-extrabold">REAL-TIME</span>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-[#04060a] border border-slate-900 font-mono text-[10px] text-slate-300 space-y-1.5 h-32 overflow-y-auto no-scrollbar">
+            <div className="p-4 rounded-2xl bg-[#04070d] border border-slate-900 font-mono text-[10px] text-slate-300 space-y-1.5 h-36 overflow-y-auto select-text">
               {contractLogs.map((log, idx) => (
                 <div key={idx} className="leading-relaxed border-b border-slate-900/60 pb-1 text-slate-400">
-                  <span className="text-[#2dd4bf] font-bold">{`>`} </span>
+                  <span className="text-[#00e676] font-bold">{`>`} </span>
                   <span>{log}</span>
                 </div>
               ))}
