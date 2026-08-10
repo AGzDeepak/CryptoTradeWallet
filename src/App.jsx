@@ -44,7 +44,6 @@ const DashboardContent = () => {
           'settings','markets','scanner','trades','strategies','analytics'].includes(activeTab)) && (
           <div className="space-y-6">
             <TotalAssetsHero />
-            <ArbitrageBotTerminal />
             <MarketGraphPanel />
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               <div className="lg:col-span-5">
