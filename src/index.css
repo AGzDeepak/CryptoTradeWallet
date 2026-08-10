@@ -8,6 +8,8 @@
   --color-ice-blue: #8dbdd8;
   --color-frost-blue: #b2d3e6;
   --color-crystal-ice: #dbe9f3;
+  --sidebar-w: 16rem;           /* 256px — matches w-64 */
+  --header-h: 5rem;             /* 80px  — matches h-20 */
 }
 
 @layer base {
@@ -25,55 +27,57 @@
   .font-mono {
     font-family: 'JetBrains Mono', 'Fira Code', monospace;
   }
+
+  /* Hide scrollbar but allow scroll */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-/* Glass & Neon Micro Animations for Ocean Steel & Crystal Ice Palette */
+/* ── Neon Micro Animations ───────────────────────────────────────── */
 @keyframes neonPulse {
   0%, 100% { box-shadow: 0 0 15px rgba(67, 144, 188, 0.4); }
-  50% { box-shadow: 0 0 30px rgba(104, 167, 202, 0.7); }
+  50%       { box-shadow: 0 0 30px rgba(104, 167, 202, 0.7); }
 }
 
 @keyframes oceanGreenGlow {
   0%, 100% { box-shadow: 0 0 15px rgba(0, 230, 118, 0.35); }
-  50% { box-shadow: 0 0 25px rgba(0, 230, 118, 0.65); }
+  50%       { box-shadow: 0 0 25px rgba(0, 230, 118, 0.65); }
 }
 
 @keyframes oceanRedGlow {
   0%, 100% { box-shadow: 0 0 15px rgba(255, 59, 105, 0.35); }
-  50% { box-shadow: 0 0 25px rgba(255, 59, 105, 0.65); }
+  50%       { box-shadow: 0 0 25px rgba(255, 59, 105, 0.65); }
 }
 
-.glow-cyan {
-  animation: neonPulse 3s infinite ease-in-out;
-}
+.glow-cyan  { animation: neonPulse       3s infinite ease-in-out; }
+.glow-ocean { animation: neonPulse       3s infinite ease-in-out; }
+.glow-green { animation: oceanGreenGlow  3s infinite ease-in-out; }
+.glow-red   { animation: oceanRedGlow    3s infinite ease-in-out; }
 
-.glow-ocean {
-  animation: neonPulse 3s infinite ease-in-out;
-}
-
-.glow-green {
-  animation: oceanGreenGlow 3s infinite ease-in-out;
-}
-
-.glow-red {
-  animation: oceanRedGlow 3s infinite ease-in-out;
-}
-
+/* ── Component Layer ─────────────────────────────────────────────── */
 @layer components {
-  /* Ultra-Premium Glassmorphic Shell Container */
+
+  /* Outer glass container — single shell wrapping page content */
   .chainblock-shell {
     background: linear-gradient(145deg, rgba(15, 28, 43, 0.95) 0%, rgba(8, 16, 26, 0.98) 100%);
     backdrop-filter: blur(24px);
-    border: 1px solid rgba(67, 144, 188, 0.35);
+    border: 1px solid rgba(67, 144, 188, 0.30);
     border-radius: 1.5rem;
-    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.85), inset 0 1px 1px rgba(219, 233, 243, 0.15);
+    box-shadow:
+      0 20px 50px -10px rgba(0, 0, 0, 0.85),
+      inset 0 1px 1px rgba(219, 233, 243, 0.12);
   }
 
-  /* High-Tech Luxury Adopted Glass Card with #4390bc & #68a7ca Theme */
+  /* Inner glass card used by individual components */
   .chainblock-card {
     background: linear-gradient(135deg, rgba(16, 31, 48, 0.92) 0%, rgba(9, 17, 27, 0.98) 100%);
     backdrop-filter: blur(18px);
-    border: 1px solid rgba(104, 167, 202, 0.25);
+    border: 1px solid rgba(104, 167, 202, 0.22);
     border-radius: 1.25rem;
     padding: 1.5rem;
     box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(219, 233, 243, 0.08);
@@ -81,25 +85,25 @@
   }
 
   .chainblock-card:hover {
-    border-color: rgba(141, 189, 216, 0.5);
-    box-shadow: 0 15px 35px -5px rgba(67, 144, 188, 0.3), inset 0 1px 0 rgba(219, 233, 243, 0.18);
+    border-color: rgba(141, 189, 216, 0.45);
+    box-shadow: 0 15px 35px -5px rgba(67, 144, 188, 0.28), inset 0 1px 0 rgba(219, 233, 243, 0.15);
   }
 
-  /* Adopted Crypto Bullish Green Card */
+  /* Bullish green card */
   .crypto-card-gain {
     background: linear-gradient(135deg, rgba(0, 230, 118, 0.09) 0%, rgba(8, 18, 26, 0.95) 100%);
     border: 1px solid rgba(0, 230, 118, 0.4);
     box-shadow: 0 10px 25px -5px rgba(0, 230, 118, 0.2);
   }
 
-  /* Adopted Crypto Bearish Red Card */
+  /* Bearish red card */
   .crypto-card-loss {
     background: linear-gradient(135deg, rgba(255, 59, 105, 0.09) 0%, rgba(20, 10, 16, 0.95) 100%);
     border: 1px solid rgba(255, 59, 105, 0.4);
     box-shadow: 0 10px 25px -5px rgba(255, 59, 105, 0.2);
   }
 
-  /* Purple Web3 Glass Card Variant */
+  /* Purple Web3 card */
   .purple-glass-card {
     background: linear-gradient(135deg, rgba(30, 27, 75, 0.75) 0%, rgba(13, 16, 30, 0.95) 100%);
     backdrop-filter: blur(16px);
@@ -109,21 +113,21 @@
     box-shadow: 0 10px 30px -5px rgba(168, 85, 247, 0.25);
   }
 
-  /* Cyber Interactive Card */
+  /* Cyber interactive card */
   .cyber-card {
     background: linear-gradient(145deg, rgba(14, 27, 42, 0.92) 0%, rgba(7, 14, 23, 0.98) 100%);
-    border: 1px solid rgba(141, 189, 216, 0.25);
+    border: 1px solid rgba(141, 189, 216, 0.22);
     border-radius: 1rem;
     transition: all 0.2s ease-in-out;
   }
 
   .cyber-card:hover {
-    border-color: rgba(178, 211, 230, 0.55);
+    border-color: rgba(178, 211, 230, 0.5);
     transform: translateY(-2px);
-    box-shadow: 0 12px 25px -5px rgba(67, 144, 188, 0.25);
+    box-shadow: 0 12px 25px -5px rgba(67, 144, 188, 0.22);
   }
 
-  /* High Contrast Ocean Blue Action Button (#4390bc -> #68a7ca -> #8dbdd8) */
+  /* Primary gradient action button */
   .chainblock-btn-emerald {
     height: 2.75rem;
     padding-left: 1.25rem;
@@ -147,32 +151,24 @@
     transform: translateY(-1px);
   }
 
-  /* Sidebar Active Navigation Pill */
+  /* Sidebar active nav pill */
   .chainblock-nav-active {
-    background: linear-gradient(90deg, rgba(67, 144, 188, 0.3) 0%, rgba(104, 167, 202, 0.2) 100%);
+    background: linear-gradient(90deg, rgba(67, 144, 188, 0.3) 0%, rgba(104, 167, 202, 0.18) 100%);
     color: #dbe9f3;
     font-weight: 800;
     border-radius: 0.75rem;
-    border: 1px solid rgba(141, 189, 216, 0.5);
-    box-shadow: 0 0 20px rgba(67, 144, 188, 0.35);
+    border: 1px solid rgba(141, 189, 216, 0.45);
+    box-shadow: 0 0 20px rgba(67, 144, 188, 0.3);
+  }
+
+  /* Smooth scroll container used on DashboardContent */
+  .smooth-scroll-container {
+    scroll-behavior: smooth;
   }
 }
 
-/* Custom Clean Scrollbar Styling */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #04070d;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(104, 167, 202, 0.35);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #68a7ca;
-}
+/* ── Custom Scrollbar ────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: #04070d; }
+::-webkit-scrollbar-thumb  { background: rgba(104, 167, 202, 0.32); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #68a7ca; }

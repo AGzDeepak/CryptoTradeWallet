@@ -34,45 +34,31 @@ const DashboardContent = () => {
   const { activeTab } = useCrypto();
 
   return (
-    <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 space-y-8 no-scrollbar smooth-scroll-container bg-[#080a10]">
-      
-      {/* Outer Shell Frame */}
-      <div className="chainblock-shell p-4 sm:p-6 lg:p-8 space-y-8">
-        
-        {(activeTab === 'dashboard' || !['papertrading', 'simulation', 'account', 'wallet', 'realwallet', 'decentralized', 'contractprocess', 'banktransfer', 'portfolio', 'metamaskterminal', 'settings'].includes(activeTab)) && (
-          <div className="space-y-8">
-            
-            {/* Top Row: Executive Hero & Autopilot Command Deck */}
-            <div className="space-y-6">
-              <TotalAssetsHero />
-              <AutoTraderBar />
-            </div>
+    <main className="flex-1 overflow-y-auto pb-24 lg:pb-8 no-scrollbar smooth-scroll-container bg-[#080a10]">
+      {/* Single unified shell — no double padding */}
+      <div className="chainblock-shell m-4 sm:m-6 lg:m-8 p-5 sm:p-7 lg:p-8 space-y-6 min-h-[calc(100%-2rem)]">
 
-            {/* Main HFT Spatial Arbitrage Bot Terminal */}
+        {/* ── DASHBOARD ── */}
+        {(activeTab === 'dashboard' || !['papertrading','simulation','account','wallet','realwallet',
+          'decentralized','contractprocess','banktransfer','portfolio','metamaskterminal',
+          'settings','markets','scanner','trades','strategies','analytics'].includes(activeTab)) && (
+          <div className="space-y-6">
+            <TotalAssetsHero />
+            <AutoTraderBar />
             <ArbitrageBotTerminal />
-
-            {/* Live Interactive Market Price Chart Graph & Orderbook */}
             <MarketGraphPanel />
-
-            {/* Split Action Deck: Swap Tool (5 Cols) & Active Positions (7 Cols) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              
-              <div className="lg:col-span-5 space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              <div className="lg:col-span-5">
                 <OperationSwapTool />
               </div>
-
-              <div className="lg:col-span-7 space-y-6">
+              <div className="lg:col-span-7">
                 <LivePositions />
               </div>
-
             </div>
-
-
-
           </div>
         )}
 
-        {/* Dedicated Standalone Paper Trading Section */}
+        {/* ── PAPER TRADING ── */}
         {activeTab === 'papertrading' && (
           <div className="space-y-6">
             <PaperTradingPanel />
@@ -80,107 +66,88 @@ const DashboardContent = () => {
           </div>
         )}
 
-        {/* Dedicated Standalone Quantitative Simulation Section */}
+        {/* ── SIMULATION ── */}
         {activeTab === 'simulation' && (
-          <div className="space-y-6">
-            <SimulationSection />
-          </div>
+          <SimulationSection />
         )}
 
+        {/* ── ACCOUNT ── */}
         {activeTab === 'account' && (
-          <div className="space-y-6">
-            <AccountSection />
-          </div>
+          <AccountSection />
         )}
 
+        {/* ── WALLET ── */}
         {activeTab === 'wallet' && (
-          <div className="space-y-6">
-            <WalletSection />
-          </div>
+          <WalletSection />
         )}
 
+        {/* ── METAMASK TERMINAL ── */}
         {activeTab === 'metamaskterminal' && (
-          <div className="space-y-6">
-            <MetaMaskTradeTerminalSection />
-          </div>
+          <MetaMaskTradeTerminalSection />
         )}
 
+        {/* ── REAL WALLET ── */}
         {activeTab === 'realwallet' && (
-          <div className="space-y-6">
-            <RealWallet />
-          </div>
+          <RealWallet />
         )}
 
+        {/* ── DECENTRALIZED VAULT WALLET ── */}
         {activeTab === 'decentralized' && (
-          <div className="space-y-6">
-            <DecentralizedWalletView />
-          </div>
+          <DecentralizedWalletView />
         )}
 
+        {/* ── CONTRACT PROCESS ── */}
         {activeTab === 'contractprocess' && (
-          <div className="space-y-6">
-            <ContractProcessSection />
-          </div>
+          <ContractProcessSection />
         )}
 
+        {/* ── BANK TO BANK TRANSFER ── */}
         {activeTab === 'banktransfer' && (
-          <div className="space-y-6">
-            <BankToBankTransferSection />
-          </div>
+          <BankToBankTransferSection />
         )}
 
+        {/* ── PORTFOLIO ── */}
         {activeTab === 'portfolio' && (
-          <div className="space-y-6">
-            <WalletSection />
-          </div>
+          <WalletSection />
         )}
 
+        {/* ── MARKETS ── */}
         {activeTab === 'markets' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <div className="lg:col-span-12 space-y-6">
-              <TotalAssetsHero />
-              <OperationSwapTool />
-            </div>
+          <div className="space-y-6">
+            <TotalAssetsHero />
+            <OperationSwapTool />
           </div>
         )}
 
+        {/* ── MARKET SCANNER ── */}
         {activeTab === 'scanner' && (
-          <div className="space-y-6">
-            <MarketScanner />
-          </div>
+          <MarketScanner />
         )}
 
+        {/* ── TRADE HISTORY LEDGER ── */}
         {activeTab === 'trades' && (
-          <div className="space-y-6">
-            <TradeHistory />
-          </div>
+          <TradeHistory />
         )}
 
+        {/* ── AI STRATEGIES ── */}
         {activeTab === 'strategies' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div className="lg:col-span-6">
-              <AiStrategyPanel />
-            </div>
-            <div className="lg:col-span-6">
-              <OperationSwapTool />
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            <AiStrategyPanel />
+            <OperationSwapTool />
           </div>
         )}
 
+        {/* ── ANALYTICS ── */}
         {activeTab === 'analytics' && (
-          <div className="space-y-6">
-            <AnalyticsSection />
-          </div>
+          <AnalyticsSection />
         )}
 
+        {/* ── SETTINGS ── */}
         {activeTab === 'settings' && (
-          <div className="space-y-6">
-            <SettingsModal />
-          </div>
+          <SettingsModal />
         )}
 
       </div>
-
     </main>
   );
 };
@@ -194,22 +161,19 @@ const MainLayout = () => {
 
   return (
     <div className="h-screen w-screen bg-[#0b0c10] text-slate-100 flex overflow-hidden font-sans selection:bg-[#facc15] selection:text-black relative">
-      {/* Background Canvas */}
       <BackgroundParticles />
 
-      {/* Outer Shell Frame */}
       <div className="w-full h-full flex overflow-hidden relative z-10">
         {/* Left Sidebar */}
         <Sidebar />
 
-        {/* Right Main Container (Header + Dashboard Body) */}
+        {/* Main Content Area */}
         <div className="flex-1 flex flex-col h-full overflow-hidden relative z-10">
           <Header />
           <DashboardContent />
         </div>
       </div>
 
-      {/* Global Modals & Mobile Navigation */}
       <GlobalModals />
       <MobileBottomNav />
     </div>
