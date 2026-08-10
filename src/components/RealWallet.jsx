@@ -9,7 +9,7 @@ import {
   Wallet, Copy, Check, Zap, Send, CheckCircle2, RefreshCw,
   TrendingUp, TrendingDown, Activity, Lock, AlertCircle, Power,
   Key, Clock, CircleDollarSign, Globe, ArrowDownLeft, ArrowUpLeft,
-  Loader2, Shield, BarChart2, ExternalLink, ChevronRight, Layers, FileCode, CheckCircle
+  Loader2, Shield, BarChart2, ExternalLink, ChevronRight, Layers, FileCode
 } from 'lucide-react';
 import { SolidityContractSection } from './SolidityContractSection';
 
@@ -205,7 +205,7 @@ export const RealWallet = () => {
   const currentNetObj = networks.find(n => n.id === realWalletNetwork) || networks[0];
 
   const tabs = [
-    { id: 'overview', label: 'Overview & Holdings', icon: <BarChart2 className="w-4 h-4" /> },
+    { id: 'overview', label: 'Overview & Smart Contracts', icon: <BarChart2 className="w-4 h-4" /> },
     { id: 'withdraw', label: 'Withdraw & Transfer', icon: <ArrowUpLeft className="w-4 h-4" /> },
     { id: 'history',  label: 'Completed Transactions', icon: <Clock className="w-4 h-4" /> },
     { id: 'held',     label: '⏸️ Held Transactions', icon: <Lock className="w-4 h-4 text-amber-400" /> },
@@ -313,14 +313,14 @@ export const RealWallet = () => {
     );
   }
 
-  // ─── CONNECTED — Show full spacious wallet dashboard ───────────────────────
+  // ─── CONNECTED — Show full 100% full-width page layout ───────────────────────
   return (
-    <div className="space-y-8 font-mono">
+    <div className="space-y-8 font-mono w-full">
 
       {/* ════════════════════════════════════════════════════
           ZONE 1: EXECUTIVE REAL WALLET HEADER & CONTROLS DECK
       ════════════════════════════════════════════════════ */}
-      <div className="relative overflow-hidden rounded-3xl border border-[#68a7ca]/40 bg-gradient-to-br from-[#0c1422] via-[#0b0c10] to-[#09101d] p-6 sm:p-8 shadow-2xl space-y-6">
+      <div className="relative overflow-hidden rounded-3xl border border-[#68a7ca]/40 bg-gradient-to-br from-[#0c1422] via-[#0b0c10] to-[#09101d] p-6 sm:p-8 shadow-2xl space-y-6 w-full">
         <div className="absolute -top-12 -right-12 w-64 h-64 rounded-full bg-[#4390bc]/10 blur-3xl pointer-events-none" />
 
         <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-6 border-b border-slate-800/80">
@@ -434,7 +434,7 @@ export const RealWallet = () => {
       {/* ════════════════════════════════════════════════════
           ZONE 2: LIVE ASSET ALLOCATION & BALANCE HERO GRID
       ════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
         {[
           { 
             label: 'Total Net Balance', 
@@ -483,7 +483,7 @@ export const RealWallet = () => {
           ZONE 3: COINGECKO LIVE PRICES TICKER BAR
       ════════════════════════════════════════════════════ */}
       {realWalletData?.prices && (
-        <div className="p-4 px-6 rounded-2xl bg-[#080d16] border border-[#68a7ca]/30 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs shadow-lg">
+        <div className="p-4 px-6 rounded-2xl bg-[#080d16] border border-[#68a7ca]/30 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs shadow-lg w-full">
           <div className="flex flex-wrap items-center gap-6">
             <span className="text-slate-400 font-extrabold uppercase text-[10px]">LIVE MARKET TICKERS:</span>
             {[
@@ -508,7 +508,7 @@ export const RealWallet = () => {
       {/* ════════════════════════════════════════════════════
           ZONE 4: TAB NAVIGATION DECK
       ════════════════════════════════════════════════════ */}
-      <div className="flex items-center gap-2 bg-[#080d16] p-2 rounded-2xl border border-slate-800 text-xs">
+      <div className="flex items-center gap-2 bg-[#080d16] p-2 rounded-2xl border border-slate-800 text-xs w-full">
         {tabs.map(t => (
           <button 
             key={t.id} 
@@ -527,23 +527,23 @@ export const RealWallet = () => {
       </div>
 
       {/* ════════════════════════════════════════════════════
-          ZONE 5: TAB CONTENT DECK
+          ZONE 5: TAB CONTENT DECK (FULL-WIDTH 100%)
       ════════════════════════════════════════════════════ */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="space-y-8 w-full">
           
-          {/* Token Breakdown Deck (6 COLS) */}
-          <div className="lg:col-span-6 p-6 sm:p-7 rounded-3xl bg-[#080d16] border border-slate-800 space-y-6 shadow-xl">
+          {/* Top Full-Width Token Holdings Breakdown */}
+          <div className="p-6 sm:p-7 rounded-3xl bg-[#080d16] border border-slate-800 space-y-6 shadow-xl w-full">
             <div className="flex items-center justify-between pb-4 border-b border-slate-800">
               <h3 className="text-sm font-black text-white uppercase flex items-center gap-2 font-mono tracking-tight">
                 <Layers className="w-5 h-5 text-[#8dbdd8]" /> Active Network Token Holdings
               </h3>
-              <span className="px-2.5 py-1 rounded-full text-[9px] font-extrabold bg-[#00e676]/10 text-[#00e676] border border-[#00e676]/30">
+              <span className="px-3 py-1 rounded-full text-[10px] font-extrabold bg-[#00e676]/10 text-[#00e676] border border-[#00e676]/30">
                 LIVE ON-CHAIN
               </span>
             </div>
 
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {[
                 { symbol: currentNetObj.symbol, name: currentNetObj.label, icon: currentNetObj.emoji, color: 'bg-indigo-500', amount: realWalletData?.ethBalance ?? 0.7605, usd: realWalletData?.ethUsd ?? 1464.99 },
                 { symbol: 'USDT', name: 'Tether USD', icon: '₮', color: 'bg-teal-500', amount: realWalletData?.usdtBalance ?? 0, usd: realWalletData?.usdtBalance ?? 0 },
@@ -552,7 +552,7 @@ export const RealWallet = () => {
                 const total = realWalletData?.totalUsd || 1;
                 const pct = Math.round((token.usd / total) * 100);
                 return (
-                  <div key={token.symbol} className="space-y-2 p-4 rounded-2xl bg-[#0d1422] border border-slate-800 hover:border-[#68a7ca]/50 transition">
+                  <div key={token.symbol} className="space-y-3 p-4 rounded-2xl bg-[#0d1422] border border-slate-800 hover:border-[#68a7ca]/50 transition">
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-3">
                         <span className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center font-black text-sm">{token.icon}</span>
@@ -576,8 +576,8 @@ export const RealWallet = () => {
             </div>
           </div>
 
-          {/* Solidity Smart Contract Deployment Deck (6 COLS) */}
-          <div className="lg:col-span-6">
+          {/* Full-Width 100% Page Solidity Smart Contract Section */}
+          <div className="w-full">
             <SolidityContractSection />
           </div>
 
@@ -648,7 +648,7 @@ export const RealWallet = () => {
                 value={withdrawAmount}
                 onChange={e => setWithdrawAmount(e.target.value)}
                 placeholder="0.00"
-                className="w-full bg-[#0d1422] border border-slate-800 rounded-2xl p-3.5 text-white font-mono text-sm font-bold outline-none focus:border-[#4390bc]"
+                className="w-full bg-[#0d1422] border border-slate-800 rounded-2xl p-3.5 text-white font-mono text-sm font-extrabold outline-none focus:border-[#4390bc]"
               />
             </div>
 
@@ -665,7 +665,7 @@ export const RealWallet = () => {
           TAB: HISTORY
       ════════════════════════════════════════════════════ */}
       {activeTab === 'history' && (
-        <div className="p-8 rounded-3xl bg-[#080d16] border border-slate-800 space-y-5 shadow-2xl">
+        <div className="p-8 rounded-3xl bg-[#080d16] border border-slate-800 space-y-5 shadow-2xl w-full">
           <h3 className="text-sm font-black text-white uppercase flex items-center gap-2 pb-4 border-b border-slate-800 font-mono">
             <Clock className="w-5 h-5 text-[#4390bc]" /> Completed Wallet Transactions
           </h3>

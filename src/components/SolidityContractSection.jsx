@@ -207,12 +207,12 @@ contract ChainblockExchangeRouter is ReentrancyGuard, Ownable {
   };
 
   return (
-    <div className="space-y-8 font-mono text-xs w-full overflow-hidden">
+    <div className="space-y-8 font-mono text-xs w-full">
       
       {/* ════════════════════════════════════════════════════
           CARD 1: SOLIDITY EXCHANGE SMART CONTRACT HERO DECK
       ════════════════════════════════════════════════════ */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-[#0c1422] via-[#0b0c10] to-[#04060a] border border-[#68a7ca]/50 space-y-6 shadow-2xl relative overflow-hidden">
+      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-[#0c1422] via-[#0b0c10] to-[#04060a] border border-[#68a7ca]/50 space-y-6 shadow-2xl relative overflow-hidden w-full">
         <div className="absolute top-0 right-0 w-80 h-80 bg-[#4390bc]/10 rounded-full blur-3xl pointer-events-none" />
         
         {/* Sub-Panel 1: Title & Mode Toggle */}
@@ -331,15 +331,15 @@ contract ChainblockExchangeRouter is ReentrancyGuard, Ownable {
       </div>
 
       {/* ════════════════════════════════════════════════════
-          CODE INSPECTOR & EXECUTION ENGINE 2-COLUMN GRID
+          CODE INSPECTOR & EXECUTION ENGINE 2-COLUMN GRID (FULL PAGE 100%)
       ════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start w-full">
         
         {/* ════════════════════════════════════════════════════
-            CARD 2: Solidity Source Inspector (LEFT COLUMN - 6 COLS)
+            CARD 2: Solidity Source Inspector (LEFT COLUMN - 6 COLS / 50% WIDTH)
         ════════════════════════════════════════════════════ */}
-        <div className="xl:col-span-6 space-y-6">
-          <div className="p-6 sm:p-7 rounded-3xl bg-[#080d16] border border-slate-800 space-y-5 shadow-2xl overflow-hidden">
+        <div className="lg:col-span-6 space-y-6 w-full">
+          <div className="p-6 sm:p-7 rounded-3xl bg-[#080d16] border border-slate-800 space-y-5 shadow-2xl overflow-hidden w-full">
             
             {/* Inspector Header */}
             <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800">
@@ -382,11 +382,11 @@ contract ChainblockExchangeRouter is ReentrancyGuard, Ownable {
 
             {/* Code Viewer Display */}
             {activeCodeTab === 'CODE' ? (
-              <pre className="p-4 sm:p-5 rounded-2xl bg-[#04070d] border border-slate-900 font-mono text-[11px] text-slate-300 overflow-x-auto max-h-[420px] leading-relaxed select-text shadow-inner">
+              <pre className="p-4 sm:p-5 rounded-2xl bg-[#04070d] border border-slate-900 font-mono text-[11px] text-slate-300 overflow-x-auto max-h-[440px] leading-relaxed select-text shadow-inner w-full">
                 {rawSolidityCode}
               </pre>
             ) : (
-              <pre className="p-4 sm:p-5 rounded-2xl bg-[#04070d] border border-slate-900 font-mono text-[11px] text-cyan-300 overflow-x-auto max-h-[420px] leading-relaxed select-text shadow-inner">
+              <pre className="p-4 sm:p-5 rounded-2xl bg-[#04070d] border border-slate-900 font-mono text-[11px] text-cyan-300 overflow-x-auto max-h-[440px] leading-relaxed select-text shadow-inner w-full">
                 {JSON.stringify(ROUTER_CONTRACT_ABI, null, 2)}
               </pre>
             )}
@@ -400,12 +400,12 @@ contract ChainblockExchangeRouter is ReentrancyGuard, Ownable {
         </div>
 
         {/* ════════════════════════════════════════════════════
-            RIGHT COLUMN: EXECUTION & DEPOSIT CARDS (6 COLS)
+            RIGHT COLUMN: EXECUTION & DEPOSIT CARDS (RIGHT COLUMN - 6 COLS / 50% WIDTH)
         ════════════════════════════════════════════════════ */}
-        <div className="xl:col-span-6 space-y-6">
+        <div className="lg:col-span-6 space-y-6 w-full">
           
           {/* CARD 3: Execute Spatial Arbitrage */}
-          <div className="p-6 sm:p-7 rounded-3xl bg-[#080d16] border border-slate-800 space-y-5 shadow-2xl overflow-hidden">
+          <div className="p-6 sm:p-7 rounded-3xl bg-[#080d16] border border-slate-800 space-y-5 shadow-2xl overflow-hidden w-full">
             <div className="flex items-center justify-between pb-4 border-b border-slate-800">
               <div className="flex items-center space-x-3">
                 <Zap className="w-5 h-5 text-[#00e676]" />
@@ -489,7 +489,7 @@ contract ChainblockExchangeRouter is ReentrancyGuard, Ownable {
           </div>
 
           {/* CARD 4: On-Chain Contract Liquidity Deposit */}
-          <div className="p-6 sm:p-7 rounded-3xl bg-[#080d16] border border-slate-800 space-y-5 shadow-2xl overflow-hidden">
+          <div className="p-6 sm:p-7 rounded-3xl bg-[#080d16] border border-slate-800 space-y-5 shadow-2xl overflow-hidden w-full">
             <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2 font-mono pb-3 border-b border-slate-800">
               <ArrowDownLeft className="w-5 h-5 text-amber-400" /> On-Chain Contract Liquidity Deposit
             </h3>
@@ -530,7 +530,7 @@ contract ChainblockExchangeRouter is ReentrancyGuard, Ownable {
           </div>
 
           {/* Telemetry Log */}
-          <div className="p-6 rounded-3xl bg-[#080d16] border border-slate-800 space-y-3 shadow-2xl overflow-hidden font-mono">
+          <div className="p-6 rounded-3xl bg-[#080d16] border border-slate-800 space-y-3 shadow-2xl overflow-hidden font-mono w-full">
             <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-bold">
               <div className="flex items-center space-x-2">
                 <Terminal className="w-4 h-4 text-[#8dbdd8]" />
@@ -539,7 +539,7 @@ contract ChainblockExchangeRouter is ReentrancyGuard, Ownable {
               <span className="text-[#00e676] font-extrabold">REAL-TIME</span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#04070d] border border-slate-900 font-mono text-[10px] text-slate-300 space-y-1.5 h-36 overflow-y-auto select-text shadow-inner">
+            <div className="p-4 rounded-2xl bg-[#04070d] border border-slate-900 font-mono text-[10px] text-slate-300 space-y-1.5 h-36 overflow-y-auto select-text shadow-inner w-full">
               {contractLogs.map((log, idx) => (
                 <div key={idx} className="leading-relaxed border-b border-slate-900/60 pb-1 text-slate-400">
                   <span className="text-[#00e676] font-bold">{`>`} </span>
