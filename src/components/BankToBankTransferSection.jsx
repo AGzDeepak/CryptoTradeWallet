@@ -400,11 +400,45 @@ export const BankToBankTransferSection = () => {
                 />
               </div>
 
+              {/* DYNAMIC SCANNABLE EIP-681 METAMASK QR CODE CARD */}
+              <div className="p-4 rounded-2xl bg-[#060913] border border-[#68a7ca]/30 flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                <div className="w-28 h-28 bg-white p-2 rounded-xl border border-[#4390bc] shadow-[0_0_15px_rgba(67,144,188,0.4)] shrink-0 flex flex-col items-center justify-center">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`ethereum:${mmRecipientAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41'}?value=${((parseFloat(mmTransferAmount) || 0.1) * 1e18).toString()}`)}`}
+                    alt="MetaMask Web3 Transfer QR"
+                    className="w-full h-full object-contain rounded-md"
+                  />
+                </div>
+
+                <div className="space-y-2 text-xs w-full">
+                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase">
+                    <span>EIP-681 METAMASK QR PAYLOAD:</span>
+                    <span className="text-[#8dbdd8]">SCANNABLE CAMERA QR</span>
+                  </div>
+
+                  <p className="text-[10px] text-slate-300 leading-normal font-mono">
+                    Scan with any Web3 Wallet camera app or click below to launch MetaMask signature prompt with target address <strong>{mmRecipientAddress ? `${mmRecipientAddress.substring(0, 10)}...` : '0x71C7...dB41'}</strong> and amount <strong>{mmTransferAmount} {mmTransferAsset}</strong>.
+                  </p>
+
+                  <div className="flex items-center space-x-2 pt-1">
+                    <a
+                      href={`https://metamask.app.link/send/${mmRecipientAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41'}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3 py-1.5 rounded-lg bg-[#101f30] border border-[#68a7ca]/40 text-[#dbe9f3] text-[10px] font-bold hover:bg-[#162a40] transition flex items-center gap-1"
+                    >
+                      <ExternalLink className="w-3 h-3 text-[#8dbdd8]" />
+                      <span>METAMASK MOBILE LINK</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+
               {/* Confirm MetaMask Transfer Button */}
               <button
                 type="submit"
                 disabled={isMmSending}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500 text-slate-950 font-black text-xs uppercase tracking-wide shadow-[0_0_25px_rgba(56,189,248,0.3)] hover:brightness-110 transition flex items-center justify-center gap-2"
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#4390bc] via-[#68a7ca] to-[#8dbdd8] text-slate-950 font-black text-xs uppercase tracking-wide shadow-[0_0_25px_rgba(67,144,188,0.4)] hover:brightness-110 transition flex items-center justify-center gap-2"
               >
                 {isMmSending ? (
                   <>
@@ -414,7 +448,7 @@ export const BankToBankTransferSection = () => {
                 ) : (
                   <>
                     <Zap className="w-4 h-4 fill-slate-950" />
-                    <span>🦊 CONFIRM & TRANSFER {mmTransferAmount} {mmTransferAsset} IN METAMASK</span>
+                    <span>🦊 SCAN & CONFIRM {mmTransferAmount} {mmTransferAsset} IN METAMASK</span>
                   </>
                 )}
               </button>

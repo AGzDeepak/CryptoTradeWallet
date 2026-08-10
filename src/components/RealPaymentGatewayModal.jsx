@@ -543,59 +543,110 @@ export const RealPaymentGatewayModal = () => {
                 </div>
               )}
 
-              {/* METHOD 2: CRYPTO QR DEPOSIT */}
+              {/* METHOD 2: CONNECTED CRYPTO QR & METAMASK PAYMENT */}
               {paymentMethod === 'QR' && (
                 <form onSubmit={handleQrSubmit} className="space-y-4 pt-2 border-t border-slate-800/80 font-mono">
-                  <div className="flex items-center space-x-3">
-                    <label className="text-xs font-bold text-slate-300">Select Network:</label>
-                    <select
-                      value={selectedChain}
-                      onChange={(e) => setSelectedChain(e.target.value)}
-                      className="bg-[#161b26] border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white outline-none font-mono"
-                    >
-                      {Object.keys(depositAddresses).map((chain) => (
-                        <option key={chain} value={chain}>{chain}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-[#141822] border border-slate-800 flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
-                    <div className="w-32 h-32 bg-white p-2 rounded-xl flex items-center justify-center shrink-0 border border-slate-700">
-                      <div className="w-full h-full border-4 border-slate-900 p-1 flex flex-col justify-between">
-                        <div className="flex justify-between">
-                          <div className="w-6 h-6 bg-slate-950" />
-                          <div className="w-6 h-6 bg-slate-950" />
-                        </div>
-                        <div className="text-[7px] font-mono font-bold text-slate-950 text-center uppercase tracking-tighter">
-                          SCAN TO PAY
-                        </div>
-                        <div className="flex justify-between">
-                          <div className="w-6 h-6 bg-slate-950" />
-                          <div className="w-4 h-4 bg-slate-950" />
-                        </div>
-                      </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <label className="text-xs font-bold text-slate-300">Target EVM Chain:</label>
+                      <select
+                        value={selectedChain}
+                        onChange={(e) => setSelectedChain(e.target.value)}
+                        className="bg-[#161b26] border border-[#68a7ca]/40 rounded-xl px-3 py-1.5 text-xs text-white outline-none font-mono"
+                      >
+                        {Object.keys(depositAddresses).map((chain) => (
+                          <option key={chain} value={chain}>{chain}</option>
+                        ))}
+                      </select>
                     </div>
 
-                    <div className="space-y-2 text-xs w-full">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Official Deposit Address:</span>
-                      <div className="p-2.5 rounded-xl bg-[#090b10] border border-slate-800 font-mono text-[11px] text-amber-300 break-all flex items-center justify-between">
-                        <span>{depositAddresses[selectedChain]}</span>
+                    <span className="text-[10px] font-bold text-[#8dbdd8] bg-[#101f30] px-2.5 py-1 rounded-full border border-[#4390bc]/40 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#00e676] animate-pulse" /> EIP-681 METAMASK QR
+                    </span>
+                  </div>
+
+                  <div className="p-5 rounded-2xl bg-[#141822] border border-[#68a7ca]/30 flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-5">
+                    {/* DYNAMIC SCANNABLE EIP-681 METAMASK QR CODE */}
+                    <div className="relative group">
+                      <div className="w-36 h-36 bg-white p-2 rounded-2xl flex items-center justify-center shrink-0 border-2 border-[#4390bc] shadow-[0_0_20px_rgba(67,144,188,0.4)]">
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`ethereum:${depositAddresses[selectedChain] || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41'}?value=${((parseFloat(depositAmount) || 100) * 1e18).toString()}`)}`}
+                          alt="MetaMask Crypto Deposit QR"
+                          className="w-full h-full object-contain rounded-lg"
+                        />
+                      </div>
+                      <span className="text-[9px] text-center text-slate-400 block mt-1 font-bold">SCAN WITH METAMASK CAMERA</span>
+                    </div>
+
+                    <div className="space-y-3 text-xs w-full">
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">Official Wallet Deposit Address:</span>
+                        <div className="p-2.5 rounded-xl bg-[#090b10] border border-slate-800 font-mono text-[11px] text-[#dbe9f3] break-all flex items-center justify-between">
+                          <span>{depositAddresses[selectedChain]}</span>
+                          <button
+                            type="button"
+                            onClick={() => copyAddress(depositAddresses[selectedChain])}
+                            className="text-slate-400 hover:text-white p-1"
+                          >
+                            {copiedAddress ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* QUICK METAMASK PAY BUTTONS */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                         <button
                           type="button"
-                          onClick={() => copyAddress(depositAddresses[selectedChain])}
-                          className="text-slate-400 hover:text-white p-1"
+                          onClick={async () => {
+                            try {
+                              if (typeof window !== 'undefined' && window.ethereum) {
+                                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                                const fromAddr = accounts[0];
+                                const targetAddr = depositAddresses[selectedChain] || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
+                                const valHex = '0x' + (BigInt(Math.floor((parseFloat(depositAmount) || 10) * 1e18))).toString(16);
+                                
+                                addNotification('🦊 Opening MetaMask extension to sign transaction...', 'info');
+                                const txHash = await window.ethereum.request({
+                                  method: 'eth_sendTransaction',
+                                  params: [{ from: fromAddr, to: targetAddr, value: valHex }]
+                                });
+
+                                executeDepositSuccess(`MetaMask QR Payment (${selectedChain})`, txHash, {
+                                  network: selectedChain,
+                                  depositAddress: targetAddr
+                                });
+                              } else {
+                                window.open(`https://metamask.app.link/send/${depositAddresses[selectedChain]}`, '_blank');
+                              }
+                            } catch (err) {
+                              addNotification(`MetaMask QR notice: ${err.message}`, 'warning');
+                            }
+                          }}
+                          className="py-2.5 px-3 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-300 font-bold text-[11px] hover:bg-amber-500/30 transition flex items-center justify-center space-x-1.5"
                         >
-                          {copiedAddress ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                          <Zap className="w-3.5 h-3.5 text-amber-400" />
+                          <span>🦊 PAY IN METAMASK</span>
                         </button>
+
+                        <a
+                          href={`https://metamask.app.link/send/${depositAddresses[selectedChain]}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="py-2.5 px-3 rounded-xl bg-[#101f30] border border-[#68a7ca]/40 text-[#dbe9f3] font-bold text-[11px] hover:bg-[#162a40] transition flex items-center justify-center space-x-1.5 text-center"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5 text-[#8dbdd8]" />
+                          <span>MOBILE DEEP LINK</span>
+                        </a>
                       </div>
                     </div>
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-sm uppercase tracking-wider hover:brightness-110 transition shadow-lg"
+                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#4390bc] via-[#68a7ca] to-[#8dbdd8] text-slate-950 font-black text-sm uppercase tracking-wider hover:brightness-110 transition shadow-lg flex items-center justify-center space-x-2"
                   >
-                    CONFIRM CRYPTO TRANSFER DEPOSIT
+                    <CheckCircle2 className="w-4 h-4 text-slate-950" />
+                    <span>CONFIRM & VERIFY ON-CHAIN QR DEPOSIT</span>
                   </button>
                 </form>
               )}

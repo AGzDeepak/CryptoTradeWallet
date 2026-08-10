@@ -811,29 +811,42 @@ contract SimpleStorage {
                   </span>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-[#060810] border border-slate-800 flex flex-col items-center justify-center space-y-4 text-center">
-                  <div className="w-36 h-36 rounded-2xl bg-white p-2 flex items-center justify-center shadow-lg">
-                    <div className="w-full h-full border-4 border-slate-950 bg-slate-950 p-1 grid grid-cols-6 gap-1 rounded">
-                      {Array.from({length: 36}).map((_, i) => (
-                        <div key={i} className={`rounded-sm ${i % 2 === 0 || i % 5 === 0 ? 'bg-white' : 'bg-slate-900'}`} />
-                      ))}
-                    </div>
+                <div className="p-5 rounded-2xl bg-[#060810] border border-[#68a7ca]/30 flex flex-col items-center justify-center space-y-4 text-center">
+                  {/* HIGH RESOLUTION SCANNABLE EIP-681 METAMASK QR CODE */}
+                  <div className="w-40 h-40 bg-white p-2 rounded-2xl flex items-center justify-center border-2 border-[#4390bc] shadow-[0_0_20px_rgba(67,144,188,0.4)]">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`ethereum:${realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41'}@11155111?value=100000000000000000`)}`}
+                      alt="My Sepolia Receive QR Code"
+                      className="w-full h-full object-contain rounded-lg"
+                    />
                   </div>
 
                   <div className="space-y-1">
                     <span className="text-[10px] text-slate-400 font-bold uppercase block">YOUR MY WALLET SEPOLIA ADDRESS:</span>
-                    <span className="text-xs font-bold text-white font-mono break-all block">
+                    <span className="text-xs font-bold text-[#dbe9f3] font-mono break-all block">
                       {realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41'}
                     </span>
                   </div>
 
-                  <button
-                    onClick={() => copyToClipboard(realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41', 'Receive Address')}
-                    className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-[#2dd4bf] font-extrabold text-xs flex items-center justify-center gap-1.5 transition border border-slate-700"
-                  >
-                    {copied === 'Receive Address' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                    <span>{copied === 'Receive Address' ? 'ADDRESS COPIED!' : '📋 COPY MY RECEIVE ADDRESS'}</span>
-                  </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full pt-1">
+                    <button
+                      onClick={() => copyToClipboard(realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41', 'Receive Address')}
+                      className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-[#8dbdd8] font-bold text-[11px] flex items-center justify-center gap-1.5 transition border border-slate-700"
+                    >
+                      {copied === 'Receive Address' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                      <span>{copied === 'Receive Address' ? 'COPIED!' : '📋 COPY ADDRESS'}</span>
+                    </button>
+
+                    <a
+                      href={`https://metamask.app.link/send/${realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41'}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="py-2.5 px-3 rounded-xl bg-[#101f30] border border-[#68a7ca]/40 text-[#dbe9f3] font-bold text-[11px] hover:bg-[#162a40] transition flex items-center justify-center space-x-1 text-center"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-[#8dbdd8]" />
+                      <span>🦊 PAY VIA METAMASK</span>
+                    </a>
+                  </div>
                 </div>
               </div>
 
