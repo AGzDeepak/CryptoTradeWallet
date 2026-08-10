@@ -207,6 +207,50 @@ export const switchMetaMaskAccount = async () => {
 // ─── Network Configurations (Mainnet & Testnet) ─────────────────────────────
 export const NETWORKS = [
   {
+    id: 'bitcoin-mainnet',
+    name: 'Bitcoin Mainnet (BTC)',
+    type: 'MAINNET',
+    chainId: 0,
+    chainIdHex: '0x0',
+    rpcUrl: 'https://blockstream.info/api',
+    nativeCurrency: { name: 'Bitcoin', symbol: 'BTC', decimals: 8 },
+    blockExplorer: 'https://mempool.space',
+    icon: '₿'
+  },
+  {
+    id: 'bitcoin-testnet',
+    name: 'Bitcoin Testnet / Signet (tBTC)',
+    type: 'TESTNET',
+    chainId: 999999,
+    chainIdHex: '0xf423f',
+    rpcUrl: 'https://mempool.space/testnet/api',
+    nativeCurrency: { name: 'Testnet Bitcoin', symbol: 'tBTC', decimals: 8 },
+    blockExplorer: 'https://mempool.space/testnet',
+    icon: '🧪'
+  },
+  {
+    id: 'rootstock-mainnet',
+    name: 'Rootstock (RSK) Smart Bitcoin Mainnet',
+    type: 'MAINNET',
+    chainId: 30,
+    chainIdHex: '0x1e',
+    rpcUrl: 'https://public-node.rsk.co',
+    nativeCurrency: { name: 'Smart Bitcoin', symbol: 'RBTC', decimals: 18 },
+    blockExplorer: 'https://explorer.rootstock.io',
+    icon: '₿'
+  },
+  {
+    id: 'rootstock-testnet',
+    name: 'Rootstock (RSK) Smart Bitcoin Testnet',
+    type: 'TESTNET',
+    chainId: 31,
+    chainIdHex: '0x1f',
+    rpcUrl: 'https://public-node.testnet.rsk.co',
+    nativeCurrency: { name: 'Testnet Smart Bitcoin', symbol: 'tRBTC', decimals: 18 },
+    blockExplorer: 'https://explorer.testnet.rootstock.io',
+    icon: '🧪'
+  },
+  {
     id: 'ethereum-mainnet',
     name: 'Ethereum Mainnet',
     type: 'MAINNET',

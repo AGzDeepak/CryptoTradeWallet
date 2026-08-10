@@ -101,10 +101,19 @@ export const Header = () => {
           </button>
         </div>
 
+        {/* Network Selector Pill */}
+        <button
+          onClick={() => openModal('NETWORK_SWITCHER')}
+          className="hidden lg:flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-[#181a20] border border-[#68a7ca]/40 text-[#dbe9f3] font-bold text-xs font-mono hover:border-[#68a7ca] transition cursor-pointer shrink-0"
+        >
+          <span className="text-sm">🌐</span>
+          <span>NETWORKS</span>
+        </button>
+
         {/* Real Payment Gateway Action Button */}
         <button
           onClick={() => openModal('DEPOSIT')}
-          className="flex items-center space-x-1.5 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-[#facc15] to-amber-500 text-slate-950 font-extrabold text-xs font-mono shadow-lg hover:brightness-110 transition cursor-pointer whitespace-nowrap shrink-0"
+          className="flex items-center space-x-1.5 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-[#4390bc] via-[#68a7ca] to-[#8dbdd8] text-slate-950 font-black text-xs font-mono shadow-lg hover:brightness-110 transition cursor-pointer whitespace-nowrap shrink-0"
         >
           <Wallet className="w-4 h-4 text-slate-950 shrink-0" />
           <span className="whitespace-nowrap">+ DEPOSIT / PAY</span>

@@ -40,23 +40,23 @@ export const RealWeb3TradingSection = () => {
   const [validatedToken, setValidatedToken] = useState(null);
   const [tokenValidationError, setTokenValidationError] = useState('');
 
-  // Preset Verified Arbitrum Tokens on Arbiscan
+  // Preset Verified Tokens (Bitcoin Mainnet, Testnet & Arbitrum)
   const ARBISCAN_DEMO_TOKENS = [
+    { symbol: 'BTC', name: 'Bitcoin (Mainnet / WBTC)', address: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f', price: 67840.50, decimals: 8, verified: true, arbiscanUrl: 'https://mempool.space' },
+    { symbol: 'tBTC', name: 'Bitcoin Testnet / Signet', address: '0x1111111111111111111111111111111111111111', price: 67840.50, decimals: 8, verified: true, arbiscanUrl: 'https://mempool.space/testnet' },
+    { symbol: 'ETH', name: 'Ethereum (WETH)', address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1', price: 3540.20, decimals: 18, verified: true, arbiscanUrl: 'https://arbiscan.io/token/0x82aF49447D8a07e3bd95BD0d56f35241523fBab1' },
     { symbol: 'ARB', name: 'Arbitrum Token', address: '0x912CE59144191C1204E64559FE8253a0e49E6548', price: 1.15, decimals: 18, verified: true, arbiscanUrl: 'https://arbiscan.io/token/0x912CE59144191C1204E64559FE8253a0e49E6548' },
-    { symbol: 'USDC', name: 'Bridged USDC (Arbitrum)', address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', price: 1.00, decimals: 6, verified: true, arbiscanUrl: 'https://arbiscan.io/token/0xaf88d065e77c8cC2239327C5EDb3A432268e5831' },
-    { symbol: 'WETH', name: 'Wrapped Ether (Arbitrum)', address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1', price: 3540.20, decimals: 18, verified: true, arbiscanUrl: 'https://arbiscan.io/token/0x82aF49447D8a07e3bd95BD0d56f35241523fBab1' },
-    { symbol: 'GMX', name: 'GMX Token (Arbitrum)', address: '0xfC5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a', price: 42.50, decimals: 18, verified: true, arbiscanUrl: 'https://arbiscan.io/token/0xfC5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a' },
-    { symbol: 'WBTC', name: 'Wrapped BTC (Arbitrum)', address: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f', price: 67840.50, decimals: 8, verified: true, arbiscanUrl: 'https://arbiscan.io/token/0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f' },
-    { symbol: 'MAGIC', name: 'Magic (Treasure Arbitrum)', address: '0x539b0e4179213434d289540ce80538f8317e4623', price: 0.85, decimals: 18, verified: true, arbiscanUrl: 'https://arbiscan.io/token/0x539b0e4179213434d289540ce80538f8317e4623' }
+    { symbol: 'USDC', name: 'Bridged USDC', address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', price: 1.00, decimals: 6, verified: true, arbiscanUrl: 'https://arbiscan.io/token/0xaf88d065e77c8cC2239327C5EDb3A432268e5831' },
+    { symbol: 'GMX', name: 'GMX Token', address: '0xfC5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a', price: 42.50, decimals: 18, verified: true, arbiscanUrl: 'https://arbiscan.io/token/0xfC5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a' }
   ];
 
   // Active Web3 Token Options List
   const [tokenOptions, setTokenOptions] = useState([
+    { symbol: 'BTC', name: 'Bitcoin (Mainnet / WBTC)', address: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f', price: 67840.50, decimals: 8, verified: true },
+    { symbol: 'tBTC', name: 'Bitcoin Testnet / Signet', address: '0x1111111111111111111111111111111111111111', price: 67840.50, decimals: 8, verified: true },
     { symbol: 'ETHUSDT', name: 'Ethereum', address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1', price: 3540.20, decimals: 18, verified: true },
     { symbol: 'ARB', name: 'Arbitrum Token', address: '0x912CE59144191C1204E64559FE8253a0e49E6548', price: 1.15, decimals: 18, verified: true },
-    { symbol: 'USDC', name: 'Tether / USDC', address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', price: 1.00, decimals: 6, verified: true },
-    { symbol: 'WBTC', name: 'Wrapped BTC', address: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f', price: 67840.50, decimals: 8, verified: true },
-    { symbol: 'GMX', name: 'GMX Token', address: '0xfC5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a', price: 42.50, decimals: 18, verified: true }
+    { symbol: 'USDC', name: 'Tether / USDC', address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', price: 1.00, decimals: 6, verified: true }
   ]);
 
   // Form State

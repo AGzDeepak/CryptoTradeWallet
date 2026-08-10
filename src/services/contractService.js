@@ -2,6 +2,30 @@
 
 export const NETWORKS = {
   // MAINNETS
+  bitcoin: {
+    id: 'bitcoin',
+    name: 'Bitcoin Mainnet (BTC)',
+    type: 'MAINNET',
+    chainIdHex: '0x0',
+    chainIdNum: 0,
+    nativeCurrency: { name: 'Bitcoin', symbol: 'BTC', decimals: 8 },
+    rpcUrl: 'https://blockstream.info/api',
+    blockExplorer: 'https://mempool.space',
+    contractAddress: 'bc1qxy2kg824000867900000000000000000000000',
+    color: 'amber'
+  },
+  bitcoinTestnet: {
+    id: 'bitcoinTestnet',
+    name: 'Bitcoin Testnet / Signet (tBTC)',
+    type: 'TESTNET',
+    chainIdHex: '0xf423f',
+    chainIdNum: 999999,
+    nativeCurrency: { name: 'Testnet Bitcoin', symbol: 'tBTC', decimals: 8 },
+    rpcUrl: 'https://mempool.space/testnet/api',
+    blockExplorer: 'https://mempool.space/testnet',
+    contractAddress: 'tb1qxy2kg824000867900000000000000000000000',
+    color: 'orange'
+  },
   ethereum: {
     id: 'ethereum',
     name: 'Ethereum Mainnet',
