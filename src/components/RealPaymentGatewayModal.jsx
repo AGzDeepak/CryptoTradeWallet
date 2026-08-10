@@ -159,21 +159,22 @@ export const RealPaymentGatewayModal = () => {
       addNotification('🦊 Opening MetaMask extension for live on-chain transaction authorization...', 'info');
 
       let txHash = '';
-      const targetContract = '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
+      const targetContract = realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
       const ethVal = (num / 3540.20).toFixed(6);
 
       if (typeof window !== 'undefined' && window.ethereum) {
         try {
           const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-          const fromAddr = accounts[0] || realWalletAddress;
-          const valueWeiHex = '0x' + (Math.floor(parseFloat(ethVal) * 1e18)).toString(16);
+          const fromAddr = accounts && accounts[0] ? accounts[0] : (realWalletAddress || targetContract);
+          const valueWeiHex = '0x' + (BigInt(Math.floor(parseFloat(ethVal) * 1e18))).toString(16);
 
           txHash = await window.ethereum.request({
             method: 'eth_sendTransaction',
             params: [{
               from: fromAddr,
               to: targetContract,
-              value: valueWeiHex
+              value: valueWeiHex,
+              gas: '0x5208'
             }]
           });
         } catch (ethErr) {
@@ -187,7 +188,7 @@ export const RealPaymentGatewayModal = () => {
       executeDepositSuccess('MetaMask Live Web3 On-Chain Deposit', txHash, {
         network: realWalletNetwork || 'Sepolia ETH Testnet',
         contractAddress: targetContract,
-        senderWallet: realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41'
+        senderWallet: realWalletAddress || targetContract
       });
 
     } catch (err) {
@@ -497,10 +498,17 @@ export const RealPaymentGatewayModal = () => {
                         </div>
                       </div>
 
-                      <div className="p-3 rounded-xl bg-[#090b10] border border-slate-800 space-y-1">
-                        <div className="text-[10px] text-slate-500 uppercase font-bold">Target Deposit Contract</div>
-                        <div className="font-bold text-amber-300 text-[11px] truncate">
-                          0x71C7656EC7ab88b098defB751B7401B5f6d7B41
+                      <div className="p-3 rounded-xl bg-[#090b10] border border-[#68a7ca]/40 space-y-1">
+                        <div className="text-[10px] text-[#8dbdd8] uppercase font-bold">Target Deposit Contract / Account</div>
+                        <div className="font-bold text-[#dbe9f3] text-[11px] truncate flex items-center gap-1.5 font-mono">
+                          {realWalletAddress ? (
+                            <>
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#00e676] animate-pulse" />
+                              <span>{realWalletAddress.substring(0, 10)}...</span>
+                            </>
+                          ) : (
+                            <span className="text-amber-300">0x71C7656EC7ab88b098defB751B7401B5f6d7B41</span>
+                          )}
                         </div>
                       </div>
                     </div>
