@@ -419,13 +419,13 @@ export const RealPaymentGatewayModal = () => {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 text-xs">
+                <div className="grid grid-cols-2 gap-3 text-xs">
                   <button
                     type="button"
                     onClick={() => setPaymentMethod('WEB3')}
                     className={`flex items-center justify-between p-3.5 rounded-2xl border transition ${
                       paymentMethod === 'WEB3'
-                        ? 'bg-gradient-to-r from-amber-950/60 to-orange-950/40 border-amber-500 text-white shadow-lg'
+                        ? 'bg-gradient-to-r from-[#4390bc]/30 via-[#68a7ca]/20 to-[#4390bc]/30 border-[#4390bc] text-white shadow-lg'
                         : 'bg-[#141822] border-slate-800 text-slate-400 hover:border-slate-700'
                     }`}
                   >
@@ -433,7 +433,7 @@ export const RealPaymentGatewayModal = () => {
                       <span className="text-xl">🦊</span>
                       <div className="text-left">
                         <div className="text-xs font-black text-white">MetaMask Web3</div>
-                        <div className="text-[9px] text-slate-400">EIP-1193 On-Chain</div>
+                        <div className="text-[9px] text-[#8dbdd8]">EIP-1193 On-Chain</div>
                       </div>
                     </div>
                   </button>
@@ -443,33 +443,15 @@ export const RealPaymentGatewayModal = () => {
                     onClick={() => setPaymentMethod('QR')}
                     className={`flex items-center justify-between p-3.5 rounded-2xl border transition ${
                       paymentMethod === 'QR'
-                        ? 'bg-amber-500/10 border-[#facc15] text-white shadow-lg'
+                        ? 'bg-gradient-to-r from-[#4390bc]/30 via-[#68a7ca]/20 to-[#4390bc]/30 border-[#68a7ca] text-white shadow-lg'
                         : 'bg-[#141822] border-slate-800 text-slate-400 hover:border-slate-700'
                     }`}
                   >
                     <div className="flex items-center space-x-2">
-                      <QrCode className="w-5 h-5 text-amber-400" />
+                      <QrCode className="w-5 h-5 text-[#8dbdd8]" />
                       <div className="text-left">
                         <div className="text-xs font-black text-white">Crypto QR</div>
-                        <div className="text-[9px] text-slate-400">Scan & Transfer</div>
-                      </div>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('BANK')}
-                    className={`flex items-center justify-between p-3.5 rounded-2xl border transition ${
-                      paymentMethod === 'BANK'
-                        ? 'bg-amber-500/10 border-[#facc15] text-white shadow-lg'
-                        : 'bg-[#141822] border-slate-800 text-slate-400 hover:border-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Building2 className="w-5 h-5 text-amber-400" />
-                      <div className="text-left">
-                        <div className="text-xs font-black text-white">Bank Wire / UPI</div>
-                        <div className="text-[9px] text-slate-400">Direct UTR</div>
+                        <div className="text-[9px] text-[#8dbdd8]">Scan & Transfer</div>
                       </div>
                     </div>
                   </button>
@@ -663,39 +645,7 @@ export const RealPaymentGatewayModal = () => {
                 </form>
               )}
 
-              {/* METHOD 3: BANK WIRE / UPI */}
-              {paymentMethod === 'BANK' && (
-                <form onSubmit={handleBankSubmit} className="space-y-4 pt-2 border-t border-slate-800/80 font-mono">
-                  <div className="p-4 rounded-2xl bg-[#141822] border border-slate-800 space-y-3 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Beneficiary Bank:</span>
-                      <span className="text-white font-bold">JPMorgan Chase & Co / Instant UPI</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">VPA / Account ID:</span>
-                      <span className="text-amber-400 font-bold">chainblock.quant@jpmorgan</span>
-                    </div>
-                  </div>
 
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Enter UTR / Transaction Reference Number</label>
-                    <input
-                      type="text"
-                      value={utrReference}
-                      onChange={(e) => setUtrReference(e.target.value)}
-                      placeholder="e.g. UTR-94820148201"
-                      className="w-full bg-[#161b26] border border-slate-700 rounded-xl p-3 text-white text-xs outline-none focus:border-amber-400"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-sm uppercase tracking-wider hover:brightness-110 transition shadow-lg"
-                  >
-                    CONFIRM BANK / UPI DEPOSIT
-                  </button>
-                </form>
-              )}
             </>
           )}
 
