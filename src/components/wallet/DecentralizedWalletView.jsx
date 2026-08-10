@@ -119,7 +119,7 @@ contract SimpleStorage {
 
   // ================= SEPOLIA ETH TRANSFER STATE =================
   const [recipientAddress, setRecipientAddress] = useState('');
-  const [transferAsset, setTransferAsset] = useState('SepoliaETH');
+  const [transferAsset, setTransferAsset] = useState('BTC'); // 'BTC' | 'tBTC' | 'ETH' | 'SepoliaETH' | 'USDT' | 'USDC'
   const [transferAmount, setTransferAmount] = useState('0.1');
   const [transferNote, setTransferNote] = useState('Payment for Sepolia smart contract deployment');
   const [isSendingTransfer, setIsSendingTransfer] = useState(false);
@@ -752,12 +752,14 @@ contract SimpleStorage {
                     <select
                       value={transferAsset}
                       onChange={e => setTransferAsset(e.target.value)}
-                      className="w-full bg-[#060810] border border-slate-800 rounded-xl p-3.5 text-cyan-300 font-bold text-xs outline-none"
+                      className="w-full bg-[#060810] border border-slate-800 rounded-xl p-3.5 text-amber-400 font-bold text-xs outline-none"
                     >
-                      <option value="SepoliaETH">Sepolia ETH (Native Gas)</option>
-                      <option value="SepoliaUSDT">Sepolia USDT (ERC-20)</option>
-                      <option value="SepoliaUSDC">Sepolia USDC (ERC-20)</option>
-                      <option value="SepoliaLINK">Sepolia LINK (Chainlink)</option>
+                      <option value="BTC">₿ Bitcoin Mainnet (BTC)</option>
+                      <option value="tBTC">🧪 Bitcoin Testnet / Signet (tBTC)</option>
+                      <option value="SepoliaETH">🔷 Sepolia ETH (Native Gas)</option>
+                      <option value="SepoliaUSDT">₮ Sepolia USDT (ERC-20)</option>
+                      <option value="SepoliaUSDC">💵 Sepolia USDC (ERC-20)</option>
+                      <option value="SepoliaLINK">🔗 Sepolia LINK (Chainlink)</option>
                     </select>
                   </div>
 

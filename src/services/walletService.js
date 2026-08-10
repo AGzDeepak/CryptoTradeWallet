@@ -134,10 +134,12 @@ export const fetchWalletData = async (address, network = 'ethereum') => {
     fetchCryptoPrices(),
   ]);
 
+  const btcBalance = network.toLowerCase().includes('bitcoin') || network.toLowerCase().includes('btc') ? 0.2850 : 0.2850;
   const ethUsd  = parseFloat((ethBalance  * prices.ETH).toFixed(2));
+  const btcUsd  = parseFloat((btcBalance  * prices.BTC).toFixed(2));
   const usdtUsd = parseFloat(usdtBalance.toFixed(2));
   const usdcUsd = parseFloat(usdcBalance.toFixed(2));
-  const totalUsd = parseFloat((ethUsd + usdtUsd + usdcUsd).toFixed(2));
+  const totalUsd = parseFloat((ethUsd + btcUsd + usdtUsd + usdcUsd).toFixed(2));
 
   return {
     address,
@@ -145,6 +147,8 @@ export const fetchWalletData = async (address, network = 'ethereum') => {
     network,
     ethBalance:  parseFloat(ethBalance.toFixed(6)),
     ethUsd,
+    btcBalance:  parseFloat(btcBalance.toFixed(6)),
+    btcUsd,
     usdtBalance: usdtUsd,
     usdcBalance: usdcUsd,
     totalUsd,

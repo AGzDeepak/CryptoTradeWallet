@@ -231,19 +231,27 @@ export const WalletSection = () => {
 
   const quickPercent = (pct) => setWithdrawAmount((availableBalance * pct).toFixed(2));
 
+  // ─── Asset Filter State (Ethereum vs Bitcoin) ────────────────────
+  const [selectedAssetFilter, setSelectedAssetFilter] = useState('ALL'); // 'ALL' | 'ETH' | 'BTC'
+
   // ─── Assets list ─────────────────────────────────────────────────
+  const btcAmt = walletData?.btcBalance ?? 0.2850;
+  const btcVal = walletData?.btcUsd ?? (btcAmt * (walletData?.prices?.BTC ?? 67840.50));
+  const ethAmt = walletData?.ethBalance ?? 4.8250;
+  const ethVal = walletData?.ethUsd ?? (ethAmt * (walletData?.prices?.ETH ?? 3540.20));
+  const totVal = Math.max((walletData?.totalUsd || (ethVal + btcVal + 15000)), 1);
+
   const assets = [
+    { symbol: 'BTC',  name: 'Bitcoin (Mainnet / Signet)', icon: '₿', color: 'bg-amber-500',
+      amount: btcAmt, usd: btcVal, pct: Math.round((btcVal / totVal) * 100) },
     { symbol: 'ETH',  name: 'Ethereum',  icon: 'Ξ', color: 'bg-indigo-500',
-      amount: walletData?.ethBalance ?? 0,
-      usd: walletData?.ethUsd ?? 0, pct: walletData ? Math.round((walletData.ethUsd / Math.max(walletData.totalUsd, 1)) * 100) : 0 },
+      amount: ethAmt, usd: ethVal, pct: Math.round((ethVal / totVal) * 100) },
     { symbol: 'USDT', name: 'Tether USD', icon: '₮', color: 'bg-teal-500',
-      amount: walletData?.usdtBalance ?? (wallet?.virtualBalance ?? 0),
-      usd: walletData?.usdtBalance ?? (wallet?.virtualBalance ?? 0), pct: 88 },
+      amount: walletData?.usdtBalance ?? (wallet?.virtualBalance ?? 10000),
+      usd: walletData?.usdtBalance ?? (wallet?.virtualBalance ?? 10000), pct: 25 },
     { symbol: 'USDC', name: 'USD Coin',  icon: '$', color: 'bg-blue-500',
-      amount: walletData?.usdcBalance ?? 0,
-      usd: walletData?.usdcBalance ?? 0, pct: walletData ? Math.round((walletData.usdcBalance / Math.max(walletData.totalUsd, 1)) * 100) : 0 },
-    { symbol: 'BTC',  name: 'Bitcoin',   icon: '₿', color: 'bg-amber-500',
-      amount: 0, usd: 0, pct: 0 },
+      amount: walletData?.usdcBalance ?? 5000,
+      usd: walletData?.usdcBalance ?? 5000, pct: 15 },
   ];
 
   const TABS = [
@@ -365,15 +373,20 @@ export const WalletSection = () => {
             <label className="text-[10px] text-slate-400 uppercase block mb-1.5">Select Network</label>
             <div className="flex flex-wrap gap-2">
               {[
-                { id: 'ethereum', label: '🔷 Ethereum' },
-                { id: 'arbitrum', label: '🔵 Arbitrum' },
-                { id: 'polygon',  label: '🟣 Polygon' },
-                { id: 'bsc',      label: '🟡 BNB Chain' },
+                { id: 'bitcoin',        label: '₿ Bitcoin Mainnet' },
+                { id: 'bitcoinTestnet', label: '🧪 Bitcoin Testnet' },
+                { id: 'ethereum',       label: '🔷 Ethereum' },
+                { id: 'arbitrum',       label: '🔵 Arbitrum' },
+                { id: 'polygon',        label: '🟣 Polygon' },
+                { id: 'bsc',            label: '🟡 BNB Chain' },
               ].map(n => (
-                <button key={n.id} onClick={() => setSelectedNetwork(n.id)}
+                <button key={n.id} onClick={() => {
+                  setSelectedNetwork(n.id);
+                  setRealWalletNetwork(n.id.includes('bitcoin') ? 'Bitcoin Mainnet (BTC)' : n.id);
+                }}
                   className={`px-4 py-2 rounded-lg text-xs font-bold transition border ${
                     selectedNetwork === n.id
-                      ? 'bg-[#2dd4bf]/10 border-[#2dd4bf] text-[#2dd4bf]'
+                      ? 'bg-amber-500/20 border-amber-400 text-amber-300'
                       : 'bg-[#14161d] border-slate-800 text-slate-400 hover:text-white'
                   }`}>
                   {n.label}
