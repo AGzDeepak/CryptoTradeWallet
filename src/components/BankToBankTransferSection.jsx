@@ -144,28 +144,32 @@ export const BankToBankTransferSection = () => {
   ]);
 
   // ================= PORTION 2: REAL MONEY FIAT BANK TRANSFER STATE =================
-  const [wireType, setWireType] = useState('SWIFT'); // 'SWIFT' | 'SEPA' | 'FEDWIRE' | 'ACH'
-  const [senderBank, setSenderBank] = useState('');
-  const [senderIban, setSenderIban] = useState('');
-  const [receiverBank, setReceiverBank] = useState('');
-  const [receiverIban, setReceiverIban] = useState('');
-  const [receiverBic, setReceiverBic] = useState('');
-  const [beneficiaryName, setBeneficiaryName] = useState('');
-  const [transferAmount, setTransferAmount] = useState('');
-  const [currency, setCurrency] = useState('USD');
-  const [paymentMemo, setPaymentMemo] = useState('');
+  // ================= PORTION 2: REAL MONEY FIAT BANK TRANSFER STATE (INDIAN BANKING STANDARDS) =================
+  const [wireType, setWireType] = useState('IMPS'); // 'IMPS' | 'NEFT' | 'RTGS' | 'UPI'
+  const [senderBank, setSenderBank] = useState('State Bank of India (SBI)');
+  const [senderIban, setSenderIban] = useState('394029481029');
+  const [receiverBank, setReceiverBank] = useState('HDFC Bank');
+  const [receiverIban, setReceiverIban] = useState('50100248201948');
+  const [receiverBic, setReceiverBic] = useState('HDFC0000240'); // Indian IFSC Code
+  const [upiVpa, setUpiVpa] = useState('cryptotradewallet@okaxis');
+  const [beneficiaryName, setBeneficiaryName] = useState('CryptoTradeWallet Treasury India Ltd');
+  const [transferAmount, setTransferAmount] = useState('50000.00');
+  const [currency, setCurrency] = useState('INR');
+  const [paymentMemo, setPaymentMemo] = useState('IMPS Fund Transfer Settlement UTR-9482014820');
   const [isProcessingBank, setIsProcessingBank] = useState(false);
 
   const populateSampleTemplate = () => {
-    setSenderBank('JPMorgan Chase Bank, N.A.');
-    setSenderIban('US89 JPMC 0001 2345 6789 001');
-    setReceiverBank('Barclays Bank PLC London');
-    setBeneficiaryName('ChainBlock Global Treasury Ltd');
-    setReceiverIban('GB29 BARC 2020 1530 4059 11');
-    setReceiverBic('BARCGB22XXX');
-    setTransferAmount('10000.00');
-    setPaymentMemo('Institutional Arbitrage Settlement Fund Transfer');
-    addNotification('Populated sample wire transfer template for testing', 'info');
+    setSenderBank('State Bank of India (SBI)');
+    setSenderIban('394029481029');
+    setReceiverBank('HDFC Bank India');
+    setBeneficiaryName('CryptoTradeWallet Treasury India Ltd');
+    setReceiverIban('50100248201948');
+    setReceiverBic('HDFC0000240');
+    setUpiVpa('cryptotradewallet@okaxis');
+    setTransferAmount('50000.00');
+    setCurrency('INR');
+    setPaymentMemo('IMPS Institutional Arbitrage Settlement UTR-9482014820');
+    addNotification('Populated Indian Bank Transfer Template (SBI ➔ HDFC Bank IMPS)', 'info');
   };
 
   const clearWireForm = () => {
@@ -175,62 +179,80 @@ export const BankToBankTransferSection = () => {
     setBeneficiaryName('');
     setReceiverIban('');
     setReceiverBic('');
+    setUpiVpa('');
     setTransferAmount('');
     setPaymentMemo('');
-    addNotification('Bank wire transfer form cleared', 'info');
+    addNotification('Indian bank transfer form cleared', 'info');
   };
 
   const [bankTransfers, setBankTransfers] = useState([
     {
-      id: 'SWFT-WIRE-8892',
+      id: 'IMPS-INST-9102',
       time: '10:45 AM',
-      type: 'SWIFT WIRE',
-      sender: 'JPMorgan Chase (US)',
-      receiver: 'Barclays Bank PLC (UK)',
-      iban: 'GB29 BARC 2020 1530...',
-      amount: '$25,000.00 USD',
-      swiftRef: 'SWFT-849201948291',
-      status: 'SETTLED 🟢'
+      type: 'IMPS INSTANT 24x7',
+      sender: 'State Bank of India (SBI)',
+      receiver: 'HDFC Bank India',
+      iban: '5010024820...',
+      ifsc: 'HDFC0000240',
+      amount: '₹1,50,000.00 INR',
+      swiftRef: 'UTR-20260810948201',
+      status: 'IMPS SETTLED 🟢'
     },
     {
-      id: 'SEPA-INST-4401',
+      id: 'RTGS-HIGH-4401',
       time: '09:20 AM',
-      type: 'SEPA INSTANT',
-      sender: 'Deutsche Bank (DE)',
-      receiver: 'BNP Paribas (FR)',
-      iban: 'FR76 3000 4000 0012...',
-      amount: '€18,500.00 EUR',
-      swiftRef: 'SEPA-918230491823',
-      status: 'SETTLED 🟢'
+      type: 'RTGS REAL TIME',
+      sender: 'ICICI Bank',
+      receiver: 'Axis Bank India',
+      iban: '918020491823...',
+      ifsc: 'UTIB0000005',
+      amount: '₹5,00,000.00 INR',
+      swiftRef: 'UTR-20260810481029',
+      status: 'RTGS SETTLED 🟢'
+    },
+    {
+      id: 'UPI-FAST-8821',
+      time: '08:15 AM',
+      type: 'UPI VPA INSTANT',
+      sender: 'Paytm Payments Bank',
+      receiver: 'State Bank of India (SBI)',
+      iban: 'deepak@upi',
+      ifsc: 'SBIN0000691',
+      amount: '₹25,000.00 INR',
+      swiftRef: 'UTR-20260810882194',
+      status: 'UPI SUCCESS 🟢'
     }
   ]);
 
   const handleExecuteWireTransfer = (e) => {
     e.preventDefault();
     if (!transferAmount || parseFloat(transferAmount) <= 0) {
-      addNotification('Please enter a valid transfer amount greater than $0.00 USD', 'warning');
+      addNotification('Please enter a valid transfer amount greater than ₹0.00 INR', 'warning');
       return;
     }
 
     setIsProcessingBank(true);
     setTimeout(() => {
       setIsProcessingBank(false);
-      const newRef = `SWFT-${Math.floor(100000000000 + Math.random() * 900000000000)}`;
+      const newRef = `UTR-${Math.floor(100000000000 + Math.random() * 900000000000)}`;
+      const formattedAmt = `${currency === 'INR' ? '₹' : currency === 'USD' ? '$' : '€'}${parseFloat(transferAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })} ${currency}`;
+      
       const newTransfer = {
-        id: `WIRE-${Math.floor(1000 + Math.random() * 9000)}`,
+        id: `${wireType}-${Math.floor(1000 + Math.random() * 9000)}`,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        type: `${wireType} WIRE`,
+        type: `${wireType} TRANSFER`,
         sender: senderBank,
         receiver: receiverBank,
-        iban: `${receiverIban.substring(0, 14)}...`,
-        amount: `${currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '£'}${parseFloat(transferAmount).toLocaleString('en-US', { minimumFractionDigits: 2 })} ${currency}`,
+        iban: `${receiverIban ? receiverIban.substring(0, 10) : upiVpa}...`,
+        ifsc: receiverBic || 'SBIN0000691',
+        amount: formattedAmt,
         swiftRef: newRef,
-        status: 'SETTLED 🟢'
+        status: `${wireType} SUCCESS 🟢`
       };
 
       setBankTransfers(prev => [newTransfer, ...prev]);
       try { audioFx?.playTradeSuccess(); } catch (_) {}
-      addNotification(`🏛️ Direct Bank-to-Bank Wire Transfer Executed! ${newTransfer.amount} sent from ${senderBank} ➔ ${receiverBank} (SWIFT Ref: ${newRef})`, 'success');
+      addNotification(`🏛️ Indian Bank Transfer Executed via ${wireType}! ${formattedAmt} sent from ${senderBank} ➔ ${receiverBank} (UTR Ref: ${newRef})`, 'success');
     }, 2000);
   };
 
@@ -489,7 +511,7 @@ export const BankToBankTransferSection = () => {
                     <span className="text-[10px] text-slate-400 block">Recipient: {tx.recipient.substring(0, 14)}...</span>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px]">
+            <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px]">
                     <span className="text-slate-500 font-mono">TX: {tx.txHash.substring(0, 12)}...</span>
                     <span className="text-slate-400">{tx.time}</span>
                   </div>
@@ -501,31 +523,31 @@ export const BankToBankTransferSection = () => {
         </div>
       )}
 
-      {/* ================= PORTION 2: REAL MONEY FIAT BANK-TO-BANK TRANSFER ================= */}
+      {/* ================= PORTION 2: REAL MONEY FIAT INDIAN BANK-TO-BANK TRANSFER ================= */}
       {activePortion === 'BANK' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start font-mono text-xs">
           
-          {/* LEFT COLUMN (7 COLS): BANK TRANSFER FORM */}
+          {/* LEFT COLUMN (7 COLS): INDIAN BANK TRANSFER FORM */}
           <div className="lg:col-span-7 p-6 rounded-3xl bg-[#090d16] border border-amber-500/40 space-y-6 shadow-xl">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center space-x-2.5">
                 <span className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-400 flex items-center justify-center font-bold">
-                  🏛️
+                  🇮🇳
                 </span>
                 <div>
-                  <h3 className="text-sm font-black text-white uppercase">REAL MONEY FIAT BANK-TO-BANK PORTION</h3>
-                  <p className="text-[10px] text-slate-400">Institutional SWIFT, SEPA Instant, & FedWire Fiat Transfer</p>
+                  <h3 className="text-sm font-black text-white uppercase">REAL MONEY FIAT INDIAN BANK-TO-BANK PORTION</h3>
+                  <p className="text-[10px] text-slate-400">Indian Standards: IMPS 24x7 Instant, NEFT, RTGS, & UPI VPA Transfer</p>
                 </div>
               </div>
               <span className="px-2.5 py-1 rounded-full text-[9px] font-bold bg-amber-950 text-amber-400 border border-amber-500">
-                SWIFT COMPLIANT
+                RBI & NPCI STANDARDS
               </span>
             </div>
 
-            {/* Wire Type Filter & Quick Template Actions */}
+            {/* Indian Transfer Type Selector & Quick Template Actions */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-2 border-b border-slate-800/80">
               <div className="flex flex-wrap items-center gap-2">
-                {['SWIFT', 'SEPA', 'FEDWIRE', 'ACH'].map(t => (
+                {['IMPS', 'NEFT', 'RTGS', 'UPI'].map(t => (
                   <button
                     key={t}
                     type="button"
@@ -536,7 +558,7 @@ export const BankToBankTransferSection = () => {
                         : 'bg-[#060810] text-slate-400 border-slate-800 hover:border-slate-700'
                     }`}
                   >
-                    {t} WIRE
+                    {t} {t === 'IMPS' ? 'INSTANT' : t === 'UPI' ? 'VPA' : 'TRANSFER'}
                   </button>
                 ))}
               </div>
@@ -547,7 +569,7 @@ export const BankToBankTransferSection = () => {
                   onClick={populateSampleTemplate}
                   className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition"
                 >
-                  ⚡ FILL SAMPLE TEMPLATE
+                  ⚡ SAMPLE INDIAN BANK TEMPLATE
                 </button>
                 <button
                   type="button"
@@ -561,37 +583,46 @@ export const BankToBankTransferSection = () => {
 
             <form onSubmit={handleExecuteWireTransfer} className="space-y-5">
               
-              {/* Originating Bank */}
+              {/* Originating Indian Bank */}
               <div className="p-4 rounded-2xl bg-[#060810] border border-slate-800 space-y-3">
-                <span className="text-[10px] text-amber-400 font-extrabold uppercase block">ORIGINATING BANK (SENDER)</span>
+                <span className="text-[10px] text-amber-400 font-extrabold uppercase block">ORIGINATING SENDER BANK (INDIA)</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[9px] text-slate-400 block mb-1 font-bold">ORIGINATING BANK NAME</label>
-                    <input
-                      type="text"
+                    <label className="text-[9px] text-slate-400 block mb-1 font-bold">ORIGINATING INDIAN BANK NAME</label>
+                    <select
                       value={senderBank}
                       onChange={e => setSenderBank(e.target.value)}
-                      placeholder="e.g. JPMorgan Chase, Bank of America, HSBC..."
                       className="w-full bg-[#090d16] border border-slate-800 rounded-xl p-3 text-white font-bold text-xs outline-none focus:border-amber-400"
-                    />
+                    >
+                      <option value="State Bank of India (SBI)">State Bank of India (SBI)</option>
+                      <option value="HDFC Bank">HDFC Bank</option>
+                      <option value="ICICI Bank">ICICI Bank</option>
+                      <option value="Axis Bank">Axis Bank</option>
+                      <option value="Punjab National Bank (PNB)">Punjab National Bank (PNB)</option>
+                      <option value="Bank of Baroda (BOB)">Bank of Baroda (BOB)</option>
+                      <option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option>
+                      <option value="Canara Bank">Canara Bank</option>
+                      <option value="IndusInd Bank">IndusInd Bank</option>
+                      <option value="Union Bank of India">Union Bank of India</option>
+                    </select>
                   </div>
 
                   <div>
-                    <label className="text-[9px] text-slate-400 block mb-1 font-bold">SENDER IBAN / ACCOUNT NO.</label>
+                    <label className="text-[9px] text-slate-400 block mb-1 font-bold">SENDER ACCOUNT NO. / VPA</label>
                     <input
                       type="text"
                       value={senderIban}
                       onChange={e => setSenderIban(e.target.value)}
-                      placeholder="Enter your sender IBAN or Account Number"
+                      placeholder="e.g. 394029481029 or sender@upi"
                       className="w-full bg-[#090d16] border border-slate-800 rounded-xl p-3 text-slate-200 font-mono text-xs outline-none focus:border-amber-400"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Receiver Bank */}
+              {/* Receiver Indian Bank */}
               <div className="p-4 rounded-2xl bg-[#060810] border border-slate-800 space-y-3">
-                <span className="text-[10px] text-cyan-400 font-extrabold uppercase block">DESTINATION BANK (RECEIVER)</span>
+                <span className="text-[10px] text-cyan-400 font-extrabold uppercase block">DESTINATION RECEIVER BANK (INDIA)</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="text-[9px] text-slate-400 block mb-1 font-bold">DESTINATION BANK NAME</label>
@@ -599,7 +630,7 @@ export const BankToBankTransferSection = () => {
                       type="text"
                       value={receiverBank}
                       onChange={e => setReceiverBank(e.target.value)}
-                      placeholder="Enter destination bank name (e.g. Barclays, Deutsche Bank)"
+                      placeholder="Enter destination bank (e.g. HDFC Bank, ICICI Bank)"
                       className="w-full bg-[#090d16] border border-slate-800 rounded-xl p-3 text-white font-bold text-xs outline-none focus:border-cyan-400"
                     />
                   </div>
@@ -610,32 +641,45 @@ export const BankToBankTransferSection = () => {
                       type="text"
                       value={beneficiaryName}
                       onChange={e => setBeneficiaryName(e.target.value)}
-                      placeholder="Enter beneficiary full account name"
+                      placeholder="Enter beneficiary full name in bank records"
                       className="w-full bg-[#090d16] border border-slate-800 rounded-xl p-3 text-white font-bold text-xs outline-none focus:border-cyan-400"
                     />
                   </div>
 
                   <div>
-                    <label className="text-[9px] text-slate-400 block mb-1 font-bold">RECEIVER IBAN / ACCOUNT NO.</label>
+                    <label className="text-[9px] text-slate-400 block mb-1 font-bold">RECEIVER ACCOUNT NUMBER</label>
                     <input
                       type="text"
                       value={receiverIban}
                       onChange={e => setReceiverIban(e.target.value)}
-                      placeholder="Enter beneficiary IBAN or Account Number"
+                      placeholder="Enter 9 to 18 digit Bank Account Number"
                       className="w-full bg-[#090d16] border border-slate-800 rounded-xl p-3 text-slate-200 font-mono text-xs outline-none focus:border-cyan-400"
                     />
                   </div>
 
                   <div>
-                    <label className="text-[9px] text-slate-400 block mb-1 font-bold">SWIFT / BIC CODE</label>
+                    <label className="text-[9px] text-slate-400 block mb-1 font-bold">IFSC CODE (11-DIGIT ALPHA-NUMERIC)</label>
                     <input
                       type="text"
                       value={receiverBic}
-                      onChange={e => setReceiverBic(e.target.value)}
-                      placeholder="Enter 8 or 11 character SWIFT / BIC code"
-                      className="w-full bg-[#090d16] border border-slate-800 rounded-xl p-3 text-cyan-300 font-mono font-bold text-xs outline-none focus:border-cyan-400"
+                      onChange={e => setReceiverBic(e.target.value.toUpperCase())}
+                      placeholder="e.g. HDFC0000240, SBIN0000691"
+                      className="w-full bg-[#090d16] border border-slate-800 rounded-xl p-3 text-cyan-300 font-mono font-bold text-xs outline-none focus:border-cyan-400 uppercase"
                     />
                   </div>
+
+                  {wireType === 'UPI' && (
+                    <div className="sm:col-span-2">
+                      <label className="text-[9px] text-slate-400 block mb-1 font-bold">UPI VPA / ID (FOR UPI TRANSFERS)</label>
+                      <input
+                        type="text"
+                        value={upiVpa}
+                        onChange={e => setUpiVpa(e.target.value)}
+                        placeholder="e.g. merchant@okaxis, trader@upi"
+                        className="w-full bg-[#090d16] border border-slate-800 rounded-xl p-3 text-amber-300 font-mono text-xs outline-none focus:border-amber-400"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -648,7 +692,7 @@ export const BankToBankTransferSection = () => {
                     step="100"
                     value={transferAmount}
                     onChange={e => setTransferAmount(e.target.value)}
-                    placeholder="Enter wire transfer amount (e.g. 5000.00)"
+                    placeholder="Enter amount in INR (e.g. 50000.00)"
                     className="w-full bg-[#060810] border border-slate-800 rounded-xl p-3 text-white font-mono font-extrabold text-sm outline-none focus:border-amber-400"
                   />
                 </div>
@@ -660,22 +704,22 @@ export const BankToBankTransferSection = () => {
                     onChange={e => setCurrency(e.target.value)}
                     className="w-full bg-[#060810] border border-slate-800 rounded-xl p-3 text-amber-400 font-bold text-xs outline-none"
                   >
+                    <option value="INR">INR (₹)</option>
                     <option value="USD">USD ($)</option>
                     <option value="EUR">EUR (€)</option>
                     <option value="GBP">GBP (£)</option>
-                    <option value="CAD">CAD (C$)</option>
                   </select>
                 </div>
               </div>
 
-              {/* Memo */}
+              {/* UTR Reference Memo */}
               <div>
-                <label className="text-[9px] text-slate-400 block mb-1 font-bold">SWIFT PAYMENT MEMO / REFERENCE</label>
+                <label className="text-[9px] text-slate-400 block mb-1 font-bold">UTR PAYMENT MEMO / REFERENCE NUMBER</label>
                 <input
                   type="text"
                   value={paymentMemo}
                   onChange={e => setPaymentMemo(e.target.value)}
-                  placeholder="Enter SWIFT wire payment reference or memo"
+                  placeholder="Enter UTR transaction reference or transfer remark"
                   className="w-full bg-[#060810] border border-slate-800 rounded-xl p-3 text-slate-200 font-mono text-xs outline-none focus:border-amber-400"
                 />
               </div>
@@ -689,12 +733,12 @@ export const BankToBankTransferSection = () => {
                 {isProcessingBank ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
-                    <span>PROCESSING SWIFT BANK WIRE TRANSFER...</span>
+                    <span>PROCESSING {wireType} INDIAN BANK TRANSFER...</span>
                   </>
                 ) : (
                   <>
                     <Landmark className="w-4 h-4 fill-slate-950" />
-                    <span>🏛️ EXECUTE DIRECT BANK-TO-BANK WIRE TRANSFER NOW</span>
+                    <span>🏛️ EXECUTE DIRECT INDIAN BANK-TO-BANK TRANSFER NOW ({wireType})</span>
                   </>
                 )}
               </button>
@@ -702,14 +746,14 @@ export const BankToBankTransferSection = () => {
             </form>
           </div>
 
-          {/* RIGHT COLUMN (5 COLS): BANK TRANSFER AUDIT LEDGER */}
-          <div className="lg:col-span-5 p-6 rounded-3xl bg-[#090d16] border border-slate-800 space-y-4 shadow-xl">
+          {/* RIGHT COLUMN (5 COLS): INDIAN BANK TRANSFER AUDIT LEDGER */}
+          <div className="lg:col-span-5 p-6 rounded-3xl bg-[#090d16] border border-slate-800 space-y-4 shadow-xl font-mono text-xs">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center space-x-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <h3 className="text-xs font-extrabold text-white uppercase">SWIFT Wire Settlement Ledger</h3>
+                <h3 className="text-xs font-extrabold text-white uppercase">Indian Bank Settlement Ledger</h3>
               </div>
-              <span className="text-[10px] text-slate-400">FIAT LOGS</span>
+              <span className="text-[10px] text-amber-400 font-bold">NPCI / RBI LOGS</span>
             </div>
 
             <div className="space-y-3">
@@ -723,12 +767,13 @@ export const BankToBankTransferSection = () => {
                   </div>
 
                   <div className="space-y-0.5 pt-1">
-                    <span className="text-xs font-bold text-white block">{tx.amount}</span>
-                    <span className="text-[10px] text-slate-400 block">{tx.sender} ➔ {tx.receiver}</span>
+                    <span className="text-xs font-extrabold text-white block">{tx.amount}</span>
+                    <span className="text-[10px] text-slate-300 block">{tx.sender} ➔ {tx.receiver}</span>
+                    <span className="text-[10px] text-cyan-400 block font-mono">IFSC: {tx.ifsc} | Acc: {tx.iban}</span>
                   </div>
 
                   <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px]">
-                    <span className="text-slate-500 font-mono">SWIFT Ref: {tx.swiftRef}</span>
+                    <span className="text-amber-300 font-mono font-bold">UTR: {tx.swiftRef}</span>
                     <span className="text-slate-400">{tx.time}</span>
                   </div>
                 </div>
