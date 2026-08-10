@@ -67,8 +67,7 @@ const DashboardContent = () => {
 
             </div>
 
-            {/* Full Width Verified Trade Audit Log Ledger */}
-            <TradeHistory />
+
 
           </div>
         )}
@@ -78,7 +77,6 @@ const DashboardContent = () => {
           <div className="space-y-6">
             <PaperTradingPanel />
             <LivePositions />
-            <TradeHistory />
           </div>
         )}
 
