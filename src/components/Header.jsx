@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { Search, Mail, Bell, Bot, LogOut, Wallet, ChevronDown, Globe } from 'lucide-react';
+import { Search, Mail, Bell, Bot, LogOut, Wallet, ChevronDown, Globe, ShieldCheck } from 'lucide-react';
 
 export const Header = () => {
   const { 
@@ -23,131 +23,119 @@ export const Header = () => {
       case 'simulation': return 'Quantitative Market Simulator';
       case 'account': return 'Account Management';
       case 'wallet': return 'Institutional Wallet';
-      case 'news': return 'Live Crypto News & Intelligence';
+      case 'news': return 'Live Crypto Intelligence';
       case 'settings': return 'System Settings';
-      default: return 'Dashboard';
+      default: return 'CryptoTradeWallet';
     }
   };
 
+  const getNetworkIcon = () => {
+    const net = (realWalletNetwork || '').toLowerCase();
+    if (net.includes('bitcoin')) return '₿';
+    if (net.includes('sepolia')) return '🧪';
+    if (net.includes('arbitrum')) return '⚡';
+    if (net.includes('polygon')) return '🟣';
+    return 'Ξ';
+  };
+
   return (
-    <header className="bg-[#0a1422] border-b border-[#68a7ca]/30 px-6 sm:px-8 h-20 flex items-center justify-between gap-6 z-40 shrink-0 font-sans">
+    <header className="bg-[#080c14] border-b border-[#4390bc]/30 px-4 sm:px-8 h-20 flex items-center justify-between gap-4 z-40 shrink-0 font-sans shadow-lg">
       
-      {/* Left: Dynamic Header Title & Mobile Brand Icon */}
-      <div className="flex items-center shrink-0 mr-2 space-x-3">
-        {/* Mobile Brand emblem icon (visible on mobile/tablet) */}
+      {/* LEFT: Title & Active Network Badge */}
+      <div className="flex items-center space-x-3 shrink-0">
         <div 
-          className="lg:hidden w-8 h-8 rounded-full bg-gradient-to-r from-[#4390bc] to-[#68a7ca] flex items-center justify-center shadow-[0_0_12px_rgba(67,144,188,0.5)] cursor-pointer"
+          className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#4390bc] via-[#68a7ca] to-[#8dbdd8] flex items-center justify-center shadow-[0_0_20px_rgba(67,144,188,0.4)] cursor-pointer"
           onClick={() => setActiveTab('dashboard')}
+          title="CryptoTradeWallet Dashboard"
         >
-          <div className="w-5 h-5 rounded-full bg-[#0a1422] flex items-center justify-center">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#dbe9f3]" />
-          </div>
+          <span className="font-extrabold text-slate-950 text-base font-mono">CTW</span>
         </div>
 
-        <h1 className="text-base sm:text-2xl font-extrabold text-[#dbe9f3] tracking-tight whitespace-nowrap">
-          {getTitle()}
-        </h1>
+        <div className="flex flex-col">
+          <div className="flex items-center space-x-2">
+            <h1 className="text-base sm:text-xl font-black text-white tracking-tight font-mono uppercase">
+              {getTitle()}
+            </h1>
+            <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-[#4390bc]/20 text-[#8dbdd8] border border-[#68a7ca]/40">
+              V3.8 PRO
+            </span>
+          </div>
+
+          {/* Connected Network Pill */}
+          <button
+            type="button"
+            onClick={() => openModal('NETWORK_SWITCHER')}
+            className="flex items-center space-x-1.5 text-[11px] font-mono font-bold text-[#8dbdd8] hover:text-white transition cursor-pointer"
+          >
+            <span className="w-2 h-2 rounded-full bg-[#00e676] animate-pulse shrink-0" />
+            <span className="text-xs">{getNetworkIcon()}</span>
+            <span className="truncate max-w-[150px] uppercase">
+              {realWalletNetwork ? realWalletNetwork.replace(' Mainnet', '').replace(' Testnet', '') : 'Ethereum'}
+            </span>
+            <ChevronDown className="w-3 h-3 text-[#68a7ca]" />
+          </button>
+        </div>
       </div>
 
-      {/* Center: Search Bar */}
-      <div className="relative hidden md:block flex-1 max-w-md mx-4">
+      {/* CENTER: Search Bar */}
+      <div className="relative hidden md:block flex-1 max-w-sm mx-4">
         <input
           type="text"
-          placeholder="Search coins, transactions, orders..."
-          className="w-full bg-[#181a20] border border-slate-800 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 outline-none focus:border-[#facc15] transition shadow-inner"
+          placeholder="Search BTC, ETH, transactions, orders..."
+          className="w-full bg-[#0d1420] border border-slate-800 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 outline-none focus:border-[#68a7ca] transition shadow-inner font-mono"
         />
         <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-500" />
       </div>
 
-      {/* Right: Controls Cluster */}
-      <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+      {/* RIGHT: Consolidated Clean Controls Cluster */}
+      <div className="flex items-center gap-3 shrink-0">
         
-        {/* Master Bot Autopilot Pill */}
+        {/* Wallet Mode Badge Button */}
         <button
-          onClick={() => setAutoTradingEnabled(!autoTradingEnabled)}
-          className={`hidden xl:flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold font-mono border transition whitespace-nowrap shrink-0 ${
-            autoTradingEnabled
-              ? 'bg-amber-950/80 text-[#facc15] border-[#facc15]/50 glow-yellow'
-              : 'bg-slate-900 text-slate-400 border-slate-800'
-          }`}
-        >
-          <Bot className={`w-4 h-4 ${autoTradingEnabled ? 'text-[#facc15]' : 'text-slate-500'}`} />
-          <span className="whitespace-nowrap">AUTOPILOT: {autoTradingEnabled ? 'ON' : 'PAUSED'}</span>
-        </button>
-
-        {/* Dual Wallet Switcher */}
-        <div className="hidden sm:flex items-center bg-[#181a20] p-1 rounded-xl border border-slate-800 text-xs font-mono shrink-0 whitespace-nowrap">
-          <button
-            onClick={() => setWalletMode('DEMO')}
-            className={`px-3 py-1.5 rounded-lg transition font-bold whitespace-nowrap ${
-              walletMode === 'DEMO'
-                ? 'bg-[#facc15] text-slate-950 shadow-sm'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            DEMO
-          </button>
-          <button
-            onClick={() => {
+          onClick={() => {
+            if (walletMode === 'DEMO') {
               if (realWallet.connected) setWalletMode('REAL');
               else openModal('WALLET');
-            }}
-            className={`px-3 py-1.5 rounded-lg transition font-bold whitespace-nowrap ${
-              walletMode === 'REAL'
-                ? 'bg-[#facc15] text-slate-950 shadow-sm'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            {realWallet.connected ? realWallet.shortAddress : 'REAL WEB3'}
-          </button>
-        </div>
-
-        {/* Premium Active Network Selector Pill */}
-        <button
-          onClick={() => openModal('NETWORK_SWITCHER')}
-          className="hidden lg:flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-[#0c1422] border border-[#4390bc]/50 text-[#dbe9f3] font-bold text-xs font-mono hover:border-[#68a7ca] hover:bg-[#121c2e] transition shadow-[0_0_15px_rgba(67,144,188,0.2)] cursor-pointer shrink-0"
-          title="Click to Switch Mainnet & Testnet Networks"
+            } else {
+              setWalletMode('DEMO');
+            }
+          }}
+          className={`flex items-center space-x-2 px-3 py-2 rounded-xl text-xs font-mono font-bold border transition cursor-pointer shrink-0 ${
+            walletMode === 'REAL'
+              ? 'bg-[#00e676]/10 text-[#00e676] border-[#00e676]/40 shadow-[0_0_15px_rgba(0,230,118,0.2)]'
+              : 'bg-amber-500/10 text-amber-300 border-amber-500/40'
+          }`}
+          title="Click to toggle Demo vs Real Web3 Wallet"
         >
-          <span className="w-2 h-2 rounded-full bg-[#00e676] animate-pulse shrink-0" />
-          <span className="text-sm shrink-0">
-            {realWalletNetwork?.toLowerCase().includes('bitcoin') ? '₿' : realWalletNetwork?.toLowerCase().includes('sepolia') ? '🧪' : realWalletNetwork?.toLowerCase().includes('arbitrum') ? '⚡' : realWalletNetwork?.toLowerCase().includes('polygon') ? '🟣' : '🌐'}
+          <span className={`w-2 h-2 rounded-full ${walletMode === 'REAL' ? 'bg-[#00e676] animate-pulse' : 'bg-amber-400'}`} />
+          <span className="uppercase">
+            {walletMode === 'REAL' ? (realWallet.connected ? realWallet.shortAddress : 'REAL WEB3') : 'DEMO MODE'}
           </span>
-          <span className="max-w-[140px] truncate uppercase text-[11px] font-extrabold tracking-tight">
-            {realWalletNetwork ? realWalletNetwork.replace(' Mainnet', '').replace(' Testnet', '') : 'Ethereum'}
-          </span>
-          <ChevronDown className="w-3.5 h-3.5 text-[#8dbdd8] shrink-0" />
         </button>
 
-        {/* Real Payment Gateway Action Button */}
+        {/* Deposit / Pay Action Button */}
         <button
           onClick={() => openModal('DEPOSIT')}
-          className="flex items-center space-x-1.5 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-[#4390bc] via-[#68a7ca] to-[#8dbdd8] text-slate-950 font-black text-xs font-mono shadow-lg hover:brightness-110 transition cursor-pointer whitespace-nowrap shrink-0"
+          className="flex items-center space-x-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#4390bc] via-[#68a7ca] to-[#8dbdd8] text-slate-950 font-black text-xs font-mono shadow-[0_0_20px_rgba(67,144,188,0.35)] hover:brightness-110 transition cursor-pointer whitespace-nowrap shrink-0"
         >
-          <Wallet className="w-4 h-4 text-slate-950 shrink-0" />
+          <Wallet className="w-4 h-4 text-slate-950 shrink-0 stroke-[2.5]" />
           <span className="whitespace-nowrap">+ DEPOSIT / PAY</span>
-        </button>
-
-        {/* Mail Icon */}
-        <button 
-          onClick={() => openModal('AI_SUPPORT')}
-          className="p-2.5 rounded-xl bg-[#181a20] border border-slate-800 text-slate-300 hover:text-[#facc15] transition shrink-0"
-        >
-          <Mail className="w-4 h-4" />
         </button>
 
         {/* Notification Bell */}
         <button
           onClick={() => openModal('NOTIFICATIONS')}
-          className="relative p-2.5 rounded-xl bg-[#181a20] border border-slate-800 text-slate-300 hover:text-[#facc15] transition shrink-0"
+          className="relative p-2.5 rounded-xl bg-[#0d1420] border border-slate-800 text-slate-300 hover:text-[#8dbdd8] transition shrink-0"
+          title="Notifications"
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#facc15]"></span>
+          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#00e676] animate-pulse"></span>
         </button>
 
         {/* User Profile Avatar */}
         <div
           onClick={() => setActiveTab('account')}
-          className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#facc15] to-[#2dd4bf] text-slate-950 font-extrabold font-mono text-xs cursor-pointer shadow-md hover:brightness-110 transition flex items-center justify-center shrink-0"
+          className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#4390bc] to-[#8dbdd8] text-slate-950 font-black font-mono text-xs cursor-pointer shadow-md hover:brightness-110 transition flex items-center justify-center shrink-0"
           title={user?.name || 'Account Profile'}
         >
           {user?.avatarInitials || (user?.name?.charAt(0)?.toUpperCase() || 'D')}
@@ -156,7 +144,7 @@ export const Header = () => {
         {/* Logout */}
         <button
           onClick={logout}
-          className="p-2.5 rounded-xl bg-[#181a20] border border-slate-800 text-slate-400 hover:text-rose-400 transition shrink-0"
+          className="p-2.5 rounded-xl bg-[#0d1420] border border-slate-800 text-slate-400 hover:text-rose-400 transition shrink-0"
           title="Sign Out"
         >
           <LogOut className="w-4 h-4" />
