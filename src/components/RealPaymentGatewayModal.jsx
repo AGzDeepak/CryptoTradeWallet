@@ -80,11 +80,13 @@ export const RealPaymentGatewayModal = () => {
 
   if (activeModal !== 'DEPOSIT' && activeModal !== 'PAYMENT') return null;
 
+  const currentEthAddress = realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
+
   const depositAddresses = {
-    'Arbitrum One': '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
-    'Ethereum Mainnet': '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
+    'Arbitrum One': currentEthAddress,
+    'Ethereum Mainnet': currentEthAddress,
     'USDT (TRC-20)': 'TX89kP2mNq3vL1zR4sJ7wK9xY5uI0oP2qR',
-    'BNB Smart Chain': '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
+    'BNB Smart Chain': currentEthAddress,
     'Solana Mainnet': '7Kx9uP2mNq3vL1zR4sJ7wK9xY5uI0oP2qR4sJ7wK'
   };
 
@@ -580,16 +582,37 @@ export const RealPaymentGatewayModal = () => {
 
                     <div className="space-y-3 text-xs w-full">
                       <div>
-                        <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">Official Wallet Deposit Address:</span>
-                        <div className="p-2.5 rounded-xl bg-[#090b10] border border-slate-800 font-mono text-[11px] text-[#dbe9f3] break-all flex items-center justify-between">
-                          <span>{depositAddresses[selectedChain]}</span>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] text-slate-400 font-bold uppercase">Official Wallet Deposit Address:</span>
                           <button
                             type="button"
-                            onClick={() => copyAddress(depositAddresses[selectedChain])}
-                            className="text-slate-400 hover:text-white p-1"
+                            onClick={handleConnectMetaMask}
+                            className="text-[9px] font-bold text-[#8dbdd8] bg-[#101f30] hover:bg-[#162a40] px-2 py-0.5 rounded-md border border-[#4390bc]/40 transition flex items-center gap-1"
                           >
-                            {copiedAddress ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                            <span>{realWalletAddress ? '🟢 METAMASK CONNECTED' : '🦊 CONNECT MY METAMASK ADDRESS'}</span>
                           </button>
+                        </div>
+
+                        <div className="p-2.5 rounded-xl bg-[#090b10] border border-[#68a7ca]/40 font-mono text-[11px] text-[#dbe9f3] break-all flex items-center justify-between">
+                          <span className="font-extrabold">{depositAddresses[selectedChain]}</span>
+                          <div className="flex items-center space-x-1 shrink-0 ml-2">
+                            <button
+                              type="button"
+                              onClick={handleConnectMetaMask}
+                              className="text-amber-400 hover:text-amber-300 p-1 text-[10px] font-bold border border-amber-500/40 rounded bg-amber-500/10"
+                              title="Connect your MetaMask address"
+                            >
+                              SYNC 🦊
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => copyAddress(depositAddresses[selectedChain])}
+                              className="text-slate-400 hover:text-white p-1"
+                              title="Copy deposit address"
+                            >
+                              {copiedAddress ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                            </button>
+                          </div>
                         </div>
                       </div>
 
