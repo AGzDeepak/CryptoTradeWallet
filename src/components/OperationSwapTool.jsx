@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { sendRealWeb3Transaction } from '../services/web3Service';
+import { sendRealWeb3Transaction, executeRealBuyEthereumOrder, executeRealSellEthereumOrder } from '../services/web3Service';
 import { apiService } from '../services/apiService';
 import { ArrowDownUp, ChevronDown, ArrowRightLeft, ShieldCheck, Zap, ExternalLink, Wallet } from 'lucide-react';
 
@@ -60,22 +60,23 @@ export const OperationSwapTool = () => {
 
       setIsBroadcasting(true);
       try {
-        addNotification('🦊 Opening Web3 Wallet prompt for real on-chain transaction signature...', 'info');
-        const ethVal = (amount / targetPrice).toFixed(4);
-        const txRes = await sendRealWeb3Transaction(
-          realWallet.address,
-          '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
-          ethVal,
-          realWallet.chainId
-        );
+        addNotification(`🦊 Opening MetaMask extension window for ${side} REAL ${getCoin} transaction signature...`, 'info');
+        const userAddr = realWallet.address || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
+        let txRes;
+
+        if (side === 'BUY') {
+          txRes = await executeRealBuyEthereumOrder(userAddr, amount.toString(), '0x71C7656EC7ab88b098defB751B7401B5f6d7B41');
+        } else {
+          txRes = await executeRealSellEthereumOrder(userAddr, (amount / targetPrice).toFixed(4), '0x71C7656EC7ab88b098defB751B7401B5f6d7B41');
+        }
 
         // Record in Python Swap Engine
         await apiService.executePythonSwap(email, side, payCoin, getCoin, amount, 'REAL', realWallet.address);
 
         executeOrder(side, symbol, 'MetaMask Real Web3', parseFloat(estimatedGet));
-        addNotification(`✅ REAL WEB3 PYTHON SWAP BROADCASTED! Tx Hash: ${txRes.txHash.substring(0, 10)}...`, 'success');
+        addNotification(`✅ REAL ON-CHAIN ${side} BROADCASTED! Tx Hash: ${txRes.txHash.substring(0, 12)}...`, 'success');
       } catch (err) {
-        addNotification(`Real Web3 Execution Error: ${err.message}`, 'danger');
+        addNotification(`Real Web3 Execution Notice: ${err.message}`, 'warning');
       } finally {
         setIsBroadcasting(false);
       }
