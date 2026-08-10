@@ -724,6 +724,34 @@ export const BankToBankTransferSection = () => {
                 />
               </div>
 
+              {/* LIVE SCANNABLE INDIAN UPI & NETBANKING QR CARD */}
+              <div className="p-4 rounded-2xl bg-[#060810] border border-amber-500/30 flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                <div className="w-28 h-28 bg-white p-2 rounded-xl border border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.3)] shrink-0 flex flex-col items-center justify-center">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`upi://pay?pa=${upiVpa || 'cryptotradewallet@okaxis'}&pn=CryptoTradeWallet%20Treasury&am=${transferAmount || '50000'}&cu=INR&tn=${paymentMemo || 'IMPS%20Settlement'}`)}`}
+                    alt="Indian UPI Payment QR Code"
+                    className="w-full h-full object-contain rounded-md"
+                  />
+                </div>
+
+                <div className="space-y-2 text-xs w-full">
+                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase">
+                    <span>INDIAN UPI / NETBANKING QR:</span>
+                    <span className="text-amber-400 font-extrabold">GPAY / PHONEPE / BHIM</span>
+                  </div>
+
+                  <p className="text-[10px] text-slate-300 leading-normal font-mono">
+                    Scan with any Indian UPI app (GPay, PhonePe, Paytm, BHIM, SBI YONO) to pay <strong>₹{parseFloat(transferAmount || 50000).toLocaleString('en-IN')} INR</strong> directly to <strong>{beneficiaryName}</strong> (IFSC: <strong>{receiverBic || 'HDFC0000240'}</strong>).
+                  </p>
+
+                  <div className="flex items-center space-x-2 pt-1">
+                    <span className="px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-300 text-[9px] font-bold border border-amber-400/40">
+                      VPA: {upiVpa || 'cryptotradewallet@okaxis'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               {/* Execute Button */}
               <button
                 type="submit"
