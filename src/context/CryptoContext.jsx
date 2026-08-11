@@ -191,51 +191,18 @@ export const CryptoProvider = ({ children }) => {
       const saved = localStorage.getItem('chainblock_paper_wallet');
       if (saved) {
         const parsed = JSON.parse(saved);
+        // Only restore if there's a real positive balance
         if (parsed.virtualBalance !== undefined && parsed.virtualBalance > 0) return parsed;
       }
     } catch (_) {}
-    return NEW_USER_WALLET;
+    return NEW_USER_WALLET; // Always start at $0.00
   });
 
   // Open Positions, History & Withdrawal Logs
   const [openPositions, setOpenPositions] = useState([]);
   const [tradeHistory, setTradeHistory] = useState([]);
   const [withdrawalHistory, setWithdrawalHistory] = useState([]);
-  const [depositHistory, setDepositHistory] = useState([
-    {
-      id: 'DEP-8801',
-      time: new Date(Date.now() - 3600000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      amount: 5000.00,
-      currency: 'USDT',
-      source: 'MetaMask Deposit',
-      network: 'Arbitrum One',
-      address: '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
-      status: 'DEPOSITED CONFIRMED 🟢',
-      txHash: '0x9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b'
-    },
-    {
-      id: 'DEP-8802',
-      time: new Date(Date.now() - 7200000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      amount: 10000.00,
-      currency: 'USD',
-      source: 'JPMorgan SWIFT Wire Deposit',
-      network: 'SWIFT Banking Network',
-      address: 'SWFT-849201948291',
-      status: 'DEPOSITED CONFIRMED 🟢',
-      txHash: 'SWFT-849201948291'
-    },
-    {
-      id: 'DEP-8803',
-      time: new Date(Date.now() - 14400000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      amount: 1250.00,
-      currency: 'USDC',
-      source: 'Arbitrage Yield Credit',
-      network: 'Polygon Mainnet',
-      address: '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
-      status: 'DEPOSITED CONFIRMED 🟢',
-      txHash: '0x1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d'
-    }
-  ]);
+  const [depositHistory, setDepositHistory] = useState([]);
   const [heldTransactions, setHeldTransactions] = useState([
     {
       id: 'HELD-101',
@@ -697,21 +664,14 @@ export const CryptoProvider = ({ children }) => {
           .filter(o => o.isProfitable && o.diffPct >= minProfitThreshold)
           .sort((a, b) => b.netProfit - a.netProfit)[0];
 
+        // Only trade if there's a real opportunity AND sufficient deposited balance
         if (topOpp) {
           const currentBalance = wallet.virtualBalance ?? 0;
-
-          // Continuous Trading Guarantee: If balance is low, auto-seed paper trading capital so bot never stops!
-          if (currentBalance < 5.00) {
-            setWallet(w => ({
-              ...w,
-              virtualBalance: parseFloat(((w.virtualBalance || 0) + 1000.00).toFixed(2)),
-              totalEquity: parseFloat(((w.totalEquity || 0) + 1000.00).toFixed(2))
-            }));
-            addNotification('⚡ Paper Bot Auto-Seeded +$1,000.00 USDT virtual capital to guarantee continuous trading!', 'success');
+          // Bot only trades with real deposited funds — no auto-seed injection
+          if (currentBalance >= 2.00) {
+            lastAutoTradeTimeRef.current = now;
+            executeAutoTrade(topOpp);
           }
-
-          lastAutoTradeTimeRef.current = now;
-          executeAutoTrade(topOpp);
         }
       }
 
@@ -726,7 +686,7 @@ export const CryptoProvider = ({ children }) => {
   }, [marketData, autoTradingEnabled, minProfitThreshold, openPositions]);
 
   // Deposit Funds Handler
-  const depositFunds = (amount, currency = 'USDT') => {
+  const depositFunds = (amount, currency = 'USDT', source = 'Manual Deposit', network = 'Paper Trading') => {
     const num = parseFloat(amount);
     if (isNaN(num) || num <= 0) return;
 
@@ -742,6 +702,19 @@ export const CryptoProvider = ({ children }) => {
         balanceUsd: parseFloat(((rw.balanceUsd || 0) + num).toFixed(2))
       }));
     }
+
+    // Record in deposit history
+    setDepositHistory(prev => [{
+      id: `DEP-${Math.floor(1000 + Math.random() * 9000)}`,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      amount: num,
+      currency,
+      source,
+      network,
+      address: '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
+      status: 'DEPOSITED CONFIRMED 🟢',
+      txHash: `0x${Math.random().toString(16).substring(2)}${Date.now()}`
+    }, ...prev]);
 
     audioFx.playTradeSuccess();
     addNotification(`Deposit Successful: +$${num.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${currency}`, 'success');
