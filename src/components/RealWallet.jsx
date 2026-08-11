@@ -12,7 +12,7 @@ import {
   Loader2, Shield, BarChart2, ExternalLink, ChevronRight, Layers, FileCode,
   ArrowRightLeft, ShoppingCart, XCircle, ChevronDown, Flame
 } from 'lucide-react';
-import { SolidityContractSection } from './SolidityContractSection';
+
 
 export const RealWallet = () => {
   const {
@@ -674,10 +674,7 @@ export const RealWallet = () => {
             </div>
           </div>
 
-          {/* Full-Width 100% Page Solidity Smart Contract Section */}
-          <div className="w-full">
-            <SolidityContractSection />
-          </div>
+
 
         </div>
       )}
