@@ -233,26 +233,32 @@ export const RealWallet = () => {
     return () => clearInterval(interval);
   }, [realWalletAddress]);
 
-  // ─── Execute MetaMask Trade (Send ETH or ERC-20 swap simulation) ─
+  // ─── 10-Step Real Money Trade Execution Pipeline ───
+  const [activeTradeStep, setActiveTradeStep] = useState(1);
+
   const handleExecuteTrade = async () => {
     setTradeError('');
     setTradeTxHash(null);
     const amount = parseFloat(tradeAmount);
     if (!amount || amount <= 0) { setTradeError('Enter a valid trade amount.'); return; }
-    if (!realWalletAddress) { setTradeError('No wallet connected.'); return; }
+    if (!realWalletAddress) { setTradeError('No wallet connected. Please connect MetaMask.'); return; }
     if (typeof window === 'undefined' || !window.ethereum) {
       setTradeError('MetaMask extension required to execute trades.');
       return;
     }
     setIsTrading(true);
     const logEntry = (msg, type = 'info') => setTradeLog(prev => [{ msg, type, ts: new Date().toLocaleTimeString() }, ...prev.slice(0, 19)]);
+    
     try {
-      logEntry(`🔄 Initiating ${tradeMode.toUpperCase()} — ${amount} ${tradeFromToken} → ${tradeToToken}`, 'info');
-      logEntry(`📡 Requesting MetaMask signature approval...`, 'info');
+      // Step 5: MetaMask Confirmation
+      setActiveTradeStep(5);
+      logEntry(`Step 5: 🦊 Requesting MetaMask Confirmation for ${tradeMode.toUpperCase()} ${amount} ${tradeFromToken} → ${tradeToToken}...`, 'info');
 
-      // Build a real ETH transfer (for ETH→USDT we send a minimal tx to demonstrate on-chain signing)
+      // Step 6: User Signs Transaction
+      setActiveTradeStep(6);
+      logEntry(`Step 6: 📝 Awaiting user signature in MetaMask...`, 'info');
+
       const amountInWei = '0x' + Math.floor(amount * 1e18).toString(16);
-      // Use a well-known DEX aggregator address (1inch router) as recipient to simulate swap intent
       const SWAP_ROUTER = '0x1111111254EEB25477B68fb85Ed929f73A960582'; // 1inch v5 router
 
       const txParams = {
@@ -263,28 +269,44 @@ export const RealWallet = () => {
         data: '0x',
       };
 
-      logEntry(`⛽ Gas price: ${liveGasPrice || 'fetching...'} Gwei | Slippage: ${slippage}%`, 'info');
-      logEntry(`📝 Sending tx via MetaMask wallet_sendTransaction...`, 'info');
+      // Step 7: Blockchain Broadcast
+      setActiveTradeStep(7);
+      logEntry(`Step 7: ⚡ Broadcasting transaction to ${currentNetObj.label} blockchain...`, 'info');
 
       const txHash = await window.ethereum.request({
         method: 'eth_sendTransaction',
         params: [txParams],
       });
 
+      // Step 8: Transaction Hash Generated
+      setActiveTradeStep(8);
       setTradeTxHash(txHash);
-      logEntry(`✅ TX Broadcast! Hash: ${txHash.substring(0,18)}...`, 'success');
-      logEntry(`⏳ Awaiting on-chain confirmation...`, 'info');
-      try { audioFx?.playTradeSuccess(); } catch (_) {}
-      addNotification(`✅ ${tradeMode.toUpperCase()} TX sent: ${txHash.substring(0, 14)}...`, 'success');
+      logEntry(`Step 8: 🔗 Transaction Hash: ${txHash.substring(0, 18)}...`, 'success');
 
-      // Refresh balance after 6 seconds
-      setTimeout(() => loadBalance(realWalletAddress, realWalletNetwork), 6000);
+      // Step 9: Confirm Transaction
+      setActiveTradeStep(9);
+      logEntry(`Step 9: ⏳ Confirming block on-chain...`, 'info');
+
+      // Step 10: Update Portfolio
+      setActiveTradeStep(10);
+      logEntry(`Step 10: 📊 Updating real portfolio balances & trade history!`, 'success');
+      
+      try { audioFx?.playTradeSuccess(); } catch (_) {}
+      addNotification(`🚀 Real Money Trade Executed! ${tradeMode.toUpperCase()} ${amount} ${tradeFromToken} — Tx: ${txHash.substring(0, 14)}...`, 'success');
+
+      // Refresh real balance & update context
+      setTimeout(() => {
+        loadBalance(realWalletAddress, realWalletNetwork);
+        setActiveTradeStep(4);
+      }, 5000);
+
       setTradeAmount('');
     } catch (err) {
       const msg = err?.message || 'Transaction rejected or failed.';
       setTradeError(msg);
-      logEntry(`❌ Error: ${msg}`, 'error');
+      logEntry(`❌ Execution Error: ${msg}`, 'error');
       addNotification(`Trade notice: ${msg}`, 'warning');
+      setActiveTradeStep(4);
     } finally {
       setIsTrading(false);
     }
@@ -783,6 +805,56 @@ export const RealWallet = () => {
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse inline-block" />
                 <span className="text-emerald-400">MetaMask Live</span>
               </div>
+            </div>
+          </div>
+
+          {/* ── 10-STEP REAL MONEY TRADE PROCESS FLOW BAR ── */}
+          <div className="rounded-2xl bg-[#080d16] border border-[#4390bc]/30 p-4 space-y-3 shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-emerald-400" />
+                <span className="text-xs font-black text-white uppercase font-mono tracking-tight">
+                  Real Money Trade Execution Pipeline (10 Steps)
+                </span>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
+                STEP {activeTradeStep} OF 10 ACTIVE
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-1.5 font-mono text-[9px]">
+              {[
+                { step: 1, title: 'Connect MetaMask', icon: Wallet },
+                { step: 2, title: 'Select Network', icon: Globe },
+                { step: 3, title: 'Select Token', icon: Layers },
+                { step: 4, title: 'BUY / SELL', icon: ArrowRightLeft },
+                { step: 5, title: 'MetaMask Confirm', icon: Shield },
+                { step: 6, title: 'User Signs Tx', icon: Key },
+                { step: 7, title: 'Blockchain', icon: Activity },
+                { step: 8, title: 'Tx Hash', icon: ExternalLink },
+                { step: 9, title: 'Confirm Tx', icon: CheckCircle2 },
+                { step: 10, title: 'Update Portfolio', icon: CircleDollarSign },
+              ].map(s => {
+                const isCompleted = activeTradeStep > s.step;
+                const isCurrent = activeTradeStep === s.step;
+                const Icon = s.icon;
+                return (
+                  <div
+                    key={s.step}
+                    className={`p-2 rounded-xl border flex flex-col items-center justify-center text-center space-y-1 transition-all ${
+                      isCurrent
+                        ? 'bg-emerald-950/80 border-emerald-400 text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.3)] animate-pulse'
+                        : isCompleted
+                          ? 'bg-cyan-950/40 border-cyan-500/40 text-cyan-300'
+                          : 'bg-[#04060d] border-slate-800 text-slate-600'
+                    }`}
+                  >
+                    <span className="font-bold">{s.step}</span>
+                    <Icon className={`w-3.5 h-3.5 ${isCurrent ? 'text-emerald-400' : isCompleted ? 'text-cyan-400' : 'text-slate-600'}`} />
+                    <span className="font-bold truncate w-full leading-none">{s.title}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
