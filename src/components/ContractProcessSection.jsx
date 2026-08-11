@@ -357,74 +357,78 @@ contract SmartSpatialArbitrage {
   };
 
   return (
-    <div className="space-y-6 font-sans text-xs">
-      
-      {/* Header Bar */}
-      <div className="chainblock-card p-6 rounded-3xl space-y-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
-          <div className="flex items-center space-x-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 text-slate-950 flex items-center justify-center font-black text-lg shadow-[0_0_20px_rgba(56,189,248,0.35)] shrink-0">
-              <FileCode2 className="w-6 h-6 stroke-[2.5]" />
+    <div className="space-y-6 font-sans">
+
+      {/* ── HEADER CARD ─────────────────────────────────────────────────── */}
+      <div className="rounded-2xl bg-[#080c14] border border-[#4390bc]/25 p-5 sm:p-6">
+
+        {/* Top row: identity + quick actions */}
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 pb-5 border-b border-slate-800/60">
+
+          {/* Left: icon + title + description */}
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 shrink-0 rounded-2xl bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 flex items-center justify-center shadow-[0_0_22px_rgba(56,189,248,0.35)]">
+              <FileCode2 className="w-6 h-6 text-slate-950 stroke-[2.5]" />
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h2 className="text-base font-black text-white font-mono uppercase tracking-tight">
-                  SMART CONTRACT COMPILATION & DEPLOYMENT PROCESS DECK
+            <div className="space-y-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-sm font-black text-white font-mono uppercase tracking-tight">
+                  Smart Contract Deployment Deck
                 </h2>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-950 text-cyan-400 border border-cyan-500">
-                  EVM ON-CHAIN ENGINE
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black bg-cyan-950 text-cyan-400 border border-cyan-700 shrink-0">
+                  EVM ON-CHAIN
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5 font-mono">
-                Remix Solidity IDE (Steps 1-8), Solc compilation, EVM gas simulation, ABI bytecodes, & Web3 MetaMask deployment.
+              <p className="text-[11px] text-slate-500 font-mono">
+                Remix IDE Steps 1–8 · Solc compiler · EVM bytecode · MetaMask deployment
               </p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 font-mono">
+          {/* Right: action buttons */}
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={handleCompile}
               disabled={isCompiling}
-              className="px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-cyan-300 font-bold hover:border-cyan-400 transition flex items-center gap-2"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0d1420] border border-slate-700 text-cyan-300 font-bold text-xs hover:border-cyan-400/60 transition disabled:opacity-60"
             >
               <RefreshCw className={`w-4 h-4 ${isCompiling ? 'animate-spin text-cyan-400' : 'text-cyan-400'}`} />
-              <span>{isCompiling ? 'COMPILING...' : 'COMPILE SOLIDITY'}</span>
+              {isCompiling ? 'COMPILING…' : 'COMPILE SOLIDITY'}
             </button>
-
             <button
               onClick={handleDeployContract}
               disabled={isDeploying}
-              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-950 font-black uppercase tracking-wide hover:brightness-110 transition shadow-lg flex items-center gap-2"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-950 font-black text-xs uppercase hover:brightness-110 transition shadow-lg disabled:opacity-60"
             >
               <Zap className="w-4 h-4 fill-slate-950" />
-              <span>{isDeploying ? 'DEPLOYING...' : 'DEPLOY TO METAMASK'}</span>
+              {isDeploying ? 'DEPLOYING…' : 'DEPLOY TO METAMASK'}
             </button>
           </div>
         </div>
 
-        {/* Sub-Tab Navigation Bar Including Remix IDE Steps 1-8 */}
-        <div className="flex flex-wrap items-center gap-2 font-mono">
+        {/* Tab Navigation */}
+        <div className="flex flex-wrap gap-2 pt-4">
           {[
-            { id: 'REMIX', label: '1. REMIX SOLIDITY IDE & DEPLOYMENT (STEPS 1-8)', icon: Rocket },
-            { id: 'PROCESS', label: '2. PROCESS PIPELINE VISUALIZER', icon: Layers },
-            { id: 'EDITOR', label: '3. SOLIDITY CODE EDITOR', icon: Code2 },
-            { id: 'BYTECODE', label: '4. EVM BYTECODE & ABI INSPECTOR', icon: Cpu },
-            { id: 'CALLER', label: '5. LIVE CONTRACT INTERACTION CALLER', icon: Terminal }
-          ].map(tab => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
+            { id: 'REMIX',    label: 'Remix IDE',         short: 'Steps 1–8',  icon: Rocket   },
+            { id: 'PROCESS',  label: 'Pipeline',           short: 'Visualizer', icon: Layers   },
+            { id: 'EDITOR',   label: 'Code Editor',        short: 'Solidity',   icon: Code2    },
+            { id: 'BYTECODE', label: 'Bytecode & ABI',     short: 'Inspector',  icon: Cpu      },
+            { id: 'CALLER',   label: 'Contract Caller',    short: 'Live Call',  icon: Terminal },
+          ].map(({ id, label, short, icon: Icon }) => {
+            const active = activeTab === id;
             return (
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 border ${
-                  isActive
-                    ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-[0_0_15px_rgba(56,189,248,0.2)]'
-                    : 'bg-[#060810] text-slate-400 border-slate-800 hover:text-white'
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-bold transition ${
+                  active
+                    ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/45 shadow-[0_0_12px_rgba(56,189,248,0.15)]'
+                    : 'bg-[#060a10] text-slate-500 border-slate-800 hover:text-white hover:border-slate-700'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-cyan-400' : 'text-slate-500'}`} />
-                <span>{tab.label}</span>
+                <Icon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-cyan-400' : 'text-slate-600'}`} />
+                <span className="hidden sm:inline font-mono">{label}</span>
+                <span className="sm:hidden font-mono">{short}</span>
               </button>
             );
           })}

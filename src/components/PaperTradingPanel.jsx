@@ -1,76 +1,56 @@
 import React, { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { 
-  Wallet, RefreshCw, ShoppingBag, ArrowUpRight, PlusCircle, Bot, 
-  Play, Pause, Zap, ShieldCheck, Activity, Terminal, Layers, ArrowRightLeft, CheckCircle2, AlertTriangle
+import {
+  Bot, Play, Pause, Zap, ShoppingBag, PlusCircle, ArrowUpRight,
+  RefreshCw, Activity, Terminal, CheckCircle2, ShieldCheck
 } from 'lucide-react';
 
+/* ── Shared sub-components ─────────────────────────────────────── */
+const SectionLabel = ({ children }) => (
+  <p className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">{children}</p>
+);
+
+const StatCard = ({ label, value, sub, accent = 'text-white', border = 'border-slate-800', glow = '' }) => (
+  <div className={`rounded-2xl bg-[#080c14] border ${border} p-5 space-y-1 ${glow}`}>
+    <SectionLabel>{label}</SectionLabel>
+    <div className={`text-2xl font-black font-mono tracking-tight ${accent}`}>{value}</div>
+    {sub && <div className="text-[10px] text-slate-500 font-mono">{sub}</div>}
+  </div>
+);
+
 export const PaperTradingPanel = () => {
-  const { 
-    wallet, 
-    walletMode,
-    setWalletMode,
-    realWallet,
-    connectRealWallet,
-    resetWallet, 
-    openPositions, 
-    tradeHistory, 
-    executeOrder, 
-    executeAutoTrade,
-    openModal, 
-    totalBotProfit,
-    autoTradeCount,
-    autoTradingEnabled,
-    setAutoTradingEnabled,
-    autoTradeLogs,
-    arbitrageOpps,
-    minProfitThreshold,
-    setMinProfitThreshold,
-    stopLossLimit,
-    setStopLossLimit,
-    addNotification,
-    audioFx,
-    marketData 
+  const {
+    wallet, walletMode, setWalletMode,
+    realWallet, connectRealWallet,
+    resetWallet, openPositions, tradeHistory,
+    executeOrder, executeAutoTrade,
+    openModal, totalBotProfit, autoTradeCount,
+    autoTradingEnabled, setAutoTradingEnabled,
+    autoTradeLogs, arbitrageOpps,
+    minProfitThreshold, setMinProfitThreshold,
+    stopLossLimit, setStopLossLimit,
+    addNotification, audioFx, marketData
   } = useCrypto();
 
   const [activeDeck, setActiveDeck] = useState('BOT'); // 'BOT' | 'MANUAL'
-  const [side, setSide] = useState('BUY');
-  const [symbol, setSymbol] = useState('BTCUSDT');
-  const [exchange, setExchange] = useState('Binance Pro');
-  const [amount, setAmount] = useState('0.5');
+  const [side, setSide]             = useState('BUY');
+  const [symbol, setSymbol]         = useState('BTCUSDT');
+  const [exchange, setExchange]     = useState('Binance Pro');
+  const [amount, setAmount]         = useState('0.5');
 
-  const selectedCoin = marketData.find(c => c.symbol === symbol) || marketData[0] || { basePrice: 67840.50 };
+  const selectedCoin   = marketData.find(c => c.symbol === symbol) || marketData[0] || { basePrice: 67840.50 };
+  const paperBalance   = wallet.virtualBalance ?? 0;
+  const currentBalance = walletMode === 'REAL' && realWallet.connected ? realWallet.balanceUsd : paperBalance;
 
-  const currentAvailableBalance = walletMode === 'REAL' && realWallet.connected 
-    ? realWallet.balanceUsd 
-    : (wallet.virtualBalance ?? 0.00);
-
-  // Manual Trigger for Automated Paper Bot Trade
-  const handleTriggerBotTradeNow = () => {
-    const topOpp = (arbitrageOpps || [])
-      .filter(o => o.isProfitable)
-      .sort((a, b) => b.netProfit - a.netProfit)[0];
-
-    if (!topOpp) {
-      const fallbackOpp = {
-        symbol: 'BTCUSDT',
-        buyEx: 'Binance',
-        sellEx: 'Bybit',
-        ex1Price: 67840.50,
-        ex2Price: 67990.20,
-        spread: 149.70,
-        diffPct: 0.22,
-        netProfit: 14.85,
-        unitSize: 0.1,
-        isProfitable: true
-      };
-      executeAutoTrade(fallbackOpp);
-    } else {
-      executeAutoTrade(topOpp);
-    }
-
+  const handleTriggerBotTrade = () => {
+    const topOpp = (arbitrageOpps || []).filter(o => o.isProfitable).sort((a, b) => b.netProfit - a.netProfit)[0];
+    executeAutoTrade(topOpp || {
+      symbol: 'BTCUSDT', buyEx: 'Binance', sellEx: 'Bybit',
+      ex1Price: 67840.50, ex2Price: 67990.20, spread: 149.70,
+      diffPct: 0.22, netProfit: 14.85, unitSize: 0.1, isProfitable: true
+    });
     try { audioFx?.playTradeSuccess(); } catch (_) {}
-    addNotification('⚡ PAPER BOT TRADE TRIGGERED! Automated paper arbitrage executed & settled.', 'success');
+    addNotification('⚡ PAPER BOT TRADE TRIGGERED!', 'success');
   };
 
   const handleManualExecute = (e) => {
@@ -79,476 +59,396 @@ export const PaperTradingPanel = () => {
   };
 
   const handleQuickPercent = (pct) => {
-    const bal = currentAvailableBalance;
-    const price = selectedCoin.basePrice || 67840.50;
-    const maxQty = (bal * pct) / price;
+    const price  = selectedCoin.basePrice || 67840.50;
+    const maxQty = (currentBalance * pct) / price;
     setAmount(maxQty.toFixed(6));
   };
 
+  const INPUT_CLASS = "w-full h-11 bg-[#060a10] border border-slate-800 rounded-xl px-3.5 text-white font-bold text-sm outline-none focus:border-[#68a7ca]/60 transition font-mono";
+  const LABEL_CLASS = "block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2";
+
   return (
-    <div className="chainblock-card p-5 sm:p-7 space-y-6 font-sans">
-      
-      {/* 1. Header Bar */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 via-yellow-500 to-amber-600 text-slate-950 flex items-center justify-center font-bold shrink-0 shadow-md">
-            <Bot className="w-6 h-6 stroke-[2.5]" />
+    <div className="space-y-6 font-sans">
+
+      {/* ══════════════════════════════════════════════════════════════
+          HEADER — Title + Mode Toggle + Actions
+      ══════════════════════════════════════════════════════════════ */}
+      <div className="rounded-2xl bg-[#080c14] border border-[#68a7ca]/25 p-5 sm:p-6">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
+
+          {/* Left: Identity */}
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 shrink-0 rounded-2xl bg-gradient-to-br from-amber-400 via-yellow-500 to-amber-600 flex items-center justify-center shadow-[0_0_22px_rgba(250,204,21,0.35)]">
+              <Bot className="w-6 h-6 text-slate-950 stroke-[2.5]" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-base font-black text-white font-mono uppercase tracking-tight">
+                  Paper Trading & Quant Bot Deck
+                </h2>
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black border shrink-0 ${
+                  walletMode === 'REAL'
+                    ? 'bg-emerald-950 text-emerald-400 border-emerald-700'
+                    : 'bg-amber-950/60 text-amber-400 border-amber-700/50'
+                }`}>
+                  {walletMode === 'REAL' ? '🟢 REAL METAMASK' : '🟡 PAPER SANDBOX'}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 font-mono">
+                Simulate trades risk-free · Automated arbitrage bot · Manual order entry
+              </p>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm sm:text-base font-extrabold text-white font-mono tracking-tight">PAPER TRADING & QUANT BOT DECK</h3>
-            <span className={`px-2.5 py-0.5 rounded text-[10px] font-mono font-bold ${
-              walletMode === 'REAL' 
-                ? 'bg-emerald-950 text-[#2dd4bf] border border-[#2dd4bf]' 
-                : 'bg-amber-950 text-[#facc15] border border-[#facc15]/40'
-            }`}>
-              {walletMode === 'REAL' ? '🟢 REAL MONEY MODE (WEB3)' : '🟡 PAPER BOT SANDBOX'}
-            </span>
+
+          {/* Right: Controls */}
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {/* Mode toggle */}
+            <div className="flex bg-[#060a10] p-1 rounded-xl border border-slate-800 gap-1">
+              {[
+                { id: 'DEMO', label: 'PAPER MOCK' },
+                { id: 'REAL', label: 'REAL METAMASK' },
+              ].map(({ id, label }) => (
+                <button key={id}
+                  onClick={() => {
+                    if (id === 'REAL' && !realWallet.connected) connectRealWallet('MetaMask');
+                    else setWalletMode(id);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition ${
+                    walletMode === id
+                      ? id === 'REAL' ? 'bg-emerald-500 text-slate-950 shadow' : 'bg-amber-400 text-slate-950 shadow'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >{label}</button>
+              ))}
+            </div>
+
+            <button onClick={() => openModal('DEPOSIT')}
+              className="h-9 px-4 rounded-xl bg-amber-400 text-slate-950 font-black text-[11px] hover:brightness-110 transition shadow flex items-center gap-1.5">
+              <PlusCircle className="w-3.5 h-3.5 stroke-[2.5]" /> Deposit
+            </button>
+            <button onClick={() => openModal('WITHDRAW')}
+              className="h-9 px-4 rounded-xl bg-[#0c0f18] border border-slate-800 text-rose-400 font-bold text-[11px] hover:border-rose-600 transition flex items-center gap-1.5">
+              <ArrowUpRight className="w-3.5 h-3.5" /> Withdraw
+            </button>
+            <button onClick={resetWallet}
+              className="h-9 px-4 rounded-xl bg-[#0c0f18] border border-slate-800 text-slate-400 font-bold text-[11px] hover:text-amber-400 hover:border-amber-500/50 transition flex items-center gap-1.5">
+              <RefreshCw className="w-3.5 h-3.5" /> Reset
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* Action Buttons & Mode Switcher */}
-        <div className="flex flex-wrap items-center gap-2 font-mono text-xs w-full lg:w-auto">
-          <div className="flex bg-[#0b0c10] p-1 rounded-xl border border-slate-800">
-            <button
-              onClick={() => setWalletMode('DEMO')}
-              className={`px-3 py-1 rounded-lg text-[10px] font-bold transition ${
-                walletMode === 'DEMO' ? 'bg-[#facc15] text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+      {/* ══════════════════════════════════════════════════════════════
+          KPI STATS — 4-Column Grid
+      ══════════════════════════════════════════════════════════════ */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Available Balance"
+          value={`$${paperBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+          sub={paperBalance <= 0 ? '⚠ Deposit funds to trade' : 'USDT Virtual Pool'}
+          accent={paperBalance <= 0 ? 'text-rose-400' : 'text-white'}
+          border={paperBalance <= 0 ? 'border-rose-700/50' : 'border-slate-800'}
+        />
+        <StatCard
+          label="Account Equity"
+          value={`$${(wallet.totalEquity ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+          sub="Cash + Open Positions"
+          accent="text-[#2dd4bf]"
+        />
+        <StatCard
+          label="Bot Cumulative Profit"
+          value={`+$${(totalBotProfit || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+          sub={`${autoTradeCount} Trades Executed`}
+          accent="text-amber-400"
+          border="border-amber-500/25"
+        />
+        <StatCard
+          label="Open / Settled"
+          value={`${openPositions.length} / ${tradeHistory.length}`}
+          sub="Live Sandbox Feed"
+          accent="text-purple-400"
+        />
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════════
+          SUB-TAB SWITCHER
+      ══════════════════════════════════════════════════════════════ */}
+      <div className="flex gap-2 border-b border-slate-800/70 pb-4">
+        {[
+          { id: 'BOT',    icon: Bot,         label: 'Automated Bot', sub: 'Quant Autopilot' },
+          { id: 'MANUAL', icon: ShoppingBag, label: 'Manual Orders', sub: 'Order Entry Terminal' },
+        ].map(({ id, icon: Icon, label, sub }) => {
+          const active = activeDeck === id;
+          return (
+            <button key={id} onClick={() => setActiveDeck(id)}
+              className={`flex items-center gap-3 px-5 py-3 rounded-xl border text-left transition ${
+                active
+                  ? id === 'BOT'
+                    ? 'bg-amber-500/15 border-amber-500/40 shadow-[0_0_18px_rgba(245,158,11,0.15)]'
+                    : 'bg-[#4390bc]/15 border-[#68a7ca]/35 shadow-[0_0_18px_rgba(67,144,188,0.15)]'
+                  : 'bg-[#060a10] border-slate-800 hover:border-slate-700'
               }`}
             >
-              PAPER MOCK
+              <Icon className={`w-4 h-4 shrink-0 ${active ? (id === 'BOT' ? 'text-amber-400' : 'text-[#68a7ca]') : 'text-slate-600'}`} />
+              <div>
+                <div className={`text-xs font-black uppercase tracking-tight font-mono ${active ? 'text-white' : 'text-slate-400'}`}>{label}</div>
+                <div className="text-[10px] text-slate-600 font-mono">{sub}</div>
+              </div>
             </button>
-            <button
-              onClick={() => {
-                if (realWallet.connected) setWalletMode('REAL');
-                else connectRealWallet('MetaMask');
-              }}
-              className={`px-3 py-1 rounded-lg text-[10px] font-bold transition ${
-                walletMode === 'REAL' ? 'bg-[#2dd4bf] text-slate-950 shadow' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              REAL METAMASK
-            </button>
-          </div>
-
-          <button
-            onClick={() => openModal('DEPOSIT')}
-            className="flex-1 lg:flex-none h-9 px-3.5 rounded-xl bg-[#facc15] text-slate-950 font-extrabold transition hover:brightness-110 shadow-md flex items-center justify-center gap-1.5"
-          >
-            <PlusCircle className="w-4 h-4 stroke-[2.5]" />
-            <span>Deposit</span>
-          </button>
-
-          <button
-            onClick={() => openModal('WITHDRAW')}
-            className="flex-1 lg:flex-none h-9 px-3.5 rounded-xl bg-[#14161d] border border-slate-700 text-rose-300 font-bold hover:border-rose-500 transition flex items-center justify-center gap-1.5"
-          >
-            <ArrowUpRight className="w-4 h-4 text-rose-400" />
-            <span>Withdraw</span>
-          </button>
-          
-          <button
-            onClick={resetWallet}
-            className="flex-1 lg:flex-none h-9 px-3.5 rounded-xl bg-[#0b0c10] border border-slate-700 text-slate-300 font-bold hover:text-[#facc15] hover:border-[#facc15] transition flex items-center justify-center gap-1.5"
-          >
-            <RefreshCw className="w-4 h-4 text-[#facc15]" />
-            <span>Reset</span>
-          </button>
-        </div>
+          );
+        })}
       </div>
 
-      {/* 2. Key KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-xs">
-        
-        <div className={`p-4 rounded-2xl border space-y-1.5 shadow-sm ${
-          (wallet.virtualBalance ?? 0) <= 0
-            ? 'bg-rose-950/40 border-rose-700'
-            : 'bg-[#0b0c10] border-slate-800'
-        }`}>
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Available Paper Balance</span>
-          <span className={`text-xl font-extrabold block tracking-tight ${
-            (wallet.virtualBalance ?? 0) <= 0 ? 'text-rose-400' : 'text-white'
-          }`}>
-            ${(wallet.virtualBalance ?? 0.00).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-          </span>
-          <span className="text-[10px] text-slate-400 block">
-            {(wallet.virtualBalance ?? 0) <= 0 ? '⚠ Deposit funds to trade' : 'USDT Virtual Pool'}
-          </span>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-[#0b0c10] border border-slate-800 space-y-1.5 shadow-sm">
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Account Equity</span>
-          <span className="text-xl font-extrabold text-[#2dd4bf] block tracking-tight">
-            ${(wallet.totalEquity ?? 0.00).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-          </span>
-          <span className="text-[10px] text-[#2dd4bf]/80 block">Cash + Open Positions</span>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-[#0b0c10] border border-[#facc15]/40 space-y-1.5 shadow-sm">
-          <span className="text-[10px] text-[#facc15] uppercase tracking-wider block font-semibold flex items-center gap-1">
-            <Bot className="w-3.5 h-3.5 text-[#facc15]" /> BOT CUM. PROFIT
-          </span>
-          <span className="text-xl font-extrabold text-[#facc15] block tracking-tight">
-            +${(totalBotProfit || 0.00).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-          </span>
-          <span className="text-[10px] text-amber-400/80 block">{autoTradeCount} Trades Executed</span>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-[#0b0c10] border border-slate-800 space-y-1.5 shadow-sm">
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Mock Executions</span>
-          <span className="text-xl font-extrabold text-purple-400 block tracking-tight">
-            {openPositions.length} Open / {tradeHistory.length} Settled
-          </span>
-          <span className="text-[10px] text-purple-400/80 block">Live Sandbox Feed</span>
-        </div>
-
-      </div>
-
-      {/* 3. Sub-Tab Mode Switcher */}
-      <div className="flex space-x-2 border-b border-slate-800/80 pb-3 font-mono">
-        <button
-          onClick={() => setActiveDeck('BOT')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 border ${
-            activeDeck === 'BOT'
-              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
-              : 'bg-[#060810] text-slate-400 border-slate-800 hover:text-white'
-          }`}
-        >
-          <Bot className={`w-4 h-4 ${activeDeck === 'BOT' ? 'text-amber-400' : 'text-slate-500'}`} />
-          <span>1. AUTOMATED PAPER TRADING BOT (QUANT AUTOPILOT)</span>
-        </button>
-
-        <button
-          onClick={() => setActiveDeck('MANUAL')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 border ${
-            activeDeck === 'MANUAL'
-              ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-[0_0_15px_rgba(56,189,248,0.2)]'
-              : 'bg-[#060810] text-slate-400 border-slate-800 hover:text-white'
-          }`}
-        >
-          <ShoppingBag className={`w-4 h-4 ${activeDeck === 'MANUAL' ? 'text-cyan-400' : 'text-slate-500'}`} />
-          <span>2. MANUAL PAPER TRADING TERMINAL (ORDER ENTRY)</span>
-        </button>
-      </div>
-
-      {/* ================= SUB-TAB 1: AUTOMATED PAPER TRADING BOT ENGINE ================= */}
+      {/* ══════════════════════════════════════════════════════════════
+          TAB 1 — AUTOMATED PAPER BOT ENGINE
+      ══════════════════════════════════════════════════════════════ */}
       {activeDeck === 'BOT' && (
-        <div className="space-y-6 font-mono text-xs">
-          
-          {/* Bot Power Control & Quick Trigger Bar */}
-          <div className="p-5 rounded-3xl bg-[#090d16] border border-amber-500/40 space-y-4 shadow-xl">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-3 border-b border-slate-800">
-              <div className="flex items-center space-x-3">
-                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold ${
+        <div className="space-y-5">
+
+          {/* Bot Control Bar */}
+          <div className="rounded-2xl bg-[#080c14] border border-amber-500/25 p-6 space-y-5">
+
+            {/* Top: Status + Buttons */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className={`w-11 h-11 shrink-0 rounded-xl flex items-center justify-center border ${
                   autoTradingEnabled
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 animate-pulse'
-                    : 'bg-rose-500/20 text-rose-400 border border-rose-500/50'
+                    ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-400 animate-pulse'
+                    : 'bg-slate-900 border-slate-700 text-slate-500'
                 }`}>
                   <Activity className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="flex items-center space-x-2">
-                    <h4 className="text-sm font-black text-white uppercase">AUTOPILOT QUANT PAPER BOT ENGINE</h4>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold ${
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-black text-white font-mono uppercase">Autopilot Quant Bot Engine</span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-mono font-black border ${
                       autoTradingEnabled
-                        ? 'bg-emerald-950 text-emerald-400 border border-emerald-500'
-                        : 'bg-rose-950 text-rose-400 border border-rose-500'
+                        ? 'bg-emerald-950 text-emerald-400 border-emerald-700'
+                        : 'bg-slate-900 text-slate-500 border-slate-700'
                     }`}>
-                      {autoTradingEnabled ? 'BOT STATUS: ONLINE 🟢' : 'BOT STATUS: PAUSED ⏸️'}
+                      {autoTradingEnabled ? '● ONLINE' : '◌ PAUSED'}
                     </span>
                   </div>
-                  <p className="text-[10px] text-slate-400">Scans multi-exchange orderbooks every 400ms & executes high-profit spatial arbitrage trades.</p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => {
-                    setAutoTradingEnabled(!autoTradingEnabled);
-                    addNotification(`Paper Bot ${!autoTradingEnabled ? 'Activated 🟢' : 'Paused ⏸️'}`, 'info');
-                  }}
-                  className={`px-4 py-2.5 rounded-xl font-black text-xs uppercase transition shadow flex items-center gap-2 ${
-                    autoTradingEnabled
-                      ? 'bg-rose-500 text-white hover:bg-rose-600'
-                      : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 hover:brightness-110'
-                  }`}
-                >
-                  {autoTradingEnabled ? (
-                    <>
-                      <Pause className="w-4 h-4" />
-                      <span>PAUSE PAPER BOT</span>
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-4 h-4 fill-slate-950" />
-                      <span>ACTIVATE PAPER BOT</span>
-                    </>
-                  )}
-                </button>
-
-                <button
-                  onClick={handleTriggerBotTradeNow}
-                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black text-xs uppercase hover:brightness-110 transition shadow flex items-center gap-2"
-                >
-                  <Zap className="w-4 h-4 fill-slate-950" />
-                  <span>TRIGGER BOT PAPER TRADE NOW</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Bot Controls Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {/* MIN PROFIT THRESHOLD CONTROL CARD */}
-              <div className="p-4 rounded-2xl bg-[#060810] border border-amber-500/40 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">MIN PROFIT THRESHOLD</span>
-                  <span className="text-base font-black text-amber-400 font-mono">{minProfitThreshold.toFixed(2)}%</span>
-                </div>
-
-                <input
-                  type="range"
-                  min="0.10"
-                  max="5.00"
-                  step="0.10"
-                  value={minProfitThreshold}
-                  onChange={e => setMinProfitThreshold(parseFloat(e.target.value))}
-                  className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400"
-                />
-
-                {/* Quick Presets */}
-                <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  {[
-                    { label: '0.25%', val: 0.25 },
-                    { label: '0.50%', val: 0.50 },
-                    { label: '1.00%', val: 1.00 },
-                    { label: '2.50%', val: 2.50 },
-                    { label: '5.00% (MAX)', val: 5.00 }
-                  ].map(p => (
-                    <button
-                      key={p.label}
-                      type="button"
-                      onClick={() => setMinProfitThreshold(p.val)}
-                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition border ${
-                        minProfitThreshold === p.val
-                          ? 'bg-amber-500 text-slate-950 border-amber-400'
-                          : 'bg-[#090d16] text-slate-400 border-slate-800 hover:text-white'
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-[#090d16] border border-slate-800/80 text-[10px] text-slate-300 space-y-1">
-                  <div className="flex items-center gap-1 text-emerald-400 font-bold">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>WORKFLOW CONNECTED TO PAPER BOT</span>
-                  </div>
-                  <p className="text-[9.5px] text-slate-400 leading-normal">
-                    The Paper Bot continuously scans orderbooks and <strong>ONLY executes trades</strong> when the exchange price spread is <strong>≥ {minProfitThreshold.toFixed(2)}%</strong> (Min $5.00 USD net profit).
+                  <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                    Scans 4 exchanges every 400ms · Executes spatial arbitrage ≥ {minProfitThreshold.toFixed(2)}%
                   </p>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-[#060810] border border-slate-800 space-y-2">
-                <span className="text-[10px] text-slate-400 font-bold block">STOP-LOSS CAPITAL LIMIT</span>
-                <input
-                  type="number"
-                  step="50"
-                  value={stopLossLimit}
-                  onChange={e => setStopLossLimit(parseFloat(e.target.value))}
-                  className="w-full bg-[#090d16] border border-slate-800 rounded-xl p-2 text-rose-300 font-mono font-bold outline-none"
-                />
-                <span className="text-[9px] text-slate-500 block">Auto-halts bot if daily loss exceeds limit</span>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => { setAutoTradingEnabled(!autoTradingEnabled); addNotification(`Paper Bot ${!autoTradingEnabled ? 'Activated 🟢' : 'Paused ⏸️'}`, 'info'); }}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-xs uppercase transition shadow ${
+                    autoTradingEnabled
+                      ? 'bg-rose-500 text-white hover:bg-rose-600'
+                      : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 hover:brightness-110'
+                  }`}>
+                  {autoTradingEnabled ? <><Pause className="w-4 h-4" /> PAUSE BOT</> : <><Play className="w-4 h-4 fill-slate-950" /> ACTIVATE BOT</>}
+                </button>
+                <button
+                  onClick={handleTriggerBotTrade}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black text-xs uppercase hover:brightness-110 transition shadow">
+                  <Zap className="w-4 h-4 fill-slate-950" /> TRIGGER NOW
+                </button>
+              </div>
+            </div>
+
+            {/* Config Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-slate-800/60">
+
+              {/* Min Profit Slider */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <SectionLabel>Min Profit Threshold</SectionLabel>
+                  <span className="text-amber-400 font-black font-mono text-sm">{minProfitThreshold.toFixed(2)}%</span>
+                </div>
+                <input type="range" min="0.10" max="5.00" step="0.10" value={minProfitThreshold}
+                  onChange={e => setMinProfitThreshold(parseFloat(e.target.value))}
+                  className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400" />
+                <div className="flex flex-wrap gap-1.5">
+                  {[0.25, 0.50, 1.00, 2.50, 5.00].map(v => (
+                    <button key={v} onClick={() => setMinProfitThreshold(v)}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition border ${
+                        minProfitThreshold === v
+                          ? 'bg-amber-500 text-slate-950 border-amber-400'
+                          : 'bg-[#060a10] text-slate-400 border-slate-800 hover:text-white'
+                      }`}>
+                      {v.toFixed(2)}%
+                    </button>
+                  ))}
+                </div>
+                <div className="p-3 rounded-xl bg-[#060a10] border border-slate-800 flex items-start gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-slate-400 font-mono leading-relaxed">
+                    Bot only executes when spread ≥ <strong className="text-amber-400">{minProfitThreshold.toFixed(2)}%</strong> — min $5.00 net profit
+                  </p>
+                </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-[#060810] border border-slate-800 space-y-2">
-                <span className="text-[10px] text-slate-400 font-bold block">SCAN SPEED & LATENCY</span>
-                <div className="flex items-center justify-between pt-1">
-                  <span className="text-xs font-bold text-emerald-400">400ms Stimulation</span>
-                  <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 text-[9px] font-bold">OPTIMAL</span>
-                </div>
-                <span className="text-[9px] text-slate-500 block">Sub-second orderbook spread detection</span>
+              {/* Stop Loss */}
+              <div className="space-y-3">
+                <SectionLabel>Stop-Loss Capital Limit</SectionLabel>
+                <input type="number" step="50" value={stopLossLimit}
+                  onChange={e => setStopLossLimit(parseFloat(e.target.value))}
+                  className={INPUT_CLASS.replace('focus:border-[#68a7ca]/60', 'focus:border-rose-500/60') + ' text-rose-300'} />
+                <p className="text-[10px] text-slate-500 font-mono leading-relaxed">
+                  Auto-halts the bot when daily loss exceeds this USD limit to protect your paper balance.
+                </p>
               </div>
+
+              {/* Scan Speed */}
+              <div className="space-y-3">
+                <SectionLabel>Scan Speed & Latency</SectionLabel>
+                <div className="rounded-xl bg-[#060a10] border border-slate-800 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-black text-emerald-400 font-mono">400ms</span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 text-[9px] font-bold border border-emerald-700">OPTIMAL</span>
+                  </div>
+                  <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-full w-3/4 bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full" />
+                  </div>
+                  <p className="text-[10px] text-slate-500 font-mono">Sub-second orderbook spread detection across all connected exchanges</p>
+                </div>
+              </div>
+
             </div>
           </div>
 
-          {/* Live Bot Execution Activity Feed Log */}
-          <div className="p-5 rounded-3xl bg-[#090d16] border border-slate-800 space-y-3 shadow-xl">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <div className="flex items-center space-x-2">
+          {/* Bot Execution Log */}
+          <div className="rounded-2xl bg-[#080c14] border border-slate-800 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800">
+              <div className="flex items-center gap-2">
                 <Terminal className="w-4 h-4 text-amber-400" />
-                <h4 className="text-xs font-black text-white uppercase">LIVE PAPER BOT EXECUTION LOG FEED</h4>
+                <span className="text-xs font-black text-white font-mono uppercase">Live Bot Execution Log</span>
               </div>
-              <span className="text-[10px] text-slate-400">{autoTradeLogs.length} Events Recorded</span>
+              <span className="text-[10px] text-slate-500 font-mono">{autoTradeLogs.length} events recorded</span>
             </div>
-
-            <div className="max-h-56 overflow-y-auto space-y-2 pr-1 font-mono text-[11px]">
+            <div className="max-h-64 overflow-y-auto no-scrollbar p-4 space-y-2 font-mono text-[11px]">
               {autoTradeLogs.length === 0 ? (
-                <div className="p-4 text-center text-slate-500 italic">No paper bot trades recorded yet. Click "TRIGGER BOT PAPER TRADE NOW" above.</div>
-              ) : (
-                autoTradeLogs.map(log => (
-                  <div
-                    key={log.id}
-                    className={`p-3 rounded-xl border flex items-center justify-between ${
-                      log.type === 'danger'
-                        ? 'bg-rose-950/40 border-rose-800 text-rose-300'
-                        : 'bg-[#060810] border-slate-800 text-slate-200'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <span className="text-amber-400 font-bold">[{log.time}]</span>
-                      <span>{log.text}</span>
-                    </div>
-                    <span className="px-2 py-0.5 rounded bg-slate-900 text-emerald-400 text-[9px] font-bold border border-slate-800 shrink-0">
-                      SETTLED 🟢
-                    </span>
+                <div className="py-8 text-center text-slate-600 italic">
+                  No paper trades recorded yet — click <strong className="text-amber-400">TRIGGER NOW</strong> to start.
+                </div>
+              ) : autoTradeLogs.map(log => (
+                <div key={log.id} className={`flex items-center justify-between gap-4 p-3 rounded-xl border ${
+                  log.type === 'danger'
+                    ? 'bg-rose-950/30 border-rose-800/60 text-rose-300'
+                    : 'bg-[#060a10] border-slate-800/80 text-slate-300'
+                }`}>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-amber-400 font-bold shrink-0">[{log.time}]</span>
+                    <span className="truncate">{log.text}</span>
                   </div>
-                ))
-              )}
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 text-[9px] font-bold border border-emerald-700/60 shrink-0">
+                    SETTLED
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 
         </div>
       )}
 
-      {/* ================= SUB-TAB 2: MANUAL PAPER TRADING TERMINAL ================= */}
+      {/* ══════════════════════════════════════════════════════════════
+          TAB 2 — MANUAL PAPER TRADING TERMINAL
+      ══════════════════════════════════════════════════════════════ */}
       {activeDeck === 'MANUAL' && (
-        <div className="p-4 sm:p-6 rounded-2xl bg-[#0b0c10] border border-slate-800 space-y-5 font-mono text-xs">
-          
-          {/* Form Header with Side Switcher */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
-            <h4 className="text-xs font-mono uppercase text-[#facc15] font-bold flex items-center gap-1.5">
-              <ShoppingBag className="w-4 h-4" /> EXECUTE MOCK PAPER ORDER
-            </h4>
+        <div className="rounded-2xl bg-[#080c14] border border-[#68a7ca]/25 overflow-hidden">
 
-            <div className="flex space-x-1 bg-[#14161d] p-1 rounded-xl border border-slate-800 text-xs w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={() => setSide('BUY')}
-                className={`flex-1 sm:flex-none h-8 px-4 rounded-lg font-extrabold transition ${
-                  side === 'BUY'
-                    ? 'bg-[#2dd4bf] text-slate-950 shadow-md'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                BUY (LONG)
-              </button>
-              <button
-                type="button"
-                onClick={() => setSide('SELL')}
-                className={`flex-1 sm:flex-none h-8 px-4 rounded-lg font-extrabold transition ${
-                  side === 'SELL'
-                    ? 'bg-rose-500 text-white shadow-md'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                SELL (SHORT)
-              </button>
+          {/* Tab header */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-6 py-4 border-b border-slate-800">
+            <div className="flex items-center gap-2">
+              <ShoppingBag className="w-4 h-4 text-[#68a7ca]" />
+              <span className="text-xs font-black text-white font-mono uppercase">Execute Mock Paper Order</span>
+            </div>
+            {/* BUY / SELL toggle */}
+            <div className="flex bg-[#060a10] p-1 rounded-xl border border-slate-800 gap-1">
+              {['BUY', 'SELL'].map(s => (
+                <button key={s} onClick={() => setSide(s)}
+                  className={`px-5 py-1.5 rounded-lg text-[11px] font-black uppercase transition ${
+                    side === s
+                      ? s === 'BUY'
+                        ? 'bg-emerald-500 text-slate-950 shadow'
+                        : 'bg-rose-500 text-white shadow'
+                      : 'text-slate-500 hover:text-white'
+                  }`}>
+                  {s === 'BUY' ? '▲ BUY (LONG)' : '▼ SELL (SHORT)'}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Inputs Grid */}
-          <form onSubmit={handleManualExecute} className="space-y-5">
-            
+          {/* Form */}
+          <form onSubmit={handleManualExecute} className="p-6 space-y-5">
+
+            {/* Inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="text-slate-400 block mb-1.5 text-[11px] font-bold">Crypto Pair</label>
-                <select
-                  value={symbol}
-                  onChange={(e) => setSymbol(e.target.value)}
-                  className="w-full h-11 bg-[#14161d] border border-slate-800 rounded-xl px-3 text-white font-bold outline-none focus:border-[#facc15]"
-                >
-                  <option value="BTCUSDT">BTC/USDT</option>
-                  <option value="ETHUSDT">ETH/USDT</option>
-                  <option value="SOLUSDT">SOL/USDT</option>
-                  <option value="LTCUSDT">LTC/USDT</option>
-                  <option value="AVAXUSDT">AVAX/USDT</option>
+                <label className={LABEL_CLASS}>Crypto Pair</label>
+                <select value={symbol} onChange={e => setSymbol(e.target.value)} className={INPUT_CLASS}>
+                  {['BTCUSDT','ETHUSDT','SOLUSDT','LTCUSDT','AVAXUSDT'].map(s => (
+                    <option key={s} value={s}>{s.replace('USDT', '/USDT')}</option>
+                  ))}
                 </select>
               </div>
-
               <div>
-                <label className="text-slate-400 block mb-1.5 text-[11px] font-bold">Target Exchange</label>
-                <select
-                  value={exchange}
-                  onChange={(e) => setExchange(e.target.value)}
-                  className="w-full h-11 bg-[#14161d] border border-slate-800 rounded-xl px-3 text-white font-bold outline-none focus:border-[#facc15]"
-                >
-                  <option value="Binance Pro">Binance Pro</option>
-                  <option value="Bybit Quant">Bybit Quant</option>
-                  <option value="OKX Institutional">OKX Institutional</option>
-                  <option value="Coinbase Pro">Coinbase Pro</option>
+                <label className={LABEL_CLASS}>Target Exchange</label>
+                <select value={exchange} onChange={e => setExchange(e.target.value)} className={INPUT_CLASS}>
+                  {['Binance Pro','Bybit Quant','OKX Institutional','Coinbase Pro'].map(ex => (
+                    <option key={ex} value={ex}>{ex}</option>
+                  ))}
                 </select>
               </div>
-
               <div>
-                <label className="text-slate-400 block mb-1.5 text-[11px] font-bold">Order Quantity</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="w-full h-11 bg-[#14161d] border border-slate-800 rounded-xl px-3 text-white font-bold outline-none focus:border-[#facc15]"
-                />
+                <label className={LABEL_CLASS}>Order Quantity</label>
+                <input type="number" step="0.01" value={amount}
+                  onChange={e => setAmount(e.target.value)} className={INPUT_CLASS} />
               </div>
             </div>
 
-            {/* Quick Size Percentage Pills */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-[#14161d] border border-slate-800">
-              <span className="text-slate-400 font-bold text-[11px]">Quick Size Percentage:</span>
-              <div className="grid grid-cols-4 gap-2 w-full sm:w-auto">
-                {[
-                  { label: '25%', pct: 0.25 },
-                  { label: '50%', pct: 0.50 },
-                  { label: '75%', pct: 0.75 },
-                  { label: '100% (MAX)', pct: 1.0 }
-                ].map((btn) => (
-                  <button
-                    key={btn.label}
-                    type="button"
-                    onClick={() => handleQuickPercent(btn.pct)}
-                    className="h-8 px-3 rounded-lg bg-[#0b0c10] hover:bg-slate-800 text-slate-200 border border-slate-700 font-bold text-[11px] transition text-center"
-                  >
-                    {btn.label}
+            {/* Quick % Chips */}
+            <div className="rounded-xl bg-[#060a10] border border-slate-800 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide shrink-0">Quick Size:</span>
+              <div className="flex flex-wrap gap-2">
+                {[['25%', 0.25], ['50%', 0.50], ['75%', 0.75], ['MAX', 1.0]].map(([label, pct]) => (
+                  <button key={label} type="button" onClick={() => handleQuickPercent(pct)}
+                    className="h-8 px-4 rounded-lg bg-[#0c0f18] hover:bg-slate-800 text-slate-300 border border-slate-700 font-bold text-[11px] transition">
+                    {label}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Insufficient Balance Warning */}
-            {side === 'BUY' && (wallet.virtualBalance ?? 0) <= 0 && (
-              <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-700 text-rose-300 text-xs font-mono font-bold flex items-center gap-2">
-                ⚠ Wallet balance is $0.00 — Please deposit funds first before placing a BUY order.
+            {/* Warnings / Cost Preview */}
+            {side === 'BUY' && paperBalance <= 0 && (
+              <div className="p-3.5 rounded-xl bg-rose-950/50 border border-rose-700/60 text-rose-300 text-[11px] font-mono font-bold flex items-center gap-2">
+                ⚠ Wallet balance is $0.00 — deposit funds before placing a BUY order.
               </div>
             )}
 
-            {/* Cost Preview */}
             {side === 'BUY' && parseFloat(amount) > 0 && (
-              <div className="p-3 rounded-xl bg-[#0b0c10] border border-slate-800 text-xs font-mono flex justify-between items-center">
-                <span className="text-slate-400">Estimated Cost:</span>
-                <span className="text-white font-bold">
+              <div className="rounded-xl bg-[#060a10] border border-slate-800 px-5 py-3 flex items-center justify-between">
+                <span className="text-[11px] text-slate-500 font-mono">Estimated Cost</span>
+                <span className="text-sm font-black text-white font-mono">
                   ${(parseFloat(amount) * (selectedCoin.basePrice || 0)).toLocaleString('en-US', { minimumFractionDigits: 2 })} USDT
                 </span>
               </div>
             )}
 
-            {/* Primary Submit Button */}
-            <button
-              type="submit"
-              disabled={side === 'BUY' && (wallet.virtualBalance ?? 0) <= 0}
-              className={`w-full h-12 rounded-xl font-extrabold font-sans text-xs sm:text-sm tracking-wider uppercase transition shadow-lg ${
+            {/* Submit */}
+            <button type="submit"
+              disabled={side === 'BUY' && paperBalance <= 0}
+              className={`w-full h-13 py-3.5 rounded-xl font-black font-mono text-sm uppercase tracking-widest transition shadow-lg ${
                 side === 'BUY'
-                  ? 'bg-[#2dd4bf] text-slate-950 hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed'
-                  : 'bg-rose-500 text-white hover:brightness-110'
-              }`}
-            >
-              {side === 'BUY' && (wallet.virtualBalance ?? 0) <= 0
-                ? 'DEPOSIT FUNDS TO TRADE'
-                : `EXECUTE ${side} ORDER — ${symbol}`
-              }
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed'
+                  : 'bg-gradient-to-r from-rose-500 to-rose-600 text-white hover:brightness-110'
+              }`}>
+              {side === 'BUY' && paperBalance <= 0
+                ? '⚠ DEPOSIT FUNDS TO TRADE'
+                : `▶ EXECUTE ${side} — ${symbol.replace('USDT', '/USDT')}`}
             </button>
 
           </form>
-
         </div>
       )}
 
