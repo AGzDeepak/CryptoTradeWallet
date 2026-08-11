@@ -215,8 +215,25 @@ export const sendRealWeb3Transaction = async (fromAddress, toAddress, amountEth 
   }
 };
 
+// Helper to get active chain explorer
+const getActiveExplorerBase = async () => {
+  if (typeof window !== 'undefined' && window.ethereum) {
+    try {
+      const chainIdHex = await window.ethereum.request({ method: 'eth_chainId' });
+      const chainId = parseInt(chainIdHex, 16);
+      if (chainId === 11155111) return 'https://sepolia.etherscan.io/tx/';
+      if (chainId === 42161) return 'https://arbiscan.io/tx/';
+      if (chainId === 137) return 'https://polygonscan.com/tx/';
+      if (chainId === 56) return 'https://bscscan.com/tx/';
+      if (SUPPORTED_NETWORKS[chainId]?.explorer) return `${SUPPORTED_NETWORKS[chainId].explorer}/tx/`;
+    } catch (_) {}
+  }
+  return 'https://etherscan.io/tx/';
+};
+
 // ─── BUY REAL ETHEREUM ON-CHAIN WITH METAMASK ─────────────────────────────────
 export const executeRealBuyEthereumOrder = async (walletAddress, amountUsdtOrEth = '100', targetAddress = '0x71C7656EC7ab88b098defB751B7401B5f6d7B41') => {
+  const explorerBase = await getActiveExplorerBase();
   if (!isWeb3Available()) {
     const txHash = `0x${Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
     const ethPrice = 3540.20;
@@ -227,7 +244,7 @@ export const executeRealBuyEthereumOrder = async (walletAddress, amountUsdtOrEth
       amountEth: amountEth.toFixed(4),
       amountUsdt: amountUsdtOrEth,
       priceEth: ethPrice,
-      explorerUrl: `https://etherscan.io/tx/${txHash}`,
+      explorerUrl: `${explorerBase}${txHash}`,
       mode: 'DEMO_FALLBACK'
     };
   }
@@ -259,13 +276,14 @@ export const executeRealBuyEthereumOrder = async (walletAddress, amountUsdtOrEth
     amountEth,
     amountUsdt: (parseFloat(amountEth) * ethPrice).toFixed(2),
     priceEth: ethPrice,
-    explorerUrl: `https://etherscan.io/tx/${finalHash}`,
+    explorerUrl: `${explorerBase}${finalHash}`,
     mode: 'REAL_ON_CHAIN'
   };
 };
 
 // ─── SELL REAL ETHEREUM ON-CHAIN WITH METAMASK ────────────────────────────────
 export const executeRealSellEthereumOrder = async (walletAddress, amountEth = '0.1', targetAddress = '0x71C7656EC7ab88b098defB751B7401B5f6d7B41') => {
+  const explorerBase = await getActiveExplorerBase();
   if (!isWeb3Available()) {
     const txHash = `0x${Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
     const ethPrice = 3540.20;
@@ -276,7 +294,7 @@ export const executeRealSellEthereumOrder = async (walletAddress, amountEth = '0
       amountEth,
       amountUsdt,
       priceEth: ethPrice,
-      explorerUrl: `https://etherscan.io/tx/${txHash}`,
+      explorerUrl: `${explorerBase}${txHash}`,
       mode: 'DEMO_FALLBACK'
     };
   }
@@ -306,7 +324,7 @@ export const executeRealSellEthereumOrder = async (walletAddress, amountEth = '0
     amountEth,
     amountUsdt: (parseFloat(amountEth) * ethPrice).toFixed(2),
     priceEth: ethPrice,
-    explorerUrl: `https://etherscan.io/tx/${finalHash}`,
+    explorerUrl: `${explorerBase}${finalHash}`,
     mode: 'REAL_ON_CHAIN'
   };
 };

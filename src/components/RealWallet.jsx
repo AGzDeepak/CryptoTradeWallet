@@ -3,7 +3,7 @@ import { useCrypto } from '../context/CryptoContext';
 import {
   fetchWalletData, isValidEthAddress, shortAddress, formatUsd,
   generateTxId, isMetaMaskAvailable, connectMetaMask,
-  onAccountChanged, removeMetaMaskListeners, switchMetaMaskNetwork
+  onAccountChanged, removeMetaMaskListeners, switchMetaMaskNetwork, getTxExplorerUrl
 } from '../services/walletService';
 import {
   Wallet, Copy, Check, Zap, Send, CheckCircle2, RefreshCw,
@@ -1013,19 +1013,34 @@ export const RealWallet = () => {
                 </div>
               )}
               {tradeTxHash && (
-                <div className="p-4 rounded-2xl bg-emerald-950/70 border border-emerald-700/50 space-y-2 text-xs">
-                  <div className="flex items-center gap-2 text-emerald-400 font-extrabold">
-                    <CheckCircle2 className="w-4 h-4" /> Transaction Broadcast!
+                <div className="p-4 rounded-2xl bg-emerald-950/70 border border-emerald-700/50 space-y-2.5 text-xs font-mono">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-emerald-400 font-extrabold">
+                      <CheckCircle2 className="w-4 h-4" /> Transaction Broadcast!
+                    </div>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase">{realWalletNetwork || 'On-Chain'}</span>
                   </div>
-                  <div className="text-slate-300 font-mono break-all">Hash: <span className="text-white font-bold">{tradeTxHash}</span></div>
-                  <a
-                    href={`https://etherscan.io/tx/${tradeTxHash}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1 text-[#68a7ca] hover:underline font-bold"
-                  >
-                    <ExternalLink className="w-3 h-3" /> View on Etherscan
-                  </a>
+                  <div className="text-slate-300 break-all text-[11px]">
+                    Tx Hash: <span className="text-white font-bold">{tradeTxHash}</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-emerald-900/60">
+                    <a
+                      href={getTxExplorerUrl(tradeTxHash, realWalletNetwork)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-900/40 text-emerald-300 font-bold hover:bg-emerald-800/50 border border-emerald-700/50 transition text-[11px]"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" /> View on {realWalletNetwork?.toLowerCase().includes('sepolia') ? 'Sepolia Etherscan' : realWalletNetwork?.toLowerCase().includes('arbitrum') ? 'Arbiscan' : 'Block Explorer'}
+                    </a>
+                    <a
+                      href={`https://blockscan.com/tx/${tradeTxHash}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1 text-slate-400 hover:text-white hover:underline text-[10px] font-bold"
+                    >
+                      <Globe className="w-3.5 h-3.5 text-cyan-400" /> Search Blockscan (All Chains)
+                    </a>
+                  </div>
                 </div>
               )}
 

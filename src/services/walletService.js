@@ -174,6 +174,32 @@ export const getNetworkName = (chainId) => {
   return map[chainId] || `Chain #${chainId}`;
 };
 
+export const getTxExplorerUrl = (txHash, networkId = '') => {
+  if (!txHash) return 'https://blockscan.com';
+
+  let chainId = 1;
+  if (typeof window !== 'undefined' && window.ethereum && window.ethereum.chainId) {
+    chainId = parseInt(window.ethereum.chainId, 16);
+  }
+
+  const net = (networkId || '').toLowerCase();
+
+  if (chainId === 11155111 || net.includes('sepolia')) {
+    return `https://sepolia.etherscan.io/tx/${txHash}`;
+  }
+  if (chainId === 42161 || net.includes('arbitrum')) {
+    return `https://arbiscan.io/tx/${txHash}`;
+  }
+  if (chainId === 137 || net.includes('polygon')) {
+    return `https://polygonscan.com/tx/${txHash}`;
+  }
+  if (chainId === 56 || net.includes('bsc') || net.includes('bnb')) {
+    return `https://bscscan.com/tx/${txHash}`;
+  }
+  
+  return `https://etherscan.io/tx/${txHash}`;
+};
+
 // ─── MetaMask (browser extension) connect ────────────────────────────────────
 export const isMetaMaskAvailable = () =>
   typeof window !== 'undefined' && typeof window.ethereum !== 'undefined';
