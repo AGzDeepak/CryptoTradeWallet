@@ -4,12 +4,12 @@ import { BackgroundParticles } from './components/BackgroundParticles';
 import { AuthScreen } from './components/AuthScreen';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
-import { AutoTraderBar } from './components/AutoTraderBar';
+
 import { TotalAssetsHero } from './components/TotalAssetsHero';
 import { YellowPortfolioCard } from './components/YellowPortfolioCard';
 import { OperationSwapTool } from './components/OperationSwapTool';
 import { MarketGraphPanel } from './components/MarketGraphPanel';
-import { ArbitrageBotTerminal } from './components/ArbitrageBotTerminal';
+
 import { AiStrategyPanel } from './components/AiStrategyPanel';
 import { PaperTradingPanel } from './components/PaperTradingPanel';
 import { LivePositions } from './components/LivePositions';

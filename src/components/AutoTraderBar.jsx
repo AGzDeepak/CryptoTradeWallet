@@ -34,7 +34,7 @@ export const AutoTraderBar = memo(() => {
     ? realWallet.balanceUsd
     : (wallet?.virtualBalance ?? 0);
   
-  const MIN_TRADE_FUNDS = 10; // $10 minimum balance to start bot trading
+  const MIN_TRADE_FUNDS = 2; // $2 minimum balance to start bot trading
   const isInsufficientFunds = autoTradingEnabled && walletBalance < MIN_TRADE_FUNDS;
 
   const handleResetClick = () => {

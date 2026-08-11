@@ -420,9 +420,9 @@ export const PaperTradingPanel = () => {
             </div>
 
             {/* Warnings / Cost Preview */}
-            {side === 'BUY' && paperBalance <= 0 && (
+            {side === 'BUY' && paperBalance < 2 && (
               <div className="p-3.5 rounded-xl bg-rose-950/50 border border-rose-700/60 text-rose-300 text-[11px] font-mono font-bold flex items-center gap-2">
-                ⚠ Wallet balance is $0.00 — deposit funds before placing a BUY order.
+                ⚠ Balance is ${paperBalance.toFixed(2)} — minimum $2.00 required to place a BUY order.
               </div>
             )}
 
@@ -437,14 +437,14 @@ export const PaperTradingPanel = () => {
 
             {/* Submit */}
             <button type="submit"
-              disabled={side === 'BUY' && paperBalance <= 0}
+              disabled={side === 'BUY' && paperBalance < 2}
               className={`w-full h-13 py-3.5 rounded-xl font-black font-mono text-sm uppercase tracking-widest transition shadow-lg ${
                 side === 'BUY'
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed'
                   : 'bg-gradient-to-r from-rose-500 to-rose-600 text-white hover:brightness-110'
               }`}>
-              {side === 'BUY' && paperBalance <= 0
-                ? '⚠ DEPOSIT FUNDS TO TRADE'
+              {side === 'BUY' && paperBalance < 2
+                ? '⚠ MIN $2.00 REQUIRED'
                 : `▶ EXECUTE ${side} — ${symbol.replace('USDT', '/USDT')}`}
             </button>
 

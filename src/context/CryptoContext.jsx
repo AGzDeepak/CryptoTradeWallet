@@ -762,11 +762,11 @@ export const CryptoProvider = ({ children }) => {
       ? realWallet.balanceUsd
       : (wallet?.virtualBalance ?? 100000);
 
-    // Auto-topup paper balance if paper withdrawal exceeds paper balance
+    // Auto-topup paper balance if paper withdrawal exceeds paper balance (minimal top-up)
     if (walletMode !== 'REAL' && num > currentBal) {
-      currentBal = Math.max(100000.00, num + 10000);
+      currentBal = parseFloat((num + 2.00).toFixed(2));
       setWallet(w => ({ ...w, virtualBalance: currentBal, totalEquity: currentBal }));
-      addNotification(`ℹ️ Paper Trading wallet topped up to $${currentBal.toLocaleString()} USDT to fulfill paper withdrawal!`, 'info');
+      addNotification(`ℹ️ Paper balance topped up to $${currentBal.toFixed(2)} USDT to fulfill paper withdrawal.`, 'info');
     }
 
     if (num > currentBal) {
@@ -791,8 +791,8 @@ export const CryptoProvider = ({ children }) => {
     // SUBTRACT WITHDRAWN FUNDS FROM WALLET BALANCE!
     setWallet(w => ({
       ...w,
-      virtualBalance: Math.max(0, parseFloat(((w.virtualBalance || 100000) - num).toFixed(2))),
-      totalEquity: Math.max(0, parseFloat(((w.totalEquity || 100000) - num).toFixed(2)))
+      virtualBalance: Math.max(0, parseFloat(((w.virtualBalance || 0) - num).toFixed(2))),
+      totalEquity: Math.max(0, parseFloat(((w.totalEquity || 0) - num).toFixed(2)))
     }));
 
     if (realWallet.connected) {
@@ -977,21 +977,22 @@ export const CryptoProvider = ({ children }) => {
     const ex2 = opp.ex2Price || 0;
     const priceDiffUsd = Math.abs(ex2 - ex1);
 
-    if (priceDiffUsd < 5.00) {
-      addNotification(`Trade Skipped — Reason: 2-Exchange price difference ($${priceDiffUsd.toFixed(2)}) is below minimum $5.00 USD requirement!`, 'warning');
+    if (priceDiffUsd < 0.02) {
+      addNotification(`Trade Skipped — Price difference ($${priceDiffUsd.toFixed(4)}) below $0.02 minimum.`, 'warning');
       return false;
     }
 
     const currentBalance = wallet.virtualBalance ?? 0;
-    const effectiveBalance = currentBalance > 0 ? currentBalance : 1000.00;
-    const tradeCost = parseFloat(Math.max(5.00, Math.min(effectiveBalance * 0.1, 50.00)).toFixed(2));
+    // Trade cost: minimum $2, max 50% of balance (so $2 balance → $1 trade)
+    const effectiveBalance = Math.max(currentBalance, 2.00);
+    const tradeCost = parseFloat(Math.min(Math.max(2.00, effectiveBalance * 0.5), 50.00).toFixed(2));
 
-    // Dynamic Sizing Guarantee: If balance is low, auto-credit paper funds so trading NEVER halts!
+    // If balance is below trade cost, top-up just $2 so bot keeps going with real-money feel
     if (currentBalance < tradeCost) {
       setWallet(w => ({
         ...w,
-        virtualBalance: parseFloat(((w.virtualBalance || 0) + 1000.00).toFixed(2)),
-        totalEquity: parseFloat(((w.totalEquity || 0) + 1000.00).toFixed(2))
+        virtualBalance: parseFloat(((w.virtualBalance || 0) + 2.00).toFixed(2)),
+        totalEquity: parseFloat(((w.totalEquity || 0) + 2.00).toFixed(2))
       }));
     }
 
@@ -1095,8 +1096,8 @@ export const CryptoProvider = ({ children }) => {
 
         const currPnL = parseFloat(((currSell - currBuy) * pos.amount - (pos.invested * 0.0004)).toFixed(2));
 
-        // STRICT RULE: Only auto-settle position when Live PnL Dollar is $5.00 USD and above!
-        if (currPnL >= 5.00) {
+        // Settle position when PnL is positive (minimum $0.01) — works with $2 balance
+        if (currPnL >= 0.01) {
           // Mark for settlement — handle wallet/history OUTSIDE setState
           positionsToSettle.push({ ...pos, currentBuyPrice: currBuy, currentSellPrice: currSell, unrealizedPnL: currPnL, settledPnL: currPnL });
         } else {
