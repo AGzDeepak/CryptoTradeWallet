@@ -26,7 +26,7 @@ import { AccountSection } from './components/AccountSection';
 import { LiveCryptoNews } from './components/LiveCryptoNews';
 import { SimulationSection } from './components/SimulationSection';
 import { MobileBottomNav } from './components/MobileBottomNav';
-import { MetaMaskTradeTerminalSection } from './components/MetaMaskTradeTerminalSection';
+import { RealWeb3TradingSection } from './components/RealWeb3TradingSection';
 import { ContractProcessSection } from './components/ContractProcessSection';
 import { BankToBankTransferSection } from './components/BankToBankTransferSection';
 
@@ -40,7 +40,7 @@ const DashboardContent = () => {
 
         {/* ── DASHBOARD ── */}
         {(activeTab === 'dashboard' || !['papertrading','simulation','account','wallet','realwallet',
-          'decentralized','contractprocess','banktransfer','portfolio','metamaskterminal',
+          'decentralized','contractprocess','banktransfer','portfolio','metamaskterminal','realtrading',
           'settings','markets','scanner','trades','strategies','analytics'].includes(activeTab)) && (
           <div className="space-y-6">
             <TotalAssetsHero />
@@ -70,9 +70,9 @@ const DashboardContent = () => {
           <WalletSection />
         )}
 
-        {/* ── METAMASK TERMINAL ── */}
-        {activeTab === 'metamaskterminal' && (
-          <MetaMaskTradeTerminalSection />
+        {/* ── REAL TRADING & SEPOLIA EXCHANGE ── */}
+        {(activeTab === 'metamaskterminal' || activeTab === 'realtrading') && (
+          <RealWeb3TradingSection />
         )}
 
         {/* ── REAL WALLET ── */}

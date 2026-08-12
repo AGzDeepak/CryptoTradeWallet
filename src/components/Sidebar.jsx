@@ -23,7 +23,7 @@ export const Sidebar = () => {
     { id: 'dashboard',        label: 'Dashboard',           icon: LayoutGrid },
     { id: 'contractprocess',  label: 'Contract Process',     icon: FileCode2 },
     { id: 'banktransfer',     label: 'Bank Transfer',        icon: Landmark },
-    { id: 'metamaskterminal', label: 'MetaMask Terminal',    icon: Zap,        badge: 'WEB3' },
+    { id: 'metamaskterminal', label: 'Real Trading & Sepolia', icon: Zap, badge: 'WEB3' },
     { id: 'realwallet',       label: 'Real Wallet',          icon: Gem,        badge: 'LIVE' },
     { id: 'decentralized',    label: 'Vault Wallet',         icon: ShieldCheck },
     { id: 'papertrading',     label: 'Paper Trading',        icon: ShoppingBag },

@@ -95,7 +95,7 @@ export const Header = () => {
     account:          'Account Management',
     wallet:           'Institutional Wallet',
     realwallet:       'Real Wallet',
-    metamaskterminal: 'MetaMask Terminal',
+    metamaskterminal: 'Real Trading & Sepolia Exchange',
     contractprocess:  'Contract Process',
     banktransfer:     'Bank Transfer',
     decentralized:    'Vault Wallet',
