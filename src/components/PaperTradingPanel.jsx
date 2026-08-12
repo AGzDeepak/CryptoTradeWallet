@@ -10,7 +10,7 @@ import {
   isWeb3Available, connectRealWeb3Wallet, sendRealWeb3Transaction,
   executeRealBuyEthereumOrder, executeRealSellEthereumOrder, SUPPORTED_NETWORKS
 } from '../services/web3Service';
-import { isValidEthAddress, shortAddress } from '../services/walletService';
+import { shortAddress } from '../services/walletService';
 
 /* ── tiny helpers ────────────────────────────────────────────────── */
 const fmt = (n, dec = 2) =>
@@ -166,16 +166,36 @@ export const PaperTradingPanel = () => {
     if (!qty || qty <= 0) { setRealError('Enter a valid amount.'); return; }
     setIsRealExec(true);
     try {
+      // Always fetch fresh address directly from MetaMask — never rely on stale state
+      let fromAddr = realWalletAddress;
+      if (isWeb3Available()) {
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        if (accounts?.[0]) {
+          fromAddr = accounts[0];
+          // Sync state if it drifted
+          if (fromAddr !== realWalletAddress) setRealWalletAddress(fromAddr);
+        }
+      }
+      if (!fromAddr || !/^0x[0-9a-fA-F]{40}$/.test(fromAddr)) {
+        throw new Error('No valid wallet address found. Please reconnect MetaMask.');
+      }
       let result;
       if (realSide === 'BUY') {
-        result = await executeRealBuyEthereumOrder(realWalletAddress, String(qty));
+        result = await executeRealBuyEthereumOrder(fromAddr, String(qty));
       } else {
-        result = await executeRealSellEthereumOrder(realWalletAddress, String(qty));
+        result = await executeRealSellEthereumOrder(fromAddr, String(qty));
       }
       setRealTxResult(result);
       addNotification(`🚀 Real ${realSide} ${qty} ${realPair} — Tx: ${result.txHash?.substring(0, 14)}...`, 'success');
     } catch (err) {
-      setRealError(err.message || 'Transaction failed');
+      // Translate MetaMask internal errors into friendly messages
+      const msg = err.message || 'Transaction failed';
+      setRealError(
+        msg.includes('user rejected') ? 'Transaction cancelled in MetaMask.' :
+        msg.includes('insufficient funds') ? 'Insufficient ETH balance for gas fees.' :
+        msg.includes('invalid') ? 'MetaMask rejected the transaction. Ensure your wallet is unlocked and on the correct network.' :
+        msg
+      );
     } finally {
       setIsRealExec(false);
     }
@@ -187,18 +207,47 @@ export const PaperTradingPanel = () => {
     setDepError('');
     setDepResult(null);
     const amt = parseFloat(depAmt);
-    if (!amt || amt <= 0) { setDepError('Enter a deposit amount.'); return; }
+    if (!amt || amt <= 0) { setDepError('Enter a deposit amount in USDT.'); return; }
     if (!isMMConnected) { setDepError('Connect MetaMask wallet first.'); return; }
 
     setIsDepositing(true);
     try {
-      const targetAddr = depTo || realWalletAddress;
-      if (!isValidEthAddress(targetAddr)) throw new Error('Invalid destination address.');
-      const result = await sendRealWeb3Transaction(realWalletAddress, targetAddr, String(amt / 3540));
+      // Always get fresh connected address directly from MetaMask
+      let fromAddr = realWalletAddress;
+      if (isWeb3Available()) {
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        if (accounts?.[0]) {
+          fromAddr = accounts[0];
+          if (fromAddr !== realWalletAddress) setRealWalletAddress(fromAddr);
+        }
+      }
+      if (!fromAddr || !/^0x[0-9a-fA-F]{40}$/.test(fromAddr)) {
+        throw new Error('No valid wallet found. Please reconnect MetaMask.');
+      }
+
+      // If no custom destination address entered, use user's own wallet (self-deposit)
+      const rawDest = depTo?.trim();
+      const targetAddr = rawDest
+        ? rawDest
+        : fromAddr; // default: deposit to own wallet
+
+      // Validate destination address with strict regex
+      if (!/^0x[0-9a-fA-F]{40}$/.test(targetAddr)) {
+        throw new Error('Invalid destination address. Must be a 0x… Ethereum address.');
+      }
+
+      // Convert USDT → ETH (approximate) for the on-chain value
+      const ethAmount = (amt / 3540).toFixed(8);
+      const result = await sendRealWeb3Transaction(fromAddr, targetAddr, ethAmount);
       setDepResult(result);
-      addNotification(`💰 Deposit of ${amt} USDT submitted — Tx: ${result.txHash?.substring(0, 14)}...`, 'success');
+      addNotification(`💰 Deposit of $${amt} USDT submitted — Tx: ${result.txHash?.substring(0, 14)}...`, 'success');
     } catch (err) {
-      setDepError(err.message || 'Deposit failed');
+      const msg = err.message || 'Deposit failed';
+      setDepError(
+        msg.includes('user rejected') ? 'Transaction cancelled in MetaMask.' :
+        msg.includes('insufficient funds') ? 'Insufficient ETH balance for gas + transfer amount.' :
+        msg
+      );
     } finally {
       setIsDepositing(false);
     }
