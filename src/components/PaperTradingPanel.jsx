@@ -57,7 +57,8 @@ export const PaperTradingPanel = () => {
   const [realSide, setRealSide]         = useState('BUY');
   const [realAmt, setRealAmt]           = useState('0.01');
   const [realPair, setRealPair]         = useState('ETH');
-  const [realNetwork, setRealNetwork]   = useState(11155111);
+  const [activeChainId, setActiveChainId] = useState(null);  // live MetaMask chain
+  const [isSwitchingNet, setIsSwitchingNet] = useState(false);
   const [isRealExec, setIsRealExec]     = useState(false);
   const [realTxResult, setRealTxResult] = useState(null);
   const [realError, setRealError]       = useState('');
@@ -78,6 +79,31 @@ export const PaperTradingPanel = () => {
   const paperBalance    = wallet?.virtualBalance ?? 0;
   const isMMConnected   = !!realWalletAddress;
 
+  /* ── Sync chain from MetaMask on mount + on chainChanged ───── */
+  useEffect(() => {
+    const syncChain = async () => {
+      if (!isWeb3Available()) return;
+      try {
+        const hex = await window.ethereum.request({ method: 'eth_chainId' });
+        setActiveChainId(parseInt(hex, 16));
+      } catch (_) {}
+    };
+    syncChain();
+    if (isWeb3Available()) {
+      window.ethereum.on('chainChanged', (hex) => setActiveChainId(parseInt(hex, 16)));
+      window.ethereum.on('accountsChanged', (accs) => {
+        if (accs?.[0]) setRealWalletAddress(accs[0]);
+        else setRealWalletAddress('');
+      });
+    }
+    return () => {
+      if (isWeb3Available()) {
+        window.ethereum.removeAllListeners?.('chainChanged');
+        window.ethereum.removeAllListeners?.('accountsChanged');
+      }
+    };
+  }, []);
+
   /* ── MetaMask Connect ───────────────────────────────────────── */
   const connectMM = async () => {
     setRealConnecting(true);
@@ -89,9 +115,10 @@ export const PaperTradingPanel = () => {
           setRealWalletAddress(accounts[0]);
           const hexId   = await window.ethereum.request({ method: 'eth_chainId' });
           const chainId = parseInt(hexId, 16);
+          setActiveChainId(chainId);
           const netMap  = { 1: 'Ethereum Mainnet', 56: 'BNB Smart Chain', 137: 'Polygon Mainnet', 42161: 'Arbitrum One', 10: 'Optimism', 11155111: 'Sepolia Testnet' };
-          setRealWalletNetwork(netMap[chainId] || 'Ethereum Mainnet');
-          addNotification(`🦊 MetaMask Connected: ${accounts[0].substring(0, 10)}...`, 'success');
+          setRealWalletNetwork(netMap[chainId] || `Chain ${chainId}`);
+          addNotification(`🦊 MetaMask Connected: ${accounts[0].substring(0, 10)}... on ${netMap[chainId] || 'Unknown Network'}`, 'success');
         }
       } else {
         const addr = window.prompt('MetaMask not detected. Paste your 0x address:');
@@ -99,13 +126,56 @@ export const PaperTradingPanel = () => {
           setRealWalletAddress(addr);
           addNotification(`✅ Wallet: ${addr.substring(0, 10)}...`, 'success');
         } else {
-          throw new Error('MetaMask not installed. Please install it from metamask.io');
+          throw new Error('MetaMask not installed. Install from metamask.io');
         }
       }
     } catch (err) {
       setRealError(err.message || 'Connection failed');
     } finally {
       setRealConnecting(false);
+    }
+  };
+
+  /* ── Switch MetaMask Network ────────────────────────────────── */
+  const switchNetwork = async (chainId) => {
+    if (!isWeb3Available()) {
+      setRealError('MetaMask not available.');
+      return;
+    }
+    setIsSwitchingNet(true);
+    setRealError('');
+    try {
+      const net = SUPPORTED_NETWORKS[chainId];
+      if (!net) throw new Error('Unsupported network.');
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: net.hexId }],
+      });
+      setActiveChainId(chainId);
+      setRealWalletNetwork(net.name);
+      addNotification(`🔗 Switched to ${net.name}`, 'success');
+    } catch (err) {
+      if (err.code === 4902) {
+        // Network not added to MetaMask — add it
+        try {
+          const net = SUPPORTED_NETWORKS[chainId];
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{ chainId: net.hexId, chainName: net.name, rpcUrls: [net.rpc], nativeCurrency: { name: net.symbol, symbol: net.symbol, decimals: 18 } }],
+          });
+          setActiveChainId(chainId);
+          setRealWalletNetwork(net.name);
+          addNotification(`✅ ${net.name} added & switched!`, 'success');
+        } catch (addErr) {
+          setRealError(`Failed to add network: ${addErr.message}`);
+        }
+      } else if (err.code === 4001) {
+        setRealError('Network switch rejected in MetaMask.');
+      } else {
+        setRealError(err.message || 'Network switch failed.');
+      }
+    } finally {
+      setIsSwitchingNet(false);
     }
   };
 
@@ -260,7 +330,6 @@ export const PaperTradingPanel = () => {
   };
 
   const estimatedCost = parseFloat(amount || 0) * (selectedCoin?.basePrice || 0);
-  const netSymbol     = SUPPORTED_NETWORKS[realNetwork] || SUPPORTED_NETWORKS[11155111];
 
   /* ── pipeline step labels ───────────────────────────────────── */
   const pipelineSteps = ['Validate', 'Liquidity', 'Signing', 'Broadcast', 'Confirm'];
@@ -503,40 +572,112 @@ export const PaperTradingPanel = () => {
 
                 {/* MetaMask connection banner */}
                 {!isMMConnected ? (
-                  <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-4 flex items-center justify-between gap-3">
+                  <div className="rounded-xl bg-[#0d1523] border border-slate-700/60 p-5 text-center space-y-4">
+                    <div className="w-12 h-12 rounded-2xl bg-violet-600/15 border border-violet-500/20 flex items-center justify-center mx-auto">
+                      <Wallet className="w-6 h-6 text-violet-400" />
+                    </div>
                     <div>
-                      <p className="text-sm font-semibold text-amber-400">Wallet not connected</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Connect MetaMask to execute real on-chain trades</p>
+                      <p className="text-sm font-semibold text-white">Connect your wallet</p>
+                      <p className="text-xs text-slate-400 mt-1">MetaMask required for real on-chain trading</p>
                     </div>
                     <button onClick={connectMM} disabled={realConnecting}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold transition shrink-0">
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold transition">
                       {realConnecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
                       {realConnecting ? 'Connecting…' : 'Connect MetaMask'}
                     </button>
                   </div>
                 ) : (
-                  <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 flex items-center justify-between">
+                  <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-xs text-emerald-400 font-medium">MetaMask Connected</span>
+                      <span className="text-xs text-emerald-400 font-semibold">Connected</span>
                       <span className="text-xs text-slate-400 font-mono">{shortAddress(realWalletAddress)}</span>
                     </div>
-                    <span className="text-xs text-slate-500">{realWalletNetwork}</span>
+                    <span className="text-xs font-medium text-slate-300">
+                      {activeChainId ? (SUPPORTED_NETWORKS[activeChainId]?.name || `Chain ${activeChainId}`) : realWalletNetwork}
+                    </span>
                   </div>
                 )}
 
-                {/* Network selector */}
-                <div className="space-y-1.5">
-                  <label className="text-xs text-slate-400 font-medium">Network</label>
-                  <select value={realNetwork} onChange={e => setRealNetwork(parseInt(e.target.value))}
-                    className="w-full bg-[#060d18] border border-slate-700/60 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-violet-500/50 transition appearance-none">
-                    {Object.entries(SUPPORTED_NETWORKS).map(([id, net]) => (
-                      <option key={id} value={id}>{net.name} ({net.symbol})</option>
-                    ))}
-                  </select>
+                {/* ── TESTNET / MAINNET NETWORK SWITCHER ─────────── */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs text-slate-400 font-medium">Select Network</label>
+                    {isSwitchingNet && (
+                      <span className="flex items-center gap-1.5 text-xs text-violet-400">
+                        <Loader2 className="w-3 h-3 animate-spin" /> Switching…
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Testnet group */}
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider px-1">Testnets — Free to test</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { id: 11155111, label: 'Sepolia ETH',    tag: 'ETH',  color: 'text-blue-400',   bg: activeChainId === 11155111 ? 'bg-blue-500/20 border-blue-500/40'   : 'bg-[#060d18] border-slate-700/60 hover:border-blue-500/30' },
+                      ].map(n => (
+                        <button key={n.id} onClick={() => switchNetwork(n.id)} disabled={isSwitchingNet || !isMMConnected || activeChainId === n.id}
+                          className={`flex items-center justify-between px-3 py-2.5 rounded-xl border text-left transition ${n.bg} ${(!isMMConnected || isSwitchingNet) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+                          <div>
+                            <p className={`text-xs font-semibold ${n.color}`}>{n.label}</p>
+                            <p className="text-[10px] text-slate-500">Chain {n.id}</p>
+                          </div>
+                          {activeChainId === n.id && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Mainnet group */}
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider px-1">Mainnets — Real funds</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { id: 1,     label: 'Ethereum',   tag: 'ETH',   color: 'text-blue-300',   bg: activeChainId === 1     ? 'bg-blue-500/20 border-blue-500/40'     : 'bg-[#060d18] border-slate-700/60 hover:border-blue-500/30'   },
+                        { id: 137,   label: 'Polygon',    tag: 'MATIC', color: 'text-violet-400', bg: activeChainId === 137   ? 'bg-violet-500/20 border-violet-500/40' : 'bg-[#060d18] border-slate-700/60 hover:border-violet-500/30' },
+                        { id: 56,    label: 'BNB Chain',  tag: 'BNB',   color: 'text-amber-400',  bg: activeChainId === 56    ? 'bg-amber-500/20 border-amber-500/40'   : 'bg-[#060d18] border-slate-700/60 hover:border-amber-500/30'  },
+                        { id: 42161, label: 'Arbitrum',   tag: 'ETH',   color: 'text-cyan-400',   bg: activeChainId === 42161 ? 'bg-cyan-500/20 border-cyan-500/40'     : 'bg-[#060d18] border-slate-700/60 hover:border-cyan-500/30'   },
+                        { id: 8453,  label: 'Base',       tag: 'ETH',   color: 'text-blue-400',   bg: activeChainId === 8453  ? 'bg-blue-500/20 border-blue-500/40'     : 'bg-[#060d18] border-slate-700/60 hover:border-blue-500/30'   },
+                        { id: 43114, label: 'Avalanche',  tag: 'AVAX',  color: 'text-rose-400',   bg: activeChainId === 43114 ? 'bg-rose-500/20 border-rose-500/40'     : 'bg-[#060d18] border-slate-700/60 hover:border-rose-500/30'   },
+                      ].map(n => (
+                        <button key={n.id} onClick={() => switchNetwork(n.id)} disabled={isSwitchingNet || !isMMConnected || activeChainId === n.id}
+                          className={`flex items-center justify-between px-3 py-2.5 rounded-xl border text-left transition ${n.bg} ${(!isMMConnected || isSwitchingNet) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+                          <div>
+                            <p className={`text-xs font-semibold ${n.color}`}>{n.label}</p>
+                            <p className="text-[10px] text-slate-500">{n.tag}</p>
+                          </div>
+                          {activeChainId === n.id && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Active network info bar */}
+                  {activeChainId && (
+                    <div className={`flex items-center justify-between px-4 py-2.5 rounded-xl border ${
+                      activeChainId === 11155111
+                        ? 'bg-blue-500/10 border-blue-500/20'
+                        : 'bg-violet-500/10 border-violet-500/20'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${activeChainId === 11155111 ? 'bg-blue-400' : 'bg-violet-400'}`} />
+                        <span className="text-xs font-medium text-white">
+                          {SUPPORTED_NETWORKS[activeChainId]?.name || `Chain ${activeChainId}`}
+                        </span>
+                        {activeChainId === 11155111 && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-semibold">TESTNET</span>
+                        )}
+                        {[1, 137, 56, 42161, 8453, 43114].includes(activeChainId) && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-semibold">MAINNET</span>
+                        )}
+                      </div>
+                      <span className="text-xs text-slate-500">{SUPPORTED_NETWORKS[activeChainId]?.symbol}</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* BUY / SELL + asset + amount */}
+                {/* BUY / SELL toggle */}
                 <div className="flex items-center gap-2">
                   {['BUY', 'SELL'].map(s => (
                     <button key={s} onClick={() => setRealSide(s)}
@@ -550,6 +691,7 @@ export const PaperTradingPanel = () => {
                   ))}
                 </div>
 
+                {/* Asset + Amount */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs text-slate-400 font-medium">Asset</label>
@@ -567,12 +709,6 @@ export const PaperTradingPanel = () => {
                   </div>
                 </div>
 
-                {/* Network info bar */}
-                <div className="flex items-center justify-between bg-[#060d18] rounded-xl px-4 py-3 border border-slate-700/60">
-                  <span className="text-xs text-slate-400">Executing on</span>
-                  <span className="text-xs font-medium text-white">{netSymbol?.name || 'Sepolia'} via MetaMask</span>
-                </div>
-
                 {/* Error */}
                 {realError && (
                   <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
@@ -585,7 +721,7 @@ export const PaperTradingPanel = () => {
                   <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 space-y-3">
                     <div className="flex items-center gap-2 text-emerald-400 text-xs font-semibold">
                       <CheckCircle2 className="w-4 h-4" />
-                      Real Transaction {realTxResult.mode === 'REAL_ON_CHAIN' ? 'Broadcast On-Chain' : 'Submitted (Demo)'}
+                      {realTxResult.mode === 'REAL_ON_CHAIN' ? 'Transaction Broadcast On-Chain ✓' : 'Transaction Submitted (Demo Mode)'}
                     </div>
                     <div className="bg-[#060d18] rounded-lg px-3 py-2 text-[11px] text-slate-400 font-mono break-all">
                       {realTxResult.txHash}
@@ -593,9 +729,19 @@ export const PaperTradingPanel = () => {
                     {realTxResult.explorerUrl && (
                       <a href={realTxResult.explorerUrl} target="_blank" rel="noreferrer"
                         className="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 transition">
-                        <ExternalLink className="w-3.5 h-3.5" /> View on Block Explorer ↗
+                        <ExternalLink className="w-3.5 h-3.5" /> View on {SUPPORTED_NETWORKS[activeChainId]?.name || 'Block'} Explorer ↗
                       </a>
                     )}
+                  </div>
+                )}
+
+                {/* Mainnet warning */}
+                {activeChainId && [1, 56, 137, 42161, 8453, 43114].includes(activeChainId) && (
+                  <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                    <span className="text-amber-400 text-sm shrink-0">⚠️</span>
+                    <p className="text-xs text-amber-300">
+                      You are on <strong>{SUPPORTED_NETWORKS[activeChainId]?.name}</strong> (Mainnet). This will spend <strong>real {SUPPORTED_NETWORKS[activeChainId]?.symbol}</strong>. Use Sepolia testnet for practice.
+                    </p>
                   </div>
                 )}
 
@@ -610,11 +756,11 @@ export const PaperTradingPanel = () => {
                   }`}>
                   {isRealExec
                     ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting to MetaMask…</>
-                    : <><ShieldCheck className="w-4 h-4" /> {isMMConnected ? `Execute Real ${realSide} — ${realAmt} ${realPair}` : 'Connect MetaMask to Trade'}</>}
+                    : <><ShieldCheck className="w-4 h-4" /> {isMMConnected ? `${realSide} ${realAmt} ${realPair}` : 'Connect MetaMask to Trade'}</>}
                 </button>
 
                 <p className="text-[11px] text-slate-500 text-center">
-                  ⚠️ Real transactions require MetaMask confirmation and network gas fees.
+                  Transactions require MetaMask confirmation and network gas fees.
                 </p>
               </div>
             )}
