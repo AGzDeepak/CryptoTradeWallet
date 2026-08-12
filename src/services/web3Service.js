@@ -5,6 +5,7 @@
 
 export const SUPPORTED_NETWORKS = {
   1: { name: 'Ethereum Mainnet', symbol: 'ETH', rpc: 'https://cloudflare-eth.com', hexId: '0x1', explorer: 'https://etherscan.io' },
+  11155111: { name: 'Sepolia ETH Testnet', symbol: 'SepoliaETH', rpc: 'https://rpc.sepolia.org', hexId: '0xaa36a7', explorer: 'https://sepolia.etherscan.io' },
   56: { name: 'BNB Smart Chain', symbol: 'BNB', rpc: 'https://bsc-dataseed.binance.org/', hexId: '0x38', explorer: 'https://bscscan.com' },
   137: { name: 'Polygon PoS', symbol: 'MATIC', rpc: 'https://polygon-rpc.com', hexId: '0x89', explorer: 'https://polygonscan.com' },
   42161: { name: 'Arbitrum One', symbol: 'ETH', rpc: 'https://arb1.arbitrum.io/rpc', hexId: '0xa4b1', explorer: 'https://arbiscan.io' },
