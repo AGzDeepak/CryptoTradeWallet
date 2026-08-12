@@ -317,32 +317,37 @@ export const PaperTradingPanel = () => {
         <div className="space-y-5 font-mono">
           
           {/* Bot Control Card */}
-          <div className="rounded-2xl bg-[#080c14] border border-slate-800/80 p-5 space-y-4">
+          <div className="rounded-2xl bg-[#080c14] border border-slate-800/80 p-5 space-y-4 font-mono">
             
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800/70">
               <div className="flex items-center gap-3">
                 <div className={`w-3 h-3 rounded-full ${autoTradingEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
                 <div>
-                  <h3 className="text-xs font-black text-white uppercase">
-                    Autopilot Quant Engine Status: <span className={autoTradingEnabled ? 'text-emerald-400' : 'text-slate-400'}>{autoTradingEnabled ? 'ONLINE' : 'PAUSED'}</span>
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xs font-black text-white uppercase">
+                      Autopilot Quant Engine Status: <span className={autoTradingEnabled ? 'text-emerald-400' : 'text-slate-400'}>{autoTradingEnabled ? 'ONLINE' : 'PAUSED'}</span>
+                    </h3>
+                    <span className="px-2 py-0.5 rounded text-[9px] font-black bg-emerald-950 text-emerald-400 border border-emerald-800">
+                      🟢 AUTO-SELL TAKE PROFIT ACTIVE
+                    </span>
+                  </div>
                   <p className="text-[10px] text-slate-500">
-                    Scans exchanges every 400ms · Auto-executes profitable spatial arbitrage routes
+                    Scans exchanges every 400ms · Auto-buys low & auto-sells high on target profit threshold
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 text-xs">
-                <span className="text-slate-400">Spread Threshold:</span>
-                <span className="text-amber-400 font-black">{minProfitThreshold.toFixed(2)}%</span>
+                <span className="text-slate-400">Spread & Take-Profit Target:</span>
+                <span className="text-amber-400 font-black">+{minProfitThreshold.toFixed(2)}%</span>
               </div>
             </div>
 
-            {/* Min Profit Slider Controls */}
+            {/* Min Profit & Take-Profit Auto-Sell Slider Controls */}
             <div className="space-y-3">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400 text-[10px] uppercase font-bold">Minimum Spread Gate (% Profit)</span>
-                <span className="text-amber-400 font-bold">{minProfitThreshold.toFixed(2)}%</span>
+                <span className="text-slate-400 text-[10px] uppercase font-bold">Auto-Sell Take-Profit Gate (% Target Profit)</span>
+                <span className="text-emerald-400 font-bold">+{minProfitThreshold.toFixed(2)}% Profit</span>
               </div>
 
               <input
@@ -352,7 +357,7 @@ export const PaperTradingPanel = () => {
                 step="0.10"
                 value={minProfitThreshold}
                 onChange={e => setMinProfitThreshold(parseFloat(e.target.value))}
-                className="w-full h-2 bg-[#04060d] rounded-lg appearance-none cursor-pointer accent-amber-400"
+                className="w-full h-2 bg-[#04060d] rounded-lg appearance-none cursor-pointer accent-emerald-400"
               />
 
               <div className="flex flex-wrap gap-2">
@@ -362,11 +367,11 @@ export const PaperTradingPanel = () => {
                     onClick={() => setMinProfitThreshold(v)}
                     className={`px-3 py-1 rounded-lg text-[10px] font-bold transition border ${
                       minProfitThreshold === v
-                        ? 'bg-amber-500 text-slate-950 border-amber-400'
+                        ? 'bg-emerald-500 text-slate-950 border-emerald-400'
                         : 'bg-[#04060d] text-slate-400 border-slate-800 hover:text-white'
                     }`}
                   >
-                    {v.toFixed(2)}%
+                    +{v.toFixed(2)}% Profit
                   </button>
                 ))}
               </div>

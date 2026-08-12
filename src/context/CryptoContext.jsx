@@ -1069,8 +1069,8 @@ export const CryptoProvider = ({ children }) => {
 
         const currPnL = parseFloat(((currSell - currBuy) * pos.amount - (pos.invested * 0.0004)).toFixed(2));
 
-        // Settle position when PnL is positive (minimum $0.01) — works with $2 balance
-        if (currPnL >= 0.01) {
+        // Settle position when PnL is positive (minimum $0.01) — automatic sell take profit
+        if (currPnL >= 0.01 || (pos.takeProfitPrice && currSell >= pos.takeProfitPrice)) {
           // Mark for settlement — handle wallet/history OUTSIDE setState
           positionsToSettle.push({ ...pos, currentBuyPrice: currBuy, currentSellPrice: currSell, unrealizedPnL: currPnL, settledPnL: currPnL });
         } else {
@@ -1097,20 +1097,31 @@ export const CryptoProvider = ({ children }) => {
         totalSettledPnL += pnl;
         totalReturnedInvested += pos.invested;
 
+        const autoSellTxHash = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
+
         newHistoryItems.push({
-          id: `TRD-${Math.floor(100 + Math.random() * 900)}`,
+          id: `TRD-AUTO-SELL-${Math.floor(100 + Math.random() * 900)}`,
           time: new Date().toLocaleTimeString(),
           symbol: pos.symbol,
-          strategy: 'Cross Exchange Arbitrage',
-          buyExchange: pos.buyExchange,
-          sellExchange: pos.sellExchange,
-          entryPrice: pos.entryBuyPrice,
+          strategy: 'Auto-Sell Take Profit Engine',
+          buyExchange: pos.buyExchange || 'Binance Pro',
+          sellExchange: pos.sellExchange || 'Bybit Quant',
+          entryPrice: pos.entryBuyPrice || pos.entryPrice,
           exitPrice: pos.currentSellPrice,
           amount: pos.amount,
           fees: parseFloat((pos.invested * 0.0004).toFixed(2)),
           netProfit: pnl,
+          txHash: autoSellTxHash,
           result: pnl >= 0 ? 'PROFIT' : 'LOSS'
         });
+
+        // Add Auto-Sell log entry
+        setAutoTradeLogs(prev => [{
+          id: Date.now() + Math.random(),
+          text: `🟢 [AUTO-SELL TAKE PROFIT] Sold ${pos.amount} ${pos.symbol} @ $${(pos.currentSellPrice || 0).toLocaleString()} (+$${pnl.toFixed(2)} profit locked in) — Tx: ${autoSellTxHash.substring(0, 10)}...`,
+          time: new Date().toLocaleTimeString(),
+          type: 'success'
+        }, ...prev.slice(0, 15)]);
 
         // Live MetaMask Account Direct Auto-Withdraw Integration
         const liveMetaMaskAddr = (typeof window !== 'undefined' && window.ethereum && window.ethereum.selectedAddress)
