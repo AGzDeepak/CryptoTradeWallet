@@ -41,6 +41,7 @@ export const PaperTradingPanel = () => {
   const [activeTradeStep, setActiveTradeStep] = useState(4);
   const [isExecuting, setIsExecuting] = useState(false);
   const [lastTxHash, setLastTxHash] = useState(null);
+  const [copiedHash, setCopiedHash] = useState(false);
   const [tradeError, setTradeError] = useState('');
 
   const selectedCoin = marketData.find(c => c.symbol === symbol) || marketData[0] || { basePrice: 67840.50 };
@@ -499,24 +500,44 @@ export const PaperTradingPanel = () => {
 
             {/* Transaction Hash Result Banner */}
             {lastTxHash && (
-              <div className="p-4 rounded-2xl bg-emerald-950/70 border border-emerald-700/50 space-y-2.5 text-xs">
+              <div className="p-4 rounded-2xl bg-emerald-950/70 border border-emerald-700/50 space-y-2.5 text-xs font-mono">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-emerald-400 font-extrabold">
                     <CheckCircle2 className="w-4 h-4" /> Order Broadcasted & Settled On-Chain!
                   </div>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase">10-STEP PIPELINE VERIFIED</span>
+                  <span className="text-[9px] font-bold text-[#2dd4bf] uppercase">10-STEP PIPELINE VERIFIED</span>
                 </div>
-                <div className="text-slate-300 break-all text-[11px]">
-                  Tx Hash: <span className="text-white font-bold">{lastTxHash}</span>
-                </div>
-                <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-emerald-900/60">
-                  <a
-                    href={getTxExplorerUrl(lastTxHash, 'sepolia')}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-900/40 text-emerald-300 font-bold hover:bg-emerald-800/50 border border-emerald-700/50 transition text-[11px]"
+                <div className="text-slate-300 break-all text-[11px] bg-[#04060d] p-2.5 rounded-xl border border-slate-800 flex items-center justify-between gap-2">
+                  <span>Tx Hash: <strong className="text-white">{lastTxHash}</strong></span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(lastTxHash);
+                      setCopiedHash(true);
+                      setTimeout(() => setCopiedHash(false), 2000);
+                      addNotification('Transaction Hash copied to clipboard!', 'info');
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[#2dd4bf] text-[10px] font-bold shrink-0 transition"
                   >
-                    <ExternalLink className="w-3.5 h-3.5" /> View Block Explorer
+                    {copiedHash ? 'COPIED!' : '📋 COPY HASH'}
+                  </button>
+                </div>
+                <div className="flex flex-wrap items-center gap-3 pt-1">
+                  <a
+                    href={`https://sepolia.etherscan.io/tx/${lastTxHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-black hover:brightness-110 transition text-[11px] shadow"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" /> View on Sepolia Etherscan ↗
+                  </a>
+                  <a
+                    href={`https://blockscan.com/tx/${lastTxHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#04060d] text-[#2dd4bf] font-bold hover:bg-slate-800 border border-slate-800 transition text-[11px]"
+                  >
+                    <Globe className="w-3.5 h-3.5" /> Search Blockscan ↗
                   </a>
                 </div>
               </div>
