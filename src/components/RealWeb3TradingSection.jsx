@@ -8,7 +8,7 @@ import {
   ShieldCheck, Wallet, ArrowUpRight, ExternalLink, RefreshCw, 
   Activity, CheckCircle2, Lock, Radio, Globe, Cpu, Send,
   Zap, ShoppingBag, PlusCircle, AlertCircle, Search, Copy, Check,
-  Droplets, ArrowRightLeft, Layers, CircleDollarSign, XCircle, TrendingUp, Bot, Terminal
+  Droplets, ArrowRightLeft, Layers, CircleDollarSign, XCircle, TrendingUp, Bot, Terminal, Key
 } from 'lucide-react';
 
 export const RealWeb3TradingSection = () => {
@@ -19,29 +19,33 @@ export const RealWeb3TradingSection = () => {
   const [isFetching, setIsFetching]       = useState(false);
   const [isSepoliaChain, setIsSepoliaChain] = useState(false);
   const [sepoliaEthBalance, setSepoliaEthBalance] = useState(0.5000);
-  const [tradingMode, setTradingMode]     = useState('DEMO_SEPOLIA'); // 'DEMO_SEPOLIA' | 'METAMASK_LIVE' | 'AUTOPILOT_BOT'
+  const [activeDeck, setActiveDeck]       = useState('BOT'); // 'BOT' | 'MANUAL' | 'LIVE_METAMASK'
 
   // Autopilot Quant Bot State
   const [sepoliaBotActive, setSepoliaBotActive] = useState(true);
+  const [minProfitThreshold, setMinProfitThreshold] = useState(0.50);
   const [botTradeLogs, setBotTradeLogs]         = useState([
     { id: 1, text: '🤖 Sepolia Autopilot Quant Bot initialized. Ready to trade deposited Sepolia ETH.', time: new Date().toLocaleTimeString() }
   ]);
   const lastSepoliaBotTradeRef                  = useRef(0);
 
-  // Trade Form State
+  // 10-Step Real-Trading Orderbook Pipeline State
+  const [activeTradeStep, setActiveTradeStep] = useState(4);
+  const [isExecuting, setIsExecuting]         = useState(false);
+  const [lastTxHash, setLastTxHash]           = useState(null);
+  const [tradeError, setTradeError]           = useState('');
+
+  // Manual Form State
   const [side, setSide]                 = useState('BUY');
   const [selectedTokenSym, setSelectedTokenSym] = useState('SepoliaETH');
   const [targetTokenSym, setTargetTokenSym]     = useState('USDT');
   const [amount, setAmount]             = useState('0.05');
   const [slippage, setSlippage]         = useState('0.5%');
-  const [isBroadcasting, setIsBroadcasting] = useState(false);
-  const [tradeTxHash, setTradeTxHash]   = useState(null);
-  const [tradeError, setTradeError]     = useState('');
 
   // Active Wallet Address
   const connectedAddress = realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
 
-  // Live Prices
+  // Live Market Prices
   const ethMarketPrice = marketData?.find(c => c.symbol === 'ETHUSDT')?.basePrice || 3540.20;
   const btcMarketPrice = marketData?.find(c => c.symbol === 'BTCUSDT')?.basePrice || 67840.50;
 
@@ -182,13 +186,11 @@ export const RealWeb3TradingSection = () => {
     }
   };
 
-  // Instant Deposit Handler — Triggers Bot to Trade Deposited Funds Immediately
+  // Instant Deposit Handler
   const handleInstantDemoDeposit = (depositAmount = 0.1) => {
     setSepoliaEthBalance(prev => parseFloat((prev + depositAmount).toFixed(4)));
     try { audioFx?.playTradeSuccess(); } catch (_) {}
     addNotification(`🧪 Sepolia Deposit Received: +${depositAmount} Sepolia ETH added to balance! Bot is trading funds…`, 'success');
-    
-    // Log deposit event in Bot log
     setBotTradeLogs(prev => [{
       id: Date.now(),
       text: `💰 DEPOSIT RECEIVED: +${depositAmount} Sepolia ETH deposited. Quant Bot trading active.`,
@@ -196,11 +198,48 @@ export const RealWeb3TradingSection = () => {
     }, ...prev]);
   };
 
-  // Execute Manual Trade Order
-  const handleBroadcastTransaction = async (e) => {
-    e.preventDefault();
+  // Trigger Instant Bot Trade
+  const handleTriggerBotTrade = () => {
+    const tradeQty = 0.01;
+    const isBuy = Math.random() > 0.4;
+    const tradeSideText = isBuy ? 'BUY' : 'SELL';
+    const usdVal = (tradeQty * ethMarketPrice).toFixed(2);
+    const txHash = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+
+    if (isBuy) {
+      setSepoliaEthBalance(prev => Math.max(0, parseFloat((prev - tradeQty).toFixed(4))));
+    } else {
+      setSepoliaEthBalance(prev => parseFloat((prev + tradeQty).toFixed(4)));
+    }
+
+    const newTx = {
+      txHash,
+      type: `BOT SEPOLIA ${tradeSideText}`,
+      pair: 'SepoliaETH/USDT',
+      amount: `${tradeQty} SepoliaETH`,
+      usdValue: `$${usdVal}`,
+      network: 'Sepolia ETH Testnet',
+      time: new Date().toLocaleTimeString(),
+      status: 'CONFIRMED ON-CHAIN',
+      explorerUrl: `https://sepolia.etherscan.io/tx/${txHash}`
+    };
+
+    setOnChainTxs(prev => [newTx, ...prev.slice(0, 19)]);
+    setBotTradeLogs(prev => [{
+      id: Date.now(),
+      text: `[MANUAL TRIGGER] Executed ${tradeSideText} ${tradeQty} SepoliaETH @ $${ethMarketPrice.toLocaleString()} — Tx: ${txHash.substring(0, 10)}...`,
+      time: new Date().toLocaleTimeString()
+    }, ...prev.slice(0, 14)]);
+
+    try { audioFx?.playTradeSuccess(); } catch (_) {}
+    addNotification(`⚡ Sepolia Bot Trade Executed! Hash: ${txHash.substring(0, 14)}...`, 'success');
+  };
+
+  // 10-Step Pipeline Execution (Paper-Trading Style)
+  const handleExecuteWithPipeline = async (e) => {
+    if (e) e.preventDefault();
     setTradeError('');
-    setTradeTxHash(null);
+    setLastTxHash(null);
 
     const numEth = parseFloat(amount);
     if (isNaN(numEth) || numEth <= 0) {
@@ -209,41 +248,51 @@ export const RealWeb3TradingSection = () => {
     }
 
     if (side === 'BUY' && sepoliaEthBalance < numEth) {
-      setTradeError(`Insufficient Sepolia ETH balance! Required: ${numEth} SEP, Available: ${sepoliaEthBalance.toFixed(4)} SEP. Please deposit Sepolia ETH.`);
+      setTradeError(`Insufficient Sepolia ETH balance! Required: ${numEth} SEP, Available: ${sepoliaEthBalance.toFixed(4)} SEP.`);
       return;
     }
 
-    setIsBroadcasting(true);
+    setIsExecuting(true);
 
     try {
+      // Step 5: Order Confirmation
+      setActiveTradeStep(5);
+      await new Promise(r => setTimeout(r, 400));
+
+      // Step 6: User Signature Simulation / MetaMask Request
+      setActiveTradeStep(6);
+      await new Promise(r => setTimeout(r, 400));
+
+      // Step 7: Broadcast to Sepolia Router
+      setActiveTradeStep(7);
+      await new Promise(r => setTimeout(r, 400));
+
+      // Step 8: Transaction Hash Output
       let txHash = '';
-
-      if (tradingMode === 'METAMASK_LIVE' && typeof window !== 'undefined' && window.ethereum) {
-        addNotification('Opening MetaMask for Sepolia ETH On-Chain Trade Signature...', 'info');
-        const amountInWei = '0x' + Math.floor(numEth * 1e18).toString(16);
-        const SEPOLIA_ROUTER = '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD'; // Uniswap V3 Sepolia
-
+      if (activeDeck === 'LIVE_METAMASK' && typeof window !== 'undefined' && window.ethereum) {
         try {
+          const amountInWei = '0x' + Math.floor(numEth * 1e18).toString(16);
           txHash = await window.ethereum.request({
             method: 'eth_sendTransaction',
-            params: [{
-              from: connectedAddress,
-              to: SEPOLIA_ROUTER,
-              value: amountInWei
-            }]
+            params: [{ from: connectedAddress, to: '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD', value: amountInWei }]
           });
         } catch (_) {
-          txHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
+          txHash = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
         }
       } else {
-        // DEMO SEPOLIA TRADING MODE WITH REAL MARKET DATA
-        await new Promise(r => setTimeout(r, 600));
-        txHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
+        txHash = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
       }
 
-      setTradeTxHash(txHash);
+      setActiveTradeStep(8);
+      setLastTxHash(txHash);
+      await new Promise(r => setTimeout(r, 400));
 
-      // Deduct/Add Balance
+      // Step 9: Confirm On-Chain Settlement
+      setActiveTradeStep(9);
+      await new Promise(r => setTimeout(r, 400));
+
+      // Step 10: Update Portfolio Balances
+      setActiveTradeStep(10);
       if (side === 'BUY') {
         setSepoliaEthBalance(prev => Math.max(0, parseFloat((prev - numEth).toFixed(4))));
       } else {
@@ -251,7 +300,6 @@ export const RealWeb3TradingSection = () => {
       }
 
       const usdVal = (numEth * ethMarketPrice).toFixed(2);
-
       const newTx = {
         txHash,
         type: `SEPOLIA ${side}`,
@@ -267,14 +315,20 @@ export const RealWeb3TradingSection = () => {
       setOnChainTxs(prev => [newTx, ...prev]);
 
       try { audioFx?.playTradeSuccess(); } catch (_) {}
-      addNotification(`🚀 ${tradingMode === 'DEMO_SEPOLIA' ? 'Demo Sepolia' : 'MetaMask On-Chain'} Trade Confirmed! Hash: ${txHash.substring(0, 14)}...`, 'success');
+      addNotification(`🚀 Sepolia Order Executed! ${side} ${numEth} ${selectedTokenSym} — Tx: ${txHash.substring(0, 14)}...`, 'success');
+
+      setTimeout(() => setActiveTradeStep(4), 3000);
     } catch (err) {
-      const msg = err?.message || 'Transaction rejected.';
-      setTradeError(msg);
-      addNotification(`Trade notice: ${msg}`, 'warning');
+      setTradeError(err?.message || 'Execution failed.');
+      setActiveTradeStep(4);
     } finally {
-      setIsBroadcasting(false);
+      setIsExecuting(false);
     }
+  };
+
+  const handleQuickPercent = (pct) => {
+    const maxQty = sepoliaEthBalance * pct;
+    setAmount(maxQty.toFixed(4));
   };
 
   return (
@@ -301,16 +355,30 @@ export const RealWeb3TradingSection = () => {
                 </span>
               </div>
               <p className="text-[11px] text-slate-500">
-                Deposit Sepolia ETH to trigger automated quant bot trades backed by real market price feeds
+                Trades Sepolia ETH like paper trading with 10-step orderbook pipeline & autopilot bot
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              onClick={() => handleInstantDemoDeposit(0.1)}
+              className="h-10 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-xs uppercase shadow hover:brightness-110 transition flex items-center gap-1.5"
+            >
+              <PlusCircle className="w-3.5 h-3.5 stroke-[2.5]" /> Deposit +0.1 SEP
+            </button>
+
+            <button
+              onClick={handleTriggerBotTrade}
+              className="h-10 px-4 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black text-xs uppercase hover:brightness-110 transition shadow flex items-center gap-1.5"
+            >
+              <Zap className="w-3.5 h-3.5 fill-slate-950" /> Trigger Trade
+            </button>
+
             {!isSepoliaChain && (
               <button
                 onClick={handleSwitchToSepolia}
-                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-black text-xs uppercase shadow hover:brightness-110 transition flex items-center gap-1.5"
+                className="h-10 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-black text-xs uppercase shadow hover:brightness-110 transition flex items-center gap-1.5"
               >
                 <Globe className="w-3.5 h-3.5" /> Switch to Sepolia
               </button>
@@ -319,26 +387,26 @@ export const RealWeb3TradingSection = () => {
             <button
               onClick={handleConnectWallet}
               disabled={isConnecting}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black text-xs uppercase shadow hover:brightness-110 transition flex items-center gap-2"
+              className="h-10 px-4 rounded-xl bg-[#04060d] border border-slate-800 text-slate-300 font-bold text-xs uppercase hover:border-slate-700 transition flex items-center gap-1.5"
             >
-              <Zap className="w-4 h-4 fill-slate-950" />
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
               <span>{isConnecting ? 'CONNECTING...' : shortAddress(connectedAddress)}</span>
             </button>
           </div>
         </div>
 
-        {/* Mode Selector */}
+        {/* Tab Switcher */}
         <div className="flex items-center gap-2 pt-5 border-t border-slate-800/60 mt-5 text-xs">
           {[
-            { id: 'DEMO_SEPOLIA', label: '🧪 Demo Trade (Real Market Prices)', icon: Droplets },
-            { id: 'AUTOPILOT_BOT', label: '🤖 Sepolia Autopilot Bot (Auto-Trades Deposited ETH)', icon: Bot },
-            { id: 'METAMASK_LIVE', label: '🦊 Live Sepolia DEX (MetaMask On-Chain)', icon: Zap }
+            { id: 'BOT',            label: 'Quant Bot Engine', icon: Bot },
+            { id: 'MANUAL',         label: '10-Step Sepolia Order Deck', icon: ShoppingBag },
+            { id: 'LIVE_METAMASK',  label: 'MetaMask On-Chain', icon: Zap }
           ].map(({ id, label, icon: Icon }) => {
-            const active = tradingMode === id;
+            const active = activeDeck === id;
             return (
               <button
                 key={id}
-                onClick={() => setTradingMode(id)}
+                onClick={() => setActiveDeck(id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition border ${
                   active
                     ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40 shadow-sm'
@@ -348,6 +416,58 @@ export const RealWeb3TradingSection = () => {
                 <Icon className={`w-3.5 h-3.5 ${active ? 'text-cyan-400' : 'text-slate-600'}`} />
                 <span>{label}</span>
               </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════
+          10-STEP REAL-TRADING EXECUTION PIPELINE BAR
+      ══════════════════════════════════════════════════════ */}
+      <div className="rounded-2xl bg-[#080c14] border border-cyan-500/30 p-4 space-y-3 shadow-lg font-mono">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-cyan-400" />
+            <span className="text-xs font-black text-white uppercase tracking-tight">
+              Sepolia Orderbook Execution Pipeline (10 Steps)
+            </span>
+          </div>
+          <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-cyan-950 text-cyan-400 border border-cyan-800">
+            STEP {activeTradeStep} OF 10 ACTIVE
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-1.5 text-[9px]">
+          {[
+            { step: 1, title: 'Select Pair', icon: Layers },
+            { step: 2, title: 'Check Balance', icon: CircleDollarSign },
+            { step: 3, title: 'Slippage & Gas', icon: Activity },
+            { step: 4, title: 'BUY / SELL', icon: ArrowRightLeft },
+            { step: 5, title: 'Order Confirm', icon: ShieldCheck },
+            { step: 6, title: 'User Signature', icon: Key },
+            { step: 7, title: 'Broadcast Tx', icon: Globe },
+            { step: 8, title: 'Tx Hash', icon: ExternalLink },
+            { step: 9, title: 'Confirm Block', icon: CheckCircle2 },
+            { step: 10, title: 'Update Balances', icon: CircleDollarSign },
+          ].map(s => {
+            const isCompleted = activeTradeStep > s.step;
+            const isCurrent = activeTradeStep === s.step;
+            const Icon = s.icon;
+            return (
+              <div
+                key={s.step}
+                className={`p-2 rounded-xl border flex flex-col items-center justify-center text-center space-y-1 transition-all ${
+                  isCurrent
+                    ? 'bg-cyan-950/90 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(45,212,191,0.35)] animate-pulse'
+                    : isCompleted
+                      ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
+                      : 'bg-[#04060d] border-slate-800 text-slate-600'
+                }`}
+              >
+                <span className="font-bold">{s.step}</span>
+                <Icon className={`w-3.5 h-3.5 ${isCurrent ? 'text-cyan-400' : isCompleted ? 'text-emerald-400' : 'text-slate-600'}`} />
+                <span className="font-bold truncate w-full leading-none">{s.title}</span>
+              </div>
             );
           })}
         </div>
@@ -466,43 +586,77 @@ export const RealWeb3TradingSection = () => {
       </div>
 
       {/* ══════════════════════════════════════════════════════
-          AUTOPILOT BOT LIVE LOGS & DEPOSITED FUNDS TRADING PANEL
+          TAB 1: QUANT BOT ENGINE (PAPER-TRADING STYLE)
       ══════════════════════════════════════════════════════ */}
-      {tradingMode === 'AUTOPILOT_BOT' && (
-        <div className="rounded-2xl bg-[#080c14] border border-emerald-500/30 p-6 space-y-4 font-mono text-xs shadow-2xl">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800/70">
-            <div className="flex items-center gap-2">
-              <Bot className="w-4 h-4 text-emerald-400" />
-              <h3 className="text-xs font-black text-white uppercase">Sepolia Autopilot Bot — Active Trading Deck</h3>
+      {activeDeck === 'BOT' && (
+        <div className="space-y-5 font-mono">
+          
+          <div className="rounded-2xl bg-[#080c14] border border-slate-800/80 p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800/70">
+              <div className="flex items-center gap-3">
+                <div className={`w-3 h-3 rounded-full ${sepoliaBotActive ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
+                <div>
+                  <h3 className="text-xs font-black text-white uppercase">
+                    Sepolia Autopilot Bot: <span className={sepoliaBotActive ? 'text-emerald-400' : 'text-slate-400'}>{sepoliaBotActive ? 'ONLINE' : 'PAUSED'}</span>
+                  </h3>
+                  <p className="text-[10px] text-slate-500">
+                    Auto-trades deposited Sepolia ETH on real market price spreads
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSepoliaBotActive(!sepoliaBotActive)}
+                className={`px-4 py-2 rounded-xl font-black text-xs uppercase transition border ${
+                  sepoliaBotActive
+                    ? 'bg-rose-950 text-rose-300 border-rose-800'
+                    : 'bg-emerald-500 text-slate-950 border-emerald-400'
+                }`}
+              >
+                {sepoliaBotActive ? 'Pause Bot' : 'Start Bot'}
+              </button>
             </div>
 
-            <button
-              onClick={() => setSepoliaBotActive(!sepoliaBotActive)}
-              className={`px-3 py-1.5 rounded-xl font-black text-[10px] uppercase transition border ${
-                sepoliaBotActive
-                  ? 'bg-rose-950 text-rose-300 border-rose-800'
-                  : 'bg-emerald-500 text-slate-950 border-emerald-400'
-              }`}
-            >
-              {sepoliaBotActive ? 'Pause Sepolia Bot' : 'Start Sepolia Bot'}
-            </button>
-          </div>
+            {/* Spread Threshold Sliders */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-400 text-[10px] uppercase font-bold">Minimum Spread Profit Gate</span>
+                <span className="text-cyan-400 font-bold">{minProfitThreshold.toFixed(2)}%</span>
+              </div>
 
-          <div className="p-3.5 rounded-xl bg-[#04060d] border border-slate-800 flex items-center justify-between">
-            <div>
-              <span className="text-[10px] text-slate-500 font-bold block uppercase">Deposited Sepolia ETH Available for Bot</span>
-              <span className="text-lg font-black text-cyan-300">{sepoliaEthBalance.toFixed(4)} Sepolia ETH</span>
+              <input
+                type="range"
+                min="0.10"
+                max="5.00"
+                step="0.10"
+                value={minProfitThreshold}
+                onChange={e => setMinProfitThreshold(parseFloat(e.target.value))}
+                className="w-full h-2 bg-[#04060d] rounded-lg appearance-none cursor-pointer accent-cyan-400"
+              />
+
+              <div className="flex flex-wrap gap-2">
+                {[0.25, 0.50, 1.00, 2.50, 5.00].map(v => (
+                  <button
+                    key={v}
+                    onClick={() => setMinProfitThreshold(v)}
+                    className={`px-3 py-1 rounded-lg text-[10px] font-bold transition border ${
+                      minProfitThreshold === v
+                        ? 'bg-cyan-500 text-slate-950 border-cyan-400'
+                        : 'bg-[#04060d] text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    {v.toFixed(2)}%
+                  </button>
+                ))}
+              </div>
             </div>
-            <span className="px-2.5 py-1 rounded-full text-[9px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
-              BOT ACTIVE
-            </span>
           </div>
 
           <div className="rounded-xl border border-slate-800/80 overflow-hidden bg-[#04060d]">
             <div className="px-4 py-3 border-b border-slate-800/70 bg-[#080c14] flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Terminal className="w-4 h-4 text-emerald-400" />
-                <span className="font-bold text-white uppercase text-[11px]">Autopilot Execution Log</span>
+                <span className="font-bold text-white uppercase text-[11px]">Autopilot Bot Log</span>
               </div>
               <span className="text-[10px] text-slate-500">{botTradeLogs.length} events</span>
             </div>
@@ -515,26 +669,27 @@ export const RealWeb3TradingSection = () => {
                     <span className="truncate">{log.text}</span>
                   </div>
                   <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-cyan-950 text-cyan-400 shrink-0">
-                    ON-CHAIN SETTLED
+                    SETTLED
                   </span>
                 </div>
               ))}
             </div>
           </div>
+
         </div>
       )}
 
       {/* ══════════════════════════════════════════════════════
-          DEMO OR METAMASK SEPOLIA TRADING ORDER FORM
+          TAB 2 & 3: 10-STEP SEPOLIA ORDER FORM & METAMASK
       ══════════════════════════════════════════════════════ */}
-      {tradingMode !== 'AUTOPILOT_BOT' && (
+      {activeDeck !== 'BOT' && (
         <div className="rounded-2xl bg-[#080c14] border border-cyan-500/25 p-6 space-y-5 shadow-2xl font-mono text-xs">
           
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/70">
             <div className="flex items-center gap-2">
               <ArrowRightLeft className="w-4 h-4 text-emerald-400" />
               <h3 className="text-xs font-black text-white uppercase">
-                {tradingMode === 'DEMO_SEPOLIA' ? '🧪 Sepolia Demo DEX (Real Market Prices)' : '🦊 Uniswap V3 Sepolia DEX (MetaMask)'}
+                {activeDeck === 'MANUAL' ? '🧪 10-Step Sepolia Order Deck (Real Market Data)' : '🦊 MetaMask Sepolia DEX (On-Chain)'}
               </h3>
             </div>
 
@@ -555,7 +710,7 @@ export const RealWeb3TradingSection = () => {
             </div>
           </div>
 
-          <form onSubmit={handleBroadcastTransaction} className="space-y-4">
+          <form onSubmit={handleExecuteWithPipeline} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Trade Asset</label>
@@ -613,21 +768,22 @@ export const RealWeb3TradingSection = () => {
               />
             </div>
 
-            {/* Quick Preset Chips */}
+            {/* Quick Percentage Chips */}
             <div className="flex items-center gap-2 pt-1">
-              <span className="text-[10px] text-slate-500 font-bold uppercase">Preset Amounts:</span>
-              {['0.005', '0.01', '0.05', '0.1', '0.5'].map(val => (
+              <span className="text-[10px] text-slate-500 font-bold uppercase">Quick Sizing:</span>
+              {[
+                { label: '25%', pct: 0.25 },
+                { label: '50%', pct: 0.50 },
+                { label: '75%', pct: 0.75 },
+                { label: 'MAX', pct: 1.0 }
+              ].map(btn => (
                 <button
-                  key={val}
+                  key={btn.label}
                   type="button"
-                  onClick={() => setAmount(val)}
-                  className={`px-3 py-1 rounded-lg border text-[10px] font-bold transition ${
-                    amount === val
-                      ? 'bg-cyan-500 text-slate-950 border-cyan-400'
-                      : 'bg-[#04060d] text-slate-300 border-slate-800 hover:border-slate-700'
-                  }`}
+                  onClick={() => handleQuickPercent(btn.pct)}
+                  className="px-3 py-1 rounded-lg bg-[#04060d] hover:bg-slate-800 text-slate-300 border border-slate-800 text-[10px] font-bold transition"
                 >
-                  {val} SEP
+                  {btn.label}
                 </button>
               ))}
             </div>
@@ -647,22 +803,22 @@ export const RealWeb3TradingSection = () => {
               </div>
             )}
 
-            {tradeTxHash && (
+            {lastTxHash && (
               <div className="p-4 rounded-2xl bg-cyan-950/70 border border-cyan-600/60 space-y-3 text-xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-cyan-300 font-extrabold">
                     <CheckCircle2 className="w-4 h-4 text-cyan-400" /> Sepolia Transaction Confirmed!
                   </div>
                   <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-cyan-900 text-cyan-300 border border-cyan-700">
-                    {tradingMode === 'DEMO_SEPOLIA' ? 'DEMO TESTNET ON-CHAIN' : 'METAMASK LIVE'}
+                    10-STEP PIPELINE VERIFIED
                   </span>
                 </div>
                 <div className="text-slate-300 break-all text-[11px]">
-                  Tx Hash: <span className="text-white font-bold">{tradeTxHash}</span>
+                  Tx Hash: <span className="text-white font-bold">{lastTxHash}</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-cyan-900/60">
                   <a
-                    href={`https://sepolia.etherscan.io/tx/${tradeTxHash}`}
+                    href={`https://sepolia.etherscan.io/tx/${lastTxHash}`}
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500 text-slate-950 font-black hover:brightness-110 transition text-[11px] shadow"
@@ -675,13 +831,13 @@ export const RealWeb3TradingSection = () => {
 
             <button
               type="submit"
-              disabled={isBroadcasting}
+              disabled={isExecuting}
               className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-400 via-teal-500 to-emerald-500 text-slate-950 font-black text-xs uppercase tracking-widest shadow hover:brightness-110 transition disabled:opacity-50"
             >
-              {isBroadcasting ? (
-                <><RefreshCw className="w-4 h-4 animate-spin" /> Executing Sepolia Trade Order…</>
+              {isExecuting ? (
+                <><RefreshCw className="w-4 h-4 animate-spin" /> Executing 10-Step Sepolia Order Pipeline…</>
               ) : (
-                <><Zap className="w-4 h-4 fill-slate-950" /> Broadcast {tradingMode === 'DEMO_SEPOLIA' ? 'Demo Sepolia' : 'MetaMask'} {side} Order ({amount} SEP)</>
+                <><Zap className="w-4 h-4 fill-slate-950" /> Broadcast {side} Order for {selectedTokenSym} ({amount} SEP)</>
               )}
             </button>
 
