@@ -1,172 +1,172 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { 
-  Activity, ExternalLink, Search, CheckCircle2, 
-  ArrowUpRight, ArrowDownRight, Filter, Download, Clock
-} from 'lucide-react';
+import { Search, ExternalLink, ArrowUpRight, ArrowDownRight, Download } from 'lucide-react';
 import { getTxExplorerUrl } from '../services/walletService';
+
+const fmt = (n, dec = 2) =>
+  (n || 0).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+
+const FILTERS = ['All', 'Buy', 'Sell', 'Bot'];
+
+const DEFAULT_TRADES = [
+  { id: 'TX-990182', type: 'BUY',  symbol: 'ETH/USDT', exchange: 'Uniswap V3 (Sepolia)', amount: 0.10, price: 3540.20, total: 354.02,   time: '10m ago',  txHash: '0x94826b52a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8', category: 'SEPOLIA DEX' },
+  { id: 'TX-990181', type: 'BUY',  symbol: 'BTC/USDT', exchange: 'Binance Pro',           amount: 0.05, price: 67840.50, total: 3392.03, time: '25m ago',  txHash: '0xa89f71c49b201d4a8e9f2b1836c0d4e91234567890abcdef1234567890abcdef', category: 'BOT' },
+  { id: 'TX-990180', type: 'SELL', symbol: 'ETH/USDT', exchange: 'OKX',                   amount: 0.20, price: 3580.00, total: 716.00,   time: '1h ago',   txHash: '0xb12345678901234567890123456789012345678901234567890123456789012345', category: 'MANUAL' },
+  { id: 'TX-990179', type: 'BUY',  symbol: 'SOL/USDT', exchange: 'Bybit',                 amount: 5.00, price: 145.30,  total: 726.50,   time: '2h ago',   txHash: '0xc23456789012345678901234567890123456789012345678901234567890123456', category: 'BOT' },
+  { id: 'TX-990178', type: 'SELL', symbol: 'BTC/USDT', exchange: 'Coinbase',              amount: 0.02, price: 68200.00, total: 1364.00, time: '3h ago',   txHash: '0xd34567890123456789012345678901234567890123456789012345678901234567', category: 'MANUAL' },
+];
 
 export const TradeHistorySection = () => {
   const { tradeHistory, autoTradeLogs } = useCrypto();
-  const [searchFilter, setSearchFilter] = useState('');
-  const [activeTabFilter, setActiveTabFilter] = useState('ALL'); // 'ALL' | 'BUY' | 'SELL' | 'BOT'
+  const [search, setSearch]   = useState('');
+  const [filter, setFilter]   = useState('All');
 
-  // Combine Trade History & Bot Execution Logs into a master audit list
-  const masterHistory = [
-    ...(tradeHistory || []).map(t => ({
-      id: t.id || `TX-${Math.floor(100000 + Math.random() * 900000)}`,
-      type: t.type || 'BUY',
-      symbol: t.symbol || 'BTCUSDT',
+  const masterHistory = useMemo(() => {
+    const manual = (tradeHistory || []).map(t => ({
+      id:       t.id || `TX-${Math.floor(100000 + Math.random() * 900000)}`,
+      type:     t.type || 'BUY',
+      symbol:   (t.symbol || 'BTCUSDT').replace('USDT', '/USDT'),
       exchange: t.exchange || 'Binance Pro',
-      amount: t.amount || 0.1,
-      price: t.price || 67840.50,
-      total: t.total || (t.amount * t.price) || 6784.05,
-      time: t.time || new Date().toLocaleTimeString(),
-      txHash: t.txHash || `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`,
-      status: 'CONFIRMED ON-CHAIN',
-      category: 'MANUAL'
-    })),
-    // Fallback default realistic trades if history is starting fresh
-    {
-      id: 'TX-990182',
-      type: 'BUY',
-      symbol: 'ETHUSDT',
-      exchange: 'Uniswap V3 (Sepolia)',
-      amount: 0.10,
-      price: 3540.20,
-      total: 354.02,
-      time: '10m ago',
-      txHash: '0x94826b52a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8',
-      status: 'CONFIRMED ON-CHAIN',
-      category: 'SEPOLIA DEX'
-    },
-    {
-      id: 'TX-990181',
-      type: 'BUY',
-      symbol: 'BTCUSDT',
-      exchange: 'Binance Pro',
-      amount: 0.05,
-      price: 67840.50,
-      total: 3392.03,
-      time: '25m ago',
-      txHash: '0xa89f71c49b201d4a8e9f2b1836c0d4e91234567890abcdef1234567890abcdef',
-      status: 'CONFIRMED ON-CHAIN',
-      category: 'BOT'
-    }
-  ];
+      amount:   t.amount || 0.1,
+      price:    t.price  || 67840.50,
+      total:    t.total  || (t.amount * t.price) || 6784.05,
+      time:     t.time   || 'Just now',
+      txHash:   t.txHash || `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`,
+      category: 'MANUAL',
+    }));
+    return manual.length >= 2 ? manual : DEFAULT_TRADES;
+  }, [tradeHistory]);
 
-  const filteredHistory = masterHistory.filter(t => {
-    const matchesSearch = t.symbol.toLowerCase().includes(searchFilter.toLowerCase()) ||
-                          t.exchange.toLowerCase().includes(searchFilter.toLowerCase()) ||
-                          t.txHash.toLowerCase().includes(searchFilter.toLowerCase());
-    if (activeTabFilter === 'ALL') return matchesSearch;
-    if (activeTabFilter === 'BUY') return matchesSearch && t.type === 'BUY';
-    if (activeTabFilter === 'SELL') return matchesSearch && t.type === 'SELL';
-    if (activeTabFilter === 'BOT') return matchesSearch && t.category === 'BOT';
-    return matchesSearch;
-  });
+  const filtered = useMemo(() =>
+    masterHistory.filter(t => {
+      const matchSearch = !search ||
+        t.symbol.toLowerCase().includes(search.toLowerCase()) ||
+        t.exchange.toLowerCase().includes(search.toLowerCase()) ||
+        t.txHash.toLowerCase().includes(search.toLowerCase());
+      const matchFilter =
+        filter === 'All'  ? true :
+        filter === 'Buy'  ? t.type === 'BUY' :
+        filter === 'Sell' ? t.type === 'SELL' :
+        filter === 'Bot'  ? t.category === 'BOT' : true;
+      return matchSearch && matchFilter;
+    }), [masterHistory, search, filter]);
+
+  /* summary stats */
+  const totalBuys  = masterHistory.filter(t => t.type === 'BUY').length;
+  const totalSells = masterHistory.filter(t => t.type === 'SELL').length;
+  const totalVol   = masterHistory.reduce((s, t) => s + (t.total || 0), 0);
 
   return (
-    <div className="space-y-6 font-sans">
-      
-      {/* Executive Header */}
-      <div className="rounded-2xl bg-gradient-to-br from-[#080e1a] via-[#050b16] to-[#080d1a] border border-[#4390bc]/25 p-6 font-mono shadow-xl">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-bold shadow-md">
-              <Activity className="w-5 h-5 stroke-[2.5]" />
-            </div>
-            <div>
-              <h1 className="text-base font-black text-white uppercase tracking-tight">Trade History & Audit Ledger</h1>
-              <p className="text-[11px] text-slate-500">Complete record of paper trades, real MetaMask transactions & bot executions</p>
-            </div>
+    <div className="space-y-6">
+
+      {/* Page title */}
+      <div>
+        <h1 className="text-xl font-bold text-white tracking-tight">History</h1>
+        <p className="text-sm text-slate-400 mt-0.5">Complete record of all trade executions</p>
+      </div>
+
+      {/* Summary stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Trades',  value: masterHistory.length, color: 'text-white' },
+          { label: 'Buy Orders',    value: totalBuys,            color: 'text-emerald-400' },
+          { label: 'Sell Orders',   value: totalSells,           color: 'text-rose-400' },
+          { label: 'Total Volume',  value: `$${fmt(totalVol)}`,  color: 'text-violet-400' },
+        ].map((s, i) => (
+          <div key={i} className="rounded-2xl bg-[#0d1523] border border-slate-800/70 px-5 py-4">
+            <p className="text-xs text-slate-400 mb-1">{s.label}</p>
+            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Table card */}
+      <div className="rounded-2xl bg-[#0d1523] border border-slate-800/70 overflow-hidden">
+
+        {/* Toolbar */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-5 py-4 border-b border-slate-800/70">
+          <div className="flex items-center gap-2">
+            {FILTERS.map(f => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                  filter === f
+                    ? 'bg-violet-600/20 text-violet-300 border border-violet-500/30'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
+              >
+                {f}
+              </button>
+            ))}
           </div>
 
-          {/* Search Bar */}
-          <div className="relative w-full sm:w-64">
+          <div className="relative w-full sm:w-56">
             <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search symbol or tx hash..."
-              value={searchFilter}
-              onChange={e => setSearchFilter(e.target.value)}
-              className="w-full bg-[#04060d] border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-white font-mono text-xs outline-none focus:border-amber-400"
+              placeholder="Search symbol, exchange…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full bg-[#060d18] border border-slate-700/60 rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-slate-600 outline-none focus:border-violet-500/50 transition"
             />
           </div>
         </div>
 
-        {/* Filter Switcher */}
-        <div className="flex items-center gap-2 pt-5 border-t border-slate-800/60 mt-5 text-xs">
-          {['ALL', 'BUY', 'SELL', 'BOT'].map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTabFilter(tab)}
-              className={`px-4 py-1.5 rounded-xl font-bold transition border ${
-                activeTabFilter === tab
-                  ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 shadow-sm'
-                  : 'bg-[#04060d] text-slate-500 border-slate-800 hover:text-slate-300'
-              }`}
-            >
-              {tab === 'ALL' ? 'ALL TRADES' : tab === 'BOT' ? 'QUANT BOT' : `${tab} ORDERS`}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* History Audit Table */}
-      <div className="rounded-2xl bg-[#080c14] border border-slate-800/80 p-5 space-y-4 font-mono text-xs">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800/70">
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-amber-400" />
-            <h3 className="text-xs font-black text-white uppercase">Executed Trade Records</h3>
-          </div>
-          <span className="text-[10px] text-slate-500 font-bold">{filteredHistory.length} RECORDS FOUND</span>
-        </div>
-
-        <div className="overflow-x-auto rounded-xl border border-slate-800/70 bg-[#04060d]">
-          <table className="w-full text-left">
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="bg-[#080c14] border-b border-slate-800 text-[10px] uppercase text-slate-400">
-                <th className="py-3 px-4">Time</th>
-                <th className="py-3 px-4">Type / Symbol</th>
-                <th className="py-3 px-4">Exchange / Network</th>
-                <th className="py-3 px-4">Amount</th>
-                <th className="py-3 px-4">Execution Price</th>
-                <th className="py-3 px-4">Total Value</th>
-                <th className="py-3 px-4 text-right">Explorer</th>
+              <tr className="text-[11px] text-slate-500 font-medium border-b border-slate-800/70">
+                <th className="px-5 py-3 text-left">Time</th>
+                <th className="px-4 py-3 text-left">Pair</th>
+                <th className="px-4 py-3 text-left">Type</th>
+                <th className="px-4 py-3 text-left">Exchange</th>
+                <th className="px-4 py-3 text-right">Amount</th>
+                <th className="px-4 py-3 text-right">Price</th>
+                <th className="px-4 py-3 text-right">Total</th>
+                <th className="px-5 py-3 text-right">Explorer</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              {filteredHistory.map((item, idx) => (
-                <tr key={idx} className="hover:bg-[#080c14] transition">
-                  <td className="py-3.5 px-4 text-slate-400 font-bold text-[11px]">{item.time}</td>
-                  <td className="py-3.5 px-4">
-                    <span className={`px-2 py-0.5 rounded text-[9px] font-black mr-2 ${
-                      item.type === 'BUY' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-rose-950 text-rose-400 border border-rose-800'
+            <tbody className="divide-y divide-slate-800/50">
+              {filtered.map((item, idx) => (
+                <tr key={idx} className="hover:bg-slate-800/20 transition group">
+                  <td className="px-5 py-3.5 text-xs text-slate-400">{item.time}</td>
+                  <td className="px-4 py-3.5 text-xs font-semibold text-white">{item.symbol}</td>
+                  <td className="px-4 py-3.5">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                      item.type === 'BUY'
+                        ? 'text-emerald-400 bg-emerald-500/10'
+                        : 'text-rose-400 bg-rose-500/10'
                     }`}>
                       {item.type}
                     </span>
-                    <span className="font-bold text-white">{item.symbol.replace('USDT', '/USDT')}</span>
                   </td>
-                  <td className="py-3.5 px-4 text-slate-300">{item.exchange}</td>
-                  <td className="py-3.5 px-4 text-white font-bold">{item.amount}</td>
-                  <td className="py-3.5 px-4 text-amber-400 font-bold">${(item.price || 0).toLocaleString()}</td>
-                  <td className="py-3.5 px-4 text-emerald-400 font-bold">${(item.total || 0).toLocaleString()}</td>
-                  <td className="py-3.5 px-4 text-right">
+                  <td className="px-4 py-3.5 text-xs text-slate-300">{item.exchange}</td>
+                  <td className="px-4 py-3.5 text-xs text-right text-slate-200">{item.amount}</td>
+                  <td className="px-4 py-3.5 text-xs text-right text-slate-200">${fmt(item.price)}</td>
+                  <td className="px-4 py-3.5 text-xs text-right font-semibold text-emerald-400">${fmt(item.total)}</td>
+                  <td className="px-5 py-3.5 text-right">
                     <a
                       href={getTxExplorerUrl(item.txHash, 'sepolia')}
                       target="_blank"
                       rel="noreferrer"
-                      className="px-3 py-1 rounded-lg bg-[#080c14] hover:bg-slate-800 border border-slate-700 text-cyan-400 text-[10px] font-bold transition inline-flex items-center gap-1"
+                      className="inline-flex items-center gap-1 text-[11px] text-violet-400 hover:text-violet-300 transition"
                     >
-                      <span>Etherscan</span>
-                      <ExternalLink className="w-3 h-3" />
+                      View <ExternalLink className="w-3 h-3" />
                     </a>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="px-5 py-3 border-t border-slate-800/70 flex items-center justify-between">
+          <span className="text-xs text-slate-500">{filtered.length} records</span>
+          <button className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 transition">
+            <Download className="w-3.5 h-3.5" /> Export CSV
+          </button>
         </div>
       </div>
 
