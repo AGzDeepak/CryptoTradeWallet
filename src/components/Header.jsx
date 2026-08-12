@@ -96,6 +96,8 @@ export const Header = () => {
     wallet:           'Institutional Wallet',
     realwallet:       'Real Wallet',
     metamaskterminal: 'Real Trading & Sepolia Exchange',
+    exchanges:        'Exchanges & Rate Scanner',
+    tradehistory:     'Trade History & Audit Ledger',
     contractprocess:  'Contract Process',
     banktransfer:     'Bank Transfer',
     decentralized:    'Vault Wallet',

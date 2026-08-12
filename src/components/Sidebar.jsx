@@ -7,28 +7,30 @@ import {
   Settings, 
   LogOut,
   ShoppingBag,
-  FlaskConical,
   Gem,
   ShieldCheck,
-  Users,
   Zap,
   FileCode2,
-  Landmark
+  Landmark,
+  ArrowRightLeft,
+  Activity,
+  Clock
 } from 'lucide-react';
 
 export const Sidebar = () => {
   const { activeTab, setActiveTab, logout } = useCrypto();
 
   const navItems = [
-    { id: 'dashboard',        label: 'Dashboard',           icon: LayoutGrid },
+    { id: 'dashboard',        label: 'Dashboard',             icon: LayoutGrid },
+    { id: 'exchanges',        label: 'Exchanges',             icon: ArrowRightLeft, badge: 'LIVE' },
+    { id: 'tradehistory',     label: 'Trade History',         icon: Clock,          badge: 'LOGS' },
+    { id: 'metamaskterminal', label: 'Real Trading & Sepolia', icon: Zap,            badge: 'WEB3' },
+    { id: 'papertrading',     label: 'Paper Trading',        icon: ShoppingBag },
     { id: 'contractprocess',  label: 'Contract Process',     icon: FileCode2 },
     { id: 'banktransfer',     label: 'Bank Transfer',        icon: Landmark },
-    { id: 'metamaskterminal', label: 'Real Trading & Sepolia', icon: Zap, badge: 'WEB3' },
-    { id: 'realwallet',       label: 'Real Wallet',          icon: Gem,        badge: 'LIVE' },
-    { id: 'decentralized',    label: 'Vault Wallet',         icon: ShieldCheck },
-    { id: 'papertrading',     label: 'Paper Trading',        icon: ShoppingBag },
     { id: 'account',          label: 'Account',              icon: User },
     { id: 'settings',         label: 'Settings',             icon: Settings },
+    { id: 'wallet',           label: 'Wallet',               icon: Wallet,         badge: 'METAMASK' },
   ];
 
   return (
@@ -57,7 +59,7 @@ export const Sidebar = () => {
         <div className="h-px bg-gradient-to-r from-transparent via-[#68a7ca]/20 to-transparent" />
 
         {/* Navigation */}
-        <nav className="flex flex-col gap-1">
+        <nav className="flex flex-col gap-1 font-mono text-xs">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -76,8 +78,8 @@ export const Sidebar = () => {
                 {item.badge && (
                   <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shrink-0 ${
                     isActive
-                      ? item.badge === 'LIVE'
-                        ? 'bg-[#00e676]/20 text-[#00e676] border border-[#00e676]/30'
+                      ? item.badge === 'LIVE' || item.badge === 'METAMASK'
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                         : 'bg-[#4390bc]/30 text-[#dbe9f3] border border-[#8dbdd8]/40'
                       : 'bg-slate-800 text-slate-500'
                   }`}>
@@ -91,7 +93,7 @@ export const Sidebar = () => {
       </div>
 
       {/* Bottom: Logout */}
-      <div className="p-5 border-t border-slate-800/60">
+      <div className="p-5 border-t border-slate-800/60 font-mono text-xs">
         <button
           onClick={logout}
           className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 text-xs font-semibold transition-all"
@@ -100,6 +102,7 @@ export const Sidebar = () => {
           <span>Log out</span>
         </button>
       </div>
+
     </aside>
   );
 };

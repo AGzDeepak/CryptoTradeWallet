@@ -29,6 +29,8 @@ import { MobileBottomNav } from './components/MobileBottomNav';
 import { RealWeb3TradingSection } from './components/RealWeb3TradingSection';
 import { ContractProcessSection } from './components/ContractProcessSection';
 import { BankToBankTransferSection } from './components/BankToBankTransferSection';
+import { ExchangesSection } from './components/ExchangesSection';
+import { TradeHistorySection } from './components/TradeHistorySection';
 
 const DashboardContent = () => {
   const { activeTab } = useCrypto();
@@ -41,10 +43,20 @@ const DashboardContent = () => {
         {/* ── DASHBOARD ── */}
         {(activeTab === 'dashboard' || !['papertrading','simulation','account','wallet','realwallet',
           'decentralized','contractprocess','banktransfer','portfolio','metamaskterminal','realtrading',
-          'settings','markets','scanner','trades','strategies','analytics'].includes(activeTab)) && (
+          'exchanges','tradehistory','settings','markets','scanner','trades','strategies','analytics'].includes(activeTab)) && (
           <div className="space-y-6">
             <TotalAssetsHero />
           </div>
+        )}
+
+        {/* ── EXCHANGES ── */}
+        {activeTab === 'exchanges' && (
+          <ExchangesSection />
+        )}
+
+        {/* ── TRADE HISTORY ── */}
+        {activeTab === 'tradehistory' && (
+          <TradeHistorySection />
         )}
 
         {/* ── PAPER TRADING ── */}
