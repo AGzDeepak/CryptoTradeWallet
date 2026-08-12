@@ -1,104 +1,89 @@
 import React from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { 
-  LayoutGrid, 
-  User, 
-  Wallet, 
-  Settings, 
+import {
+  LayoutDashboard,
+  BarChart2,
+  ArrowLeftRight,
+  Briefcase,
+  ClipboardList,
+  Settings,
+  Wallet,
   LogOut,
-  ShoppingBag,
-  Gem,
-  ShieldCheck,
-  Zap,
-  FileCode2,
-  Landmark,
-  ArrowRightLeft,
-  Activity,
-  Clock
+  Moon
 } from 'lucide-react';
 
 export const Sidebar = () => {
   const { activeTab, setActiveTab, logout } = useCrypto();
 
   const navItems = [
-    { id: 'dashboard',        label: 'Dashboard',             icon: LayoutGrid },
-    { id: 'exchanges',        label: 'Exchanges',             icon: ArrowRightLeft, badge: 'LIVE' },
-    { id: 'tradehistory',     label: 'Trade History',         icon: Clock,          badge: 'LOGS' },
-    { id: 'metamaskterminal', label: 'Real Trading & Sepolia', icon: Zap,            badge: 'WEB3' },
-    { id: 'papertrading',     label: 'Paper Trading',        icon: ShoppingBag },
-    { id: 'contractprocess',  label: 'Contract Process',     icon: FileCode2 },
-    { id: 'banktransfer',     label: 'Bank Transfer',        icon: Landmark },
-    { id: 'account',          label: 'Account',              icon: User },
-    { id: 'settings',         label: 'Settings',             icon: Settings },
-    { id: 'wallet',           label: 'Wallet',               icon: Wallet,         badge: 'METAMASK' },
+    { id: 'dashboard',    label: 'Dashboard',     icon: LayoutDashboard },
+    { id: 'exchanges',    label: 'Market',         icon: BarChart2 },
+    { id: 'papertrading', label: 'Trade',          icon: ArrowLeftRight },
+    { id: 'tradehistory', label: 'History',        icon: ClipboardList },
+    { id: 'account',      label: 'Portfolio',      icon: Briefcase },
+    { id: 'wallet',       label: 'Wallet',         icon: Wallet },
+    { id: 'settings',     label: 'Settings',       icon: Settings },
   ];
 
   return (
-    <aside className="hidden lg:flex w-64 shrink-0 h-full flex-col justify-between bg-gradient-to-b from-[#0b1624] via-[#07101a] to-[#03070d] border-r border-[#68a7ca]/25 z-30 overflow-y-auto no-scrollbar font-sans shadow-2xl">
+    <aside className="hidden lg:flex w-56 shrink-0 h-full flex-col bg-[#080f1c] border-r border-slate-800/60 z-30 overflow-y-auto no-scrollbar">
 
-      {/* Top: Brand + Nav */}
-      <div className="flex flex-col gap-6 p-5">
-
-        {/* Brand Emblem */}
+      {/* Brand */}
+      <div className="px-5 py-5 border-b border-slate-800/60">
         <button
           onClick={() => setActiveTab('dashboard')}
-          className="flex items-center gap-3 px-2 py-1 rounded-2xl hover:bg-white/5 transition w-full text-left"
+          className="flex items-center gap-3 w-full text-left group"
         >
-          <div className="w-10 h-10 shrink-0 rounded-2xl bg-gradient-to-br from-[#4390bc] via-[#68a7ca] to-[#8dbdd8] flex items-center justify-center shadow-[0_0_22px_rgba(67,144,188,0.5)] hover:scale-105 transition-transform">
-            <div className="w-5.5 h-5.5 rounded-xl bg-[#07101a] flex items-center justify-center">
-              <div className="w-3 h-3 rounded-lg bg-gradient-to-br from-[#8dbdd8] to-[#dbe9f3] animate-pulse" />
-            </div>
+          <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center shrink-0 shadow-lg shadow-violet-500/20 group-hover:bg-violet-500 transition">
+            <span className="text-white font-bold text-sm">B</span>
           </div>
-          <div className="min-w-0">
-            <div className="text-[11px] font-black text-white tracking-tight uppercase font-mono leading-tight truncate">CryptoTradeWallet</div>
-            <div className="text-[9px] text-[#8dbdd8] font-mono font-bold tracking-widest uppercase">QUANT TERMINAL</div>
+          <div>
+            <div className="text-sm font-bold text-white leading-tight">CryptoBot</div>
+            <div className="text-[10px] text-slate-500 leading-tight">Trading Dashboard</div>
           </div>
         </button>
-
-        {/* Divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-[#68a7ca]/20 to-transparent" />
-
-        {/* Navigation */}
-        <nav className="flex flex-col gap-1 font-mono text-xs">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                  isActive
-                    ? 'chainblock-nav-active'
-                    : 'text-slate-400 hover:text-[#dbe9f3] hover:bg-[#101f30]/60'
-                }`}
-              >
-                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#dbe9f3]' : 'text-[#68a7ca]'}`} />
-                <span className="flex-1 truncate text-left">{item.label}</span>
-                {item.badge && (
-                  <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shrink-0 ${
-                    isActive
-                      ? item.badge === 'LIVE' || item.badge === 'METAMASK'
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                        : 'bg-[#4390bc]/30 text-[#dbe9f3] border border-[#8dbdd8]/40'
-                      : 'bg-slate-800 text-slate-500'
-                  }`}>
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
       </div>
 
-      {/* Bottom: Logout */}
-      <div className="p-5 border-t border-slate-800/60 font-mono text-xs">
+      {/* Navigation */}
+      <nav className="flex-1 px-3 py-4 space-y-0.5">
+        {navItems.map(({ id, label, icon: Icon }) => {
+          const isActive = activeTab === id;
+          return (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                isActive
+                  ? 'bg-violet-600/20 text-violet-300 border border-violet-500/20'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-violet-400' : 'text-slate-500'}`} />
+              <span>{label}</span>
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* Bottom */}
+      <div className="px-3 py-4 border-t border-slate-800/60 space-y-0.5">
+        {/* Dark mode toggle (visual only) */}
+        <div className="flex items-center justify-between px-3 py-2.5 rounded-xl">
+          <div className="flex items-center gap-3">
+            <Moon className="w-4 h-4 text-slate-500" />
+            <span className="text-sm text-slate-400 font-medium">Dark Mode</span>
+          </div>
+          <div className="w-9 h-5 bg-violet-600 rounded-full relative cursor-pointer">
+            <div className="w-3.5 h-3.5 bg-white rounded-full absolute right-0.5 top-0.5 shadow" />
+          </div>
+        </div>
+
+        {/* Logout */}
         <button
           onClick={logout}
-          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 text-xs font-semibold transition-all"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 transition-all"
         >
-          <LogOut className="w-4 h-4 text-slate-500 shrink-0" />
+          <LogOut className="w-4 h-4 text-slate-500" />
           <span>Log out</span>
         </button>
       </div>

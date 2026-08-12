@@ -14,8 +14,7 @@
 
 @layer base {
   html, body {
-    background: radial-gradient(ellipse at 50% -20%, #0f1c2b 0%, #08101a 60%, #03060a 100%);
-    background-attachment: fixed;
+    background: #060d18;
     color: #f8fafc;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     overflow-x: hidden;

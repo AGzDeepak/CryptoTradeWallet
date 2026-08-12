@@ -36,9 +36,8 @@ const DashboardContent = () => {
   const { activeTab } = useCrypto();
 
   return (
-    <main className="flex-1 overflow-y-auto pb-24 lg:pb-8 no-scrollbar smooth-scroll-container bg-[#080a10]">
-      {/* Single unified shell — no double padding */}
-      <div className="chainblock-shell m-4 sm:m-6 lg:m-8 p-5 sm:p-7 lg:p-8 space-y-6 min-h-[calc(100%-2rem)]">
+    <main className="flex-1 overflow-y-auto pb-24 lg:pb-8 no-scrollbar bg-[#060d18]">
+      <div className="p-6 lg:p-8 space-y-0 min-h-full">
 
         {/* ── DASHBOARD ── */}
         {(activeTab === 'dashboard' || !['papertrading','simulation','account','wallet','realwallet',
@@ -161,7 +160,7 @@ const MainLayout = () => {
   }
 
   return (
-    <div className="h-screen w-screen bg-[#0b0c10] text-slate-100 flex overflow-hidden font-sans selection:bg-[#facc15] selection:text-black relative">
+    <div className="h-screen w-screen bg-[#060d18] text-slate-100 flex overflow-hidden font-sans selection:bg-violet-500 selection:text-white relative">
       <BackgroundParticles />
 
       <div className="w-full h-full flex overflow-hidden relative z-10">
