@@ -43,7 +43,7 @@ export const generateVirtualAddress = (email = 'user@chainblock.io') => {
     hash |= 0;
   }
   const hex = Math.abs(hash).toString(16).padStart(8, '0');
-  return `0x${hex}C7656EC7ab88b098defB751B7401B5f6d7B41`.substring(0, 42);
+  return `0x${hex}C7656EC7ab88b098defB751B7401B5f6d7B410`.substring(0, 42);
 };
 
 // ─── RPC Call helper ─────────────────────────────────────────────────────────

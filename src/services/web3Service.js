@@ -17,6 +17,18 @@ export const isWeb3Available = () => {
   return typeof window !== 'undefined' && typeof window.ethereum !== 'undefined';
 };
 
+const DEFAULT_ROUTER_ADDRESS = '0x71C7656EC7ab88b098defB751B7401B5f6d7B410'; // Valid 42-char (20-byte) address
+
+export const cleanEvmAddress = (addr, fallback) => {
+  if (typeof addr === 'string' && /^0x[0-9a-fA-F]{40}$/.test(addr.trim())) {
+    return addr.trim();
+  }
+  if (typeof fallback === 'string' && /^0x[0-9a-fA-F]{40}$/.test(fallback.trim())) {
+    return fallback.trim();
+  }
+  return DEFAULT_ROUTER_ADDRESS;
+};
+
 export class Web3Service {
   activeAddress = null;
 
@@ -49,7 +61,6 @@ export class Web3Service {
     try {
       const challengeText = `Sign this message to authenticate with Chainblock Quant Trading Terminal:\n\nWallet: ${address}\nNonce: ${Math.floor(Math.random() * 1000000)}\nTimestamp: ${new Date().toISOString()}`;
       
-      // Request EIP-191 Personal Signature from user
       const signature = await ethereum.request({
         method: 'personal_sign',
         params: [challengeText, address]
@@ -90,7 +101,7 @@ export class Web3Service {
   }
 
   connectDemoWallet() {
-    const demoAddress = '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
+    const demoAddress = DEFAULT_ROUTER_ADDRESS;
     const demoToken = 'demo_jwt_token_chainblock_2026';
 
     if (typeof window !== 'undefined') {
@@ -139,7 +150,7 @@ export const connectRealWeb3Wallet = async (walletType = 'MetaMask') => {
     const demo = web3Service.connectDemoWallet();
     return {
       address: demo.address,
-      shortAddress: '0x71C7...dB41',
+      shortAddress: '0x71C7...dB410',
       balanceEth: demo.balanceEth,
       balanceUsd: parseFloat((demo.balanceEth * 3540.20).toFixed(2)),
       chainId: demo.chainId,
@@ -182,6 +193,14 @@ export const sendRealWeb3Transaction = async (fromAddress, toAddress, amountEth 
   }
 
   try {
+    let accounts = await window.ethereum.request({ method: 'eth_accounts' });
+    if (!accounts || !accounts[0]) {
+      accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    }
+
+    const validFrom = cleanEvmAddress(accounts?.[0], fromAddress);
+    const validTo   = cleanEvmAddress(toAddress, validFrom);
+
     const valueWei = Math.floor(parseFloat(amountEth || '0.01') * 1e18);
     const valueWeiHex = '0x' + valueWei.toString(16);
 
@@ -189,8 +208,8 @@ export const sendRealWeb3Transaction = async (fromAddress, toAddress, amountEth 
       method: 'eth_sendTransaction',
       params: [
         {
-          from: fromAddress,
-          to: toAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
+          from: validFrom,
+          to: validTo,
           value: valueWeiHex
         }
       ]
@@ -206,13 +225,7 @@ export const sendRealWeb3Transaction = async (fromAddress, toAddress, amountEth 
     };
   } catch (err) {
     console.warn('Web3 Transaction broadcasting notice:', err?.message);
-    const networkConfig = SUPPORTED_NETWORKS[chainId] || { explorer: 'https://arbiscan.io' };
-
-    return {
-      txHash: fallbackHash,
-      explorerUrl: `${networkConfig.explorer}/tx/${fallbackHash}`,
-      status: 'BROADCASTED'
-    };
+    throw err;
   }
 };
 
@@ -233,7 +246,7 @@ const getActiveExplorerBase = async () => {
 };
 
 // ─── BUY REAL ETHEREUM ON-CHAIN WITH METAMASK ─────────────────────────────────
-export const executeRealBuyEthereumOrder = async (walletAddress, amountUsdtOrEth = '100', targetAddress = '0x71C7656EC7ab88b098defB751B7401B5f6d7B41') => {
+export const executeRealBuyEthereumOrder = async (walletAddress, amountUsdtOrEth = '100', targetAddress) => {
   const explorerBase = await getActiveExplorerBase();
   if (!isWeb3Available()) {
     const txHash = `0x${Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
@@ -250,8 +263,14 @@ export const executeRealBuyEthereumOrder = async (walletAddress, amountUsdtOrEth
     };
   }
 
-  const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-  const fromAddr = (accounts && accounts[0]) || walletAddress;
+  let accounts = await window.ethereum.request({ method: 'eth_accounts' });
+  if (!accounts || !accounts[0]) {
+    accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+  }
+
+  const fromAddr = cleanEvmAddress(accounts?.[0], walletAddress);
+  const toAddr   = cleanEvmAddress(targetAddress, fromAddr);
+
   const ethPrice = 3540.20;
   const numUsdt = parseFloat(amountUsdtOrEth);
   const amountEth = numUsdt > 50 ? (numUsdt / ethPrice).toFixed(6) : amountUsdtOrEth;
@@ -264,7 +283,7 @@ export const executeRealBuyEthereumOrder = async (walletAddress, amountUsdtOrEth
     params: [
       {
         from: fromAddr,
-        to: targetAddress,
+        to: toAddr,
         value: valueWeiHex
       }
     ]
@@ -283,7 +302,7 @@ export const executeRealBuyEthereumOrder = async (walletAddress, amountUsdtOrEth
 };
 
 // ─── SELL REAL ETHEREUM ON-CHAIN WITH METAMASK ────────────────────────────────
-export const executeRealSellEthereumOrder = async (walletAddress, amountEth = '0.1', targetAddress = '0x71C7656EC7ab88b098defB751B7401B5f6d7B41') => {
+export const executeRealSellEthereumOrder = async (walletAddress, amountEth = '0.1', targetAddress) => {
   const explorerBase = await getActiveExplorerBase();
   if (!isWeb3Available()) {
     const txHash = `0x${Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
@@ -300,10 +319,15 @@ export const executeRealSellEthereumOrder = async (walletAddress, amountEth = '0
     };
   }
 
-  const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-  const fromAddr = (accounts && accounts[0]) || walletAddress;
-  const ethPrice = 3540.20;
+  let accounts = await window.ethereum.request({ method: 'eth_accounts' });
+  if (!accounts || !accounts[0]) {
+    accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+  }
 
+  const fromAddr = cleanEvmAddress(accounts?.[0], walletAddress);
+  const toAddr   = cleanEvmAddress(targetAddress, fromAddr);
+
+  const ethPrice = 3540.20;
   const valueWei = Math.floor(parseFloat(amountEth) * 1e18);
   const valueWeiHex = '0x' + valueWei.toString(16);
 
@@ -312,7 +336,7 @@ export const executeRealSellEthereumOrder = async (walletAddress, amountEth = '0
     params: [
       {
         from: fromAddr,
-        to: targetAddress,
+        to: toAddr,
         value: valueWeiHex
       }
     ]
