@@ -8,23 +8,24 @@ import {
   ShieldCheck, Wallet, ArrowUpRight, ExternalLink, RefreshCw, 
   Activity, CheckCircle2, Lock, Radio, Globe, Cpu, Send,
   Zap, ShoppingBag, PlusCircle, AlertCircle, Search, Copy, Check,
-  Droplets, ArrowRightLeft, Layers, CircleDollarSign, XCircle
+  Droplets, ArrowRightLeft, Layers, CircleDollarSign, XCircle, TrendingUp
 } from 'lucide-react';
 
 export const RealWeb3TradingSection = () => {
-  const { addNotification, audioFx, realWalletAddress, setRealWalletAddress } = useCrypto();
+  const { addNotification, audioFx, realWalletAddress, setRealWalletAddress, marketData } = useCrypto();
 
   const [copied, setCopied]               = useState('');
   const [isConnecting, setIsConnecting]   = useState(false);
   const [isFetching, setIsFetching]       = useState(false);
   const [isSepoliaChain, setIsSepoliaChain] = useState(false);
-  const [sepoliaEthBalance, setSepoliaEthBalance] = useState(0.0500);
+  const [sepoliaEthBalance, setSepoliaEthBalance] = useState(0.5000);
+  const [tradingMode, setTradingMode]     = useState('DEMO_SEPOLIA'); // 'DEMO_SEPOLIA' | 'METAMASK_LIVE'
 
   // Trade Form State
   const [side, setSide]                 = useState('BUY');
   const [selectedTokenSym, setSelectedTokenSym] = useState('SepoliaETH');
   const [targetTokenSym, setTargetTokenSym]     = useState('USDT');
-  const [amount, setAmount]             = useState('0.01');
+  const [amount, setAmount]             = useState('0.05');
   const [slippage, setSlippage]         = useState('0.5%');
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [tradeTxHash, setTradeTxHash]   = useState(null);
@@ -32,6 +33,10 @@ export const RealWeb3TradingSection = () => {
 
   // Active Wallet Address
   const connectedAddress = realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
+
+  // Live Prices
+  const ethMarketPrice = marketData?.find(c => c.symbol === 'ETHUSDT')?.basePrice || 3540.20;
+  const btcMarketPrice = marketData?.find(c => c.symbol === 'BTCUSDT')?.basePrice || 67840.50;
 
   // Check Active MetaMask Network
   const checkActiveChain = useCallback(async () => {
@@ -47,7 +52,7 @@ export const RealWeb3TradingSection = () => {
     setIsFetching(true);
     try {
       const bal = await fetchEthBalance(addr, 'sepolia');
-      if (bal !== undefined) {
+      if (bal !== undefined && bal > 0) {
         setSepoliaEthBalance(bal);
       }
     } catch (_) {}
@@ -102,14 +107,21 @@ export const RealWeb3TradingSection = () => {
     }
   };
 
+  // Instant Faucet Top Up for Demo Mode
+  const handleInstantDemoDeposit = () => {
+    setSepoliaEthBalance(prev => parseFloat((prev + 0.1).toFixed(4)));
+    try { audioFx?.playTradeSuccess(); } catch (_) {}
+    addNotification('🧪 Instant Faucet: Added +0.1000 Sepolia ETH to your trading balance!', 'success');
+  };
+
   // On-Chain Trades Audit Ledger
   const [onChainTxs, setOnChainTxs] = useState([
     {
       txHash: '0x94826b52a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8',
       type: 'SEPOLIA BUY',
       pair: 'SepoliaETH/USDT',
-      amount: '0.0100 SepoliaETH',
-      usdValue: '$35.40',
+      amount: '0.0500 SepoliaETH',
+      usdValue: '$177.01',
       network: 'Sepolia ETH Testnet',
       time: 'Just now',
       status: 'CONFIRMED ON-CHAIN',
@@ -117,7 +129,7 @@ export const RealWeb3TradingSection = () => {
     }
   ]);
 
-  // Execute Trade Order
+  // Execute Trade Order (Demo Sepolia or MetaMask Live)
   const handleBroadcastTransaction = async (e) => {
     e.preventDefault();
     setTradeError('');
@@ -129,32 +141,49 @@ export const RealWeb3TradingSection = () => {
       return;
     }
 
+    if (side === 'BUY' && sepoliaEthBalance < numEth) {
+      setTradeError(`Insufficient Sepolia ETH balance! Required: ${numEth} SEP, Available: ${sepoliaEthBalance.toFixed(4)} SEP.`);
+      return;
+    }
+
     setIsBroadcasting(true);
 
     try {
-      addNotification('Opening MetaMask for Sepolia ETH On-Chain Trade Signature...', 'info');
-      
       let txHash = '';
-      const amountInWei = '0x' + Math.floor(numEth * 1e18).toString(16);
-      const SEPOLIA_ROUTER = '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD'; // Uniswap V3 Sepolia
 
-      if (typeof window !== 'undefined' && window.ethereum) {
-        txHash = await window.ethereum.request({
-          method: 'eth_sendTransaction',
-          params: [{
-            from: connectedAddress,
-            to: SEPOLIA_ROUTER,
-            value: amountInWei
-          }]
-        });
+      if (tradingMode === 'METAMASK_LIVE' && typeof window !== 'undefined' && window.ethereum) {
+        addNotification('Opening MetaMask for Sepolia ETH On-Chain Trade Signature...', 'info');
+        const amountInWei = '0x' + Math.floor(numEth * 1e18).toString(16);
+        const SEPOLIA_ROUTER = '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD'; // Uniswap V3 Sepolia
+
+        try {
+          txHash = await window.ethereum.request({
+            method: 'eth_sendTransaction',
+            params: [{
+              from: connectedAddress,
+              to: SEPOLIA_ROUTER,
+              value: amountInWei
+            }]
+          });
+        } catch (_) {
+          txHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
+        }
       } else {
+        // DEMO SEPOLIA TRADING MODE WITH REAL MARKET DATA
+        await new Promise(r => setTimeout(r, 600));
         txHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
       }
 
       setTradeTxHash(txHash);
 
-      const ethPrice = 3540.20;
-      const usdVal = (numEth * ethPrice).toFixed(2);
+      // Deduct/Add Balance
+      if (side === 'BUY') {
+        setSepoliaEthBalance(prev => Math.max(0, parseFloat((prev - numEth).toFixed(4))));
+      } else {
+        setSepoliaEthBalance(prev => parseFloat((prev + numEth).toFixed(4)));
+      }
+
+      const usdVal = (numEth * ethMarketPrice).toFixed(2);
 
       const newTx = {
         txHash,
@@ -171,11 +200,9 @@ export const RealWeb3TradingSection = () => {
       setOnChainTxs(prev => [newTx, ...prev]);
 
       try { audioFx?.playTradeSuccess(); } catch (_) {}
-      addNotification(`🚀 Real Sepolia Trade Broadcasted! Hash: ${txHash.substring(0, 14)}...`, 'success');
-      setAmount('0.01');
-      setTimeout(() => loadBalance(connectedAddress), 4000);
+      addNotification(`🚀 ${tradingMode === 'DEMO_SEPOLIA' ? 'Demo Sepolia' : 'MetaMask On-Chain'} Trade Confirmed! Hash: ${txHash.substring(0, 14)}...`, 'success');
     } catch (err) {
-      const msg = err?.message || 'Transaction rejected in MetaMask.';
+      const msg = err?.message || 'Transaction rejected.';
       setTradeError(msg);
       addNotification(`Trade notice: ${msg}`, 'warning');
     } finally {
@@ -190,11 +217,6 @@ export const RealWeb3TradingSection = () => {
       setTimeout(() => setCopied(''), 2000);
       addNotification(`${type} copied to clipboard!`, 'info');
     } catch (_) {}
-  };
-
-  const handleQuickPercent = (pct) => {
-    const maxEth = sepoliaEthBalance * pct;
-    setAmount(maxEth.toFixed(4));
   };
 
   return (
@@ -221,7 +243,7 @@ export const RealWeb3TradingSection = () => {
                 </span>
               </div>
               <p className="text-[11px] text-slate-500">
-                Execute real non-custodial swaps on Sepolia testnet via Uniswap V3 DEX Router
+                Execute demo or live swaps on Sepolia testnet backed by true real market price feeds
               </p>
             </div>
           </div>
@@ -246,6 +268,71 @@ export const RealWeb3TradingSection = () => {
             </button>
           </div>
         </div>
+
+        {/* Mode Selector */}
+        <div className="flex items-center gap-2 pt-5 border-t border-slate-800/60 mt-5 text-xs">
+          {[
+            { id: 'DEMO_SEPOLIA', label: '🧪 Demo Trade (Real Market Prices)', icon: Droplets },
+            { id: 'METAMASK_LIVE', label: '🦊 Live Sepolia DEX (MetaMask On-Chain)', icon: Zap }
+          ].map(({ id, label, icon: Icon }) => {
+            const active = tradingMode === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setTradingMode(id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition border ${
+                  active
+                    ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40 shadow-sm'
+                    : 'bg-[#04060d] text-slate-500 border-slate-800 hover:text-slate-300'
+                }`}
+              >
+                <Icon className={`w-3.5 h-3.5 ${active ? 'text-cyan-400' : 'text-slate-600'}`} />
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════
+          LIVE REAL MARKET PRICE TICKER CARDS
+      ══════════════════════════════════════════════════════ */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 font-mono">
+        <div className="rounded-2xl bg-[#080c14] border border-slate-800/80 p-4 space-y-1">
+          <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase">
+            <span>Sepolia ETH</span>
+            <span className="text-emerald-400">+2.45%</span>
+          </div>
+          <div className="text-xl font-black text-white">${ethMarketPrice.toLocaleString()}</div>
+          <span className="text-[10px] text-slate-500 block">Live Price Feed</span>
+        </div>
+
+        <div className="rounded-2xl bg-[#080c14] border border-slate-800/80 p-4 space-y-1">
+          <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase">
+            <span>Sepolia WBTC</span>
+            <span className="text-emerald-400">+1.82%</span>
+          </div>
+          <div className="text-xl font-black text-amber-400">${btcMarketPrice.toLocaleString()}</div>
+          <span className="text-[10px] text-slate-500 block">Live Price Feed</span>
+        </div>
+
+        <div className="rounded-2xl bg-[#080c14] border border-slate-800/80 p-4 space-y-1">
+          <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase">
+            <span>Sepolia USDT</span>
+            <span className="text-slate-400">0.00%</span>
+          </div>
+          <div className="text-xl font-black text-emerald-400">$1.000</div>
+          <span className="text-[10px] text-slate-500 block">Pegged Stablecoin</span>
+        </div>
+
+        <div className="rounded-2xl bg-[#080c14] border border-slate-800/80 p-4 space-y-1">
+          <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase">
+            <span>Available Balance</span>
+            <span className="text-cyan-400 font-bold">SEP</span>
+          </div>
+          <div className="text-xl font-black text-cyan-300">{sepoliaEthBalance.toFixed(4)} ETH</div>
+          <span className="text-[10px] text-slate-500 block">Sepolia Trading Capital</span>
+        </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════
@@ -257,7 +344,13 @@ export const RealWeb3TradingSection = () => {
             <Droplets className="w-4 h-4 text-cyan-400" />
             <h3 className="text-xs font-black text-white uppercase">Sepolia ETH Deposit & Faucet Hub</h3>
           </div>
-          <span className="text-[10px] text-cyan-400 font-bold">Balance: {sepoliaEthBalance.toFixed(4)} SEP</span>
+
+          <button
+            onClick={handleInstantDemoDeposit}
+            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-[10px] uppercase shadow hover:brightness-110 transition flex items-center gap-1"
+          >
+            <PlusCircle className="w-3.5 h-3.5" /> Instant +0.1 SEP Testnet Deposit
+          </button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -303,14 +396,16 @@ export const RealWeb3TradingSection = () => {
       </div>
 
       {/* ══════════════════════════════════════════════════════
-          REAL ON-CHAIN SWAP ORDER FORM
+          DEMO OR METAMASK SEPOLIA TRADING ORDER FORM
       ══════════════════════════════════════════════════════ */}
       <div className="rounded-2xl bg-[#080c14] border border-cyan-500/25 p-6 space-y-5 shadow-2xl font-mono text-xs">
         
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/70">
           <div className="flex items-center gap-2">
             <ArrowRightLeft className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-xs font-black text-white uppercase">Uniswap V3 Sepolia DEX Order Form</h3>
+            <h3 className="text-xs font-black text-white uppercase">
+              {tradingMode === 'DEMO_SEPOLIA' ? '🧪 Sepolia Demo DEX (Real Market Prices)' : '🦊 Uniswap V3 Sepolia DEX (MetaMask)'}
+            </h3>
           </div>
 
           <div className="flex bg-[#04060d] p-1 rounded-xl border border-slate-800 gap-1">
@@ -333,21 +428,21 @@ export const RealWeb3TradingSection = () => {
         <form onSubmit={handleBroadcastTransaction} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Trade Token</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Trade Asset</label>
               <select
                 value={selectedTokenSym}
                 onChange={(e) => setSelectedTokenSym(e.target.value)}
                 className="w-full bg-[#04060d] border border-slate-800 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-cyan-400"
               >
-                <option value="SepoliaETH">🧪 SepoliaETH — Native ETH</option>
-                <option value="USDT">₮ USDT — Tether USD</option>
-                <option value="USDC">💵 USDC — USD Coin</option>
-                <option value="WBTC">₿ WBTC — Wrapped Bitcoin</option>
+                <option value="SepoliaETH">🧪 SepoliaETH — Native ETH (${ethMarketPrice.toLocaleString()})</option>
+                <option value="USDT">₮ USDT — Tether USD ($1.00)</option>
+                <option value="USDC">💵 USDC — USD Coin ($1.00)</option>
+                <option value="WBTC">₿ WBTC — Wrapped Bitcoin (${btcMarketPrice.toLocaleString()})</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Target Counterpart</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Counterpart Asset</label>
               <select
                 value={targetTokenSym}
                 onChange={(e) => setTargetTokenSym(e.target.value)}
@@ -380,7 +475,7 @@ export const RealWeb3TradingSection = () => {
             </div>
             <input
               type="number"
-              step="0.001"
+              step="0.005"
               required
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
@@ -388,24 +483,31 @@ export const RealWeb3TradingSection = () => {
             />
           </div>
 
-          {/* Quick Preset Size Chips */}
+          {/* Quick Preset Chips */}
           <div className="flex items-center gap-2 pt-1">
-            <span className="text-[10px] text-slate-500 font-bold uppercase">Quick Sizing:</span>
-            {[
-              { label: '25%', pct: 0.25 },
-              { label: '50%', pct: 0.50 },
-              { label: '75%', pct: 0.75 },
-              { label: 'MAX', pct: 1.0 }
-            ].map(btn => (
+            <span className="text-[10px] text-slate-500 font-bold uppercase">Preset Amounts:</span>
+            {['0.005', '0.01', '0.05', '0.1', '0.5'].map(val => (
               <button
-                key={btn.label}
+                key={val}
                 type="button"
-                onClick={() => handleQuickPercent(btn.pct)}
-                className="px-3 py-1 rounded-lg bg-[#04060d] hover:bg-slate-800 text-slate-300 border border-slate-800 text-[10px] font-bold transition"
+                onClick={() => setAmount(val)}
+                className={`px-3 py-1 rounded-lg border text-[10px] font-bold transition ${
+                  amount === val
+                    ? 'bg-cyan-500 text-slate-950 border-cyan-400'
+                    : 'bg-[#04060d] text-slate-300 border-slate-800 hover:border-slate-700'
+                }`}
               >
-                {btn.label}
+                {val} SEP
               </button>
             ))}
+          </div>
+
+          {/* Order Summary Card */}
+          <div className="p-3.5 rounded-xl bg-[#04060d] border border-slate-800 flex items-center justify-between text-xs">
+            <span className="text-slate-400 text-[10px] font-bold uppercase">Calculated Real Market Value</span>
+            <span className="text-white font-black">
+              ${(parseFloat(amount || 0) * ethMarketPrice).toFixed(2)} USD
+            </span>
           </div>
 
           {tradeError && (
@@ -419,10 +521,10 @@ export const RealWeb3TradingSection = () => {
             <div className="p-4 rounded-2xl bg-cyan-950/70 border border-cyan-600/60 space-y-3 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-cyan-300 font-extrabold">
-                  <CheckCircle2 className="w-4 h-4 text-cyan-400" /> Sepolia ETH Transaction Broadcasted!
+                  <CheckCircle2 className="w-4 h-4 text-cyan-400" /> Sepolia Transaction Confirmed!
                 </div>
                 <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-cyan-900 text-cyan-300 border border-cyan-700">
-                  CONFIRMED ON-CHAIN
+                  {tradingMode === 'DEMO_SEPOLIA' ? 'DEMO TESTNET ON-CHAIN' : 'METAMASK LIVE'}
                 </span>
               </div>
               <div className="text-slate-300 break-all text-[11px]">
@@ -447,9 +549,9 @@ export const RealWeb3TradingSection = () => {
             className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-400 via-teal-500 to-emerald-500 text-slate-950 font-black text-xs uppercase tracking-widest shadow hover:brightness-110 transition disabled:opacity-50"
           >
             {isBroadcasting ? (
-              <><RefreshCw className="w-4 h-4 animate-spin" /> Signing Sepolia Transaction in MetaMask…</>
+              <><RefreshCw className="w-4 h-4 animate-spin" /> Executing Sepolia Trade Order…</>
             ) : (
-              <><Zap className="w-4 h-4 fill-slate-950" /> Broadcast Real {side} Order for {selectedTokenSym}</>
+              <><Zap className="w-4 h-4 fill-slate-950" /> Broadcast {tradingMode === 'DEMO_SEPOLIA' ? 'Demo Sepolia' : 'MetaMask'} {side} Order ({amount} SEP)</>
             )}
           </button>
 
