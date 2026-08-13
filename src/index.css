@@ -171,3 +171,80 @@
 ::-webkit-scrollbar-track  { background: #04070d; }
 ::-webkit-scrollbar-thumb  { background: rgba(104, 167, 202, 0.32); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #68a7ca; }
+
+/* ── Light Mode Complete Theme Overrides ─────────────────────────── */
+html.light-mode,
+html.light-mode body {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+html.light-mode main {
+  background-color: #f1f5f9 !important;
+}
+
+html.light-mode header,
+html.light-mode aside {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light-mode .bg-\[\#060d18\],
+html.light-mode .bg-\[\#04070d\],
+html.light-mode .bg-\[\#081220\],
+html.light-mode .bg-\[\#091220\],
+html.light-mode .bg-\[\#0b1320\] {
+  background-color: #f1f5f9 !important;
+}
+
+html.light-mode .bg-\[\#0d1523\],
+html.light-mode .bg-\[\#0f1c2b\],
+html.light-mode .bg-\[\#101f30\] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+html.light-mode .border-slate-800,
+html.light-mode .border-slate-800\/70,
+html.light-mode .border-slate-800\/50,
+html.light-mode .border-slate-800\/40,
+html.light-mode .border-slate-700\/60,
+html.light-mode .border-slate-700\/40 {
+  border-color: #e2e8f0 !important;
+}
+
+html.light-mode .text-white {
+  color: #0f172a !important;
+}
+
+html.light-mode .text-slate-300,
+html.light-mode .text-slate-400 {
+  color: #334155 !important;
+}
+
+html.light-mode .text-slate-500 {
+  color: #64748b !important;
+}
+
+html.light-mode input,
+html.light-mode select,
+html.light-mode textarea {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light-mode .chainblock-card,
+html.light-mode .cyber-card {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06) !important;
+}
+
+html.light-mode .chainblock-shell {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.08) !important;
+}
+

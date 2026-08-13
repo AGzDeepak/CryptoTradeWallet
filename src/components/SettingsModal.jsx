@@ -3,7 +3,11 @@ import { useCrypto } from '../context/CryptoContext';
 import { Server, Bell, Volume2, Bot, Shield, Moon, Zap, RefreshCw } from 'lucide-react';
 
 export const SettingsModal = () => {
-  const { soundEnabled, setSoundEnabled, autoTradingEnabled, setAutoTradingEnabled } = useCrypto();
+  const {
+    soundEnabled, setSoundEnabled,
+    autoTradingEnabled, setAutoTradingEnabled,
+    darkMode, setDarkMode
+  } = useCrypto();
 
   const Toggle = ({ on, onToggle }) => (
     <button
@@ -57,11 +61,12 @@ export const SettingsModal = () => {
               {
                 icon: <Moon className="w-4 h-4 text-blue-400" />,
                 label: 'Dark Mode',
-                desc: 'Always-on dark theme',
-                on: true,
-                toggle: () => {}
+                desc: darkMode ? 'Always-on dark theme' : 'Light theme active',
+                on: darkMode,
+                toggle: () => setDarkMode(!darkMode)
               },
             ].map((item, i) => (
+
               <div key={i} className="flex items-center justify-between py-4">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-slate-800/60 flex items-center justify-center">

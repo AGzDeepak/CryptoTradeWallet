@@ -158,7 +158,31 @@ export const CryptoProvider = ({ children }) => {
     } catch (_) {}
   };
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkModeState] = useState(() => {
+    try {
+      const saved = localStorage.getItem('chainblock_dark_mode');
+      return saved !== null ? JSON.parse(saved) : true;
+    } catch (_) {
+      return true;
+    }
+  });
+
+  const setDarkMode = (val) => {
+    const nextVal = typeof val === 'function' ? val(darkMode) : val;
+    setDarkModeState(nextVal);
+    try {
+      localStorage.setItem('chainblock_dark_mode', JSON.stringify(nextVal));
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.remove('light-mode');
+    } else {
+      document.documentElement.classList.add('light-mode');
+    }
+  }, [darkMode]);
+
   const [soundEnabled, setSoundEnabled] = useState(false);
 
   // Modals & Drawers
