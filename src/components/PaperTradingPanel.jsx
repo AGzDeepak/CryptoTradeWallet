@@ -286,8 +286,8 @@ export const PaperTradingPanel = () => {
           // Check Take-Profit (e.g. >= +1.0%)
           if (pnlPct >= paperAutoTakeProfit) {
             setPaperAutoStatusMsg(`🎯 TAKE PROFIT (+${pnlPct.toFixed(2)}%)! Auto-Selling ${pos.amount} ${pos.symbol}…`);
-            const success = executeOrder('SELL', pos.symbol, pos.exchange, pos.amount);
-            if (success) {
+            const success = closePosition(pos.id, pnlUsd, 'AUTO_TAKE_PROFIT');
+            if (success !== false) {
               soldPosition = true;
               const logEntry = {
                 id: `P-SELL-${Date.now()}`,
@@ -314,8 +314,8 @@ export const PaperTradingPanel = () => {
           // Check Stop-Loss (e.g. <= -1.0%)
           else if (pnlPct <= -Math.abs(paperAutoStopLoss)) {
             setPaperAutoStatusMsg(`🛑 STOP LOSS (${pnlPct.toFixed(2)}%)! Auto-Selling ${pos.amount} ${pos.symbol}…`);
-            const success = executeOrder('SELL', pos.symbol, pos.exchange, pos.amount);
-            if (success) {
+            const success = closePosition(pos.id, pnlUsd, 'AUTO_STOP_LOSS');
+            if (success !== false) {
               soldPosition = true;
               const logEntry = {
                 id: `P-SELL-${Date.now()}`,
@@ -353,7 +353,7 @@ export const PaperTradingPanel = () => {
 
           if (qty > 0) {
             setPaperAutoStatusMsg(`🟢 AUTO-BUY ENTRY! Buying ${qty} ${chosenSymbol} @ $${coin.basePrice.toLocaleString()} on ${buyEx}…`);
-            const success = executeOrder('BUY', chosenSymbol, buyEx, qty);
+            const success = executeOrder('BUY', chosenSymbol, buyEx, qty, coin.basePrice, paperAutoTakeProfit, paperAutoStopLoss);
             if (success) {
               const logEntry = {
                 id: `P-BUY-${Date.now()}`,
@@ -371,6 +371,7 @@ export const PaperTradingPanel = () => {
               setPaperAutoStats(prev => ({ ...prev, buyCount: prev.buyCount + 1 }));
             }
           }
+
         } else if (!soldPosition) {
           setPaperAutoStatusMsg(`📊 Monitoring ${openPosList.length} open position(s) & scanning entry signals…`);
         }
@@ -382,7 +383,8 @@ export const PaperTradingPanel = () => {
     runAutoEngine();
     timer = setInterval(runAutoEngine, paperAutoInterval * 1000);
     return () => clearInterval(timer);
-  }, [paperAutoEnabled, paperAutoTargetSymbol, paperAutoOrderUsd, paperAutoTakeProfit, paperAutoStopLoss, paperAutoInterval, openPositions, wallet, marketData, executeOrder, addNotification]);
+  }, [paperAutoEnabled, paperAutoTargetSymbol, paperAutoOrderUsd, paperAutoTakeProfit, paperAutoStopLoss, paperAutoInterval, executeOrder, closePosition, addNotification]);
+
 
 
   /* ── Fetch live balances + DEX quote ───────────────────────── */

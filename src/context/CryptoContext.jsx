@@ -842,7 +842,7 @@ export const CryptoProvider = ({ children }) => {
   };
 
   // Order Placement (BUY / SELL FIFO Execution)
-  const executeOrder = (side, symbol, exchange, amount, priceOverride = null) => {
+  const executeOrder = (side, symbol, exchange, amount, priceOverride = null, takeProfitPct = null, stopLossPct = null) => {
     const coin = marketData.find(c => c.symbol === symbol) || marketData[0];
     const price = priceOverride || coin.basePrice;
     const sideUpper = side.toUpperCase();
@@ -881,9 +881,12 @@ export const CryptoProvider = ({ children }) => {
         currentSellPrice: parseFloat((price * 1.004).toFixed(2)),
         invested: totalCost,
         status: 'OPEN',
+        takeProfitPct: takeProfitPct || minProfitThreshold || 1.0,
+        stopLossPct: stopLossPct || 1.0,
         timestamp: new Date().toISOString(),
         unrealizedPnL: 0.0
       };
+
 
       setOpenPositions(prev => [newPos, ...prev]);
       setTradeHistory(prev => [{
@@ -1201,19 +1204,14 @@ export const CryptoProvider = ({ children }) => {
 
   const closePosition = (posId, finalPnL = null, reason = 'MANUAL') => {
     const targetPos = openPositions.find(p => p.id === posId);
-    if (targetPos) {
-      const pnl = finalPnL !== null ? finalPnL : targetPos.unrealizedPnL;
-      // STRICT RULE: Do not close / trade if Live PnL is below $5.00 USD!
-      if (pnl < 5.00) {
-        addNotification(`Hold Position — Reason: Live PnL ($${pnl.toFixed(2)}) is below minimum $5.00 USD profit requirement!`, 'warning');
-        try { audioFx.playAlertChime(); } catch (_) {}
-        return false;
-      }
-    }
+    if (!targetPos) return false;
+
+    const pnl = finalPnL !== null ? finalPnL : targetPos.unrealizedPnL;
 
     setOpenPositions(prev => {
       const pos = prev.find(p => p.id === posId);
       if (!pos) return prev;
+
 
       const pnl = finalPnL !== null ? finalPnL : pos.unrealizedPnL;
       
