@@ -87,21 +87,25 @@ export const TotalAssetsHero = () => {
   ];
 
   const recentTrades = useMemo(() => {
-    const manual = (tradeHistory || []).slice(-4).reverse().map(t => ({
-      pair:   (t.symbol || 'BTC/USDT').replace('USDT', '/USDT'),
-      type:   t.type || 'BUY',
-      amount: t.amount || 0.0125,
-      price:  t.price  || 63100,
-      profit: t.pnl != null ? t.pnl : 45.20
-    }));
+    const manual = (tradeHistory || []).slice(-10).reverse().map(t => {
+      const type = (t.type || t.side || t.action || (t.settleReason || t.exitPrice || t.profit != null ? 'SELL' : 'BUY')).toUpperCase();
+      return {
+        pair:   (t.symbol || 'BTC/USDT').replace('USDT', '/USDT'),
+        type,
+        amount: t.amount || 0.0125,
+        price:  t.price || t.exitPrice || t.entryPrice || 63100,
+        profit: t.profit != null ? t.profit : (t.netProfit != null ? t.netProfit : 45.20)
+      };
+    });
     const defaults = [
       { pair: 'BTC/USDT', type: 'BUY',  amount: 0.0125, price: 63100.00,  profit: 45.20  },
       { pair: 'ETH/USDT', type: 'SELL', amount: 0.2500, price: 3120.00,   profit: 18.75  },
       { pair: 'SOL/USDT', type: 'BUY',  amount: 2.500,  price: 145.30,    profit: 12.30  },
-      { pair: 'XRP/USDT', type: 'BUY',  amount: 100,    price: 0.54,      profit: 2.10   },
+      { pair: 'XRP/USDT', type: 'SELL', amount: 100,    price: 0.54,      profit: 2.10   },
     ];
-    return manual.length >= 2 ? manual.slice(0, 4) : defaults;
+    return manual.length >= 1 ? manual.slice(0, 4) : defaults;
   }, [tradeHistory]);
+
 
   /* ── stat cards ─────────────────────────────────────────────── */
   const stats = [

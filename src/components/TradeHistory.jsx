@@ -294,6 +294,7 @@ export const TradeHistory = () => {
               <th className="py-3 px-3">Audit ID</th>
               <th className="py-3 px-3">Time</th>
               <th className="py-3 px-3">Asset</th>
+              <th className="py-3 px-3">Type</th>
               <th className="py-3 px-3">Buy Leg (Exchange & Price)</th>
               <th className="py-3 px-3">Sell Leg (Exchange & Price)</th>
               <th className="py-3 px-3">Volume / Amount</th>
@@ -307,7 +308,7 @@ export const TradeHistory = () => {
           <tbody className="divide-y divide-slate-800/60">
             {filteredHistory.length === 0 ? (
               <tr>
-                <td colSpan="11" className="text-center text-slate-500 py-10 font-mono">
+                <td colSpan="12" className="text-center text-slate-500 py-10 font-mono">
                   No matching trade settlement logs found for "{searchTerm}".
                 </td>
               </tr>
@@ -320,6 +321,7 @@ export const TradeHistory = () => {
                 const sTotal = item.sellTotal || (sPrice * amt);
                 const isExpanded = expandedRowId === item.id;
                 const isBotTrade = item.isBot || (item.strategy && item.strategy.toLowerCase().includes('bot'));
+                const orderType = (item.type || item.side || item.action || (item.settleReason || item.exitPrice ? 'SELL' : 'BUY')).toUpperCase();
 
                 return (
                   <React.Fragment key={item.id}>
@@ -337,6 +339,16 @@ export const TradeHistory = () => {
                       </td>
                       <td className="py-3 px-3 text-slate-500">{item.time}</td>
                       <td className="py-3 px-3 font-bold text-cyan-400">{item.symbol}</td>
+                      <td className="py-3 px-3 font-bold">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                          orderType === 'BUY'
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                            : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                        }`}>
+                          {orderType}
+                        </span>
+                      </td>
+
                       
                       {/* BUY LEG INFO */}
                       <td className="py-3 px-3">
