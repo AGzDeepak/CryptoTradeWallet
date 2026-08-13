@@ -44,10 +44,12 @@ export const PaperTradingPanel = () => {
   const [activeTab, setActiveTab] = useState('Paper Trade');
 
   /* ── paper trade form state ─────────────────────────────────── */
+  const [paperTradeMode, setPaperTradeMode] = useState('MANUAL'); // 'MANUAL' | 'AUTO'
   const [side, setSide]         = useState('BUY');
   const [symbol, setSymbol]     = useState('BTCUSDT');
   const [exchange, setExchange] = useState('Binance Pro');
   const [amount, setAmount]     = useState('0.10');
+
   const [isExec, setIsExec]     = useState(false);
   const [execStep, setExecStep] = useState(0);   // 0=idle, 1-5=pipeline, 6=done
   const [paperTxHash, setPaperTxHash] = useState(null);
@@ -572,6 +574,142 @@ export const PaperTradingPanel = () => {
             {activeTab === 'Paper Trade' && (
               <div className="space-y-5">
 
+                {/* Mode Selector: Manual vs Paper Auto-Trader Bot */}
+                <div className="flex rounded-xl bg-[#060d18] p-1 border border-slate-700/60 gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setPaperTradeMode('MANUAL')}
+                    className={`flex-1 py-2 rounded-lg text-xs font-semibold transition ${
+                      paperTradeMode === 'MANUAL'
+                        ? 'bg-violet-600 text-white shadow'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    ⚡ Manual Paper Swap
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaperTradeMode('AUTO')}
+                    className={`flex-1 py-2 rounded-lg text-xs font-semibold transition ${
+                      paperTradeMode === 'AUTO'
+                        ? 'bg-violet-600 text-white shadow'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    🤖 Paper Auto-Trader Bot
+                  </button>
+                </div>
+
+                {paperTradeMode === 'AUTO' && (
+                  <div className="p-4 rounded-xl bg-[#060d18] border border-slate-800/80 space-y-4">
+                    {/* Bot Power & Quick Trigger Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <Bot className="w-5 h-5 text-emerald-400" />
+                        <div>
+                          <h4 className="text-xs font-bold text-white">Paper Arbitrage Auto-Trader</h4>
+                          <p className="text-[10px] text-slate-400">Scans Binance, Bybit, OKX, Coinbase & executes auto trades</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setAutoTradingEnabled(!autoTradingEnabled)}
+                          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                            autoTradingEnabled
+                              ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+                              : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+                          }`}
+                        >
+                          <span className={`w-2 h-2 rounded-full ${autoTradingEnabled ? 'bg-white animate-ping' : 'bg-slate-500'}`} />
+                          {autoTradingEnabled ? 'PAPER BOT ACTIVE (ON)' : 'START PAPER BOT'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleBotTrade}
+                          className="px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold flex items-center gap-1.5 transition"
+                          title="Trigger instant paper trade"
+                        >
+                          <Zap className="w-3.5 h-3.5 fill-current" /> Trigger Now
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Status Monitor Bar */}
+                    <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800/70 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <Activity className={`w-3.5 h-3.5 ${autoTradingEnabled ? 'text-emerald-400 animate-pulse' : 'text-slate-500'}`} />
+                        <span className="text-slate-300 font-medium">
+                          {autoTradingEnabled
+                            ? '🟢 BOT RUNNING — Scanning 4 Exchanges for Arbitrage Spreads…'
+                            : '⚪ BOT PAUSED — Click Start Paper Bot to run automated loop'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Bot Controls & Parameters */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[11px] text-slate-400">Min Profit Threshold Gate (%)</label>
+                        <select
+                          value={minProfitThreshold || 0.25}
+                          onChange={e => setMinProfitThreshold(parseFloat(e.target.value))}
+                          className="w-full bg-[#0d1523] border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
+                        >
+                          <option value={0.10}>0.10% (Aggressive High-Frequency)</option>
+                          <option value={0.25}>0.25% (Balanced Standard)</option>
+                          <option value={0.50}>0.50% (High Margin)</option>
+                          <option value={1.00}>1.00% (Ultra Conservative)</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[11px] text-slate-400">Paper Capital Sizing</label>
+                        <div className="w-full bg-[#0d1523] border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 flex items-center justify-between">
+                          <span>25% balance / trade</span>
+                          <span className="font-mono text-emerald-400">Max $500</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Paper Bot Stats Row */}
+                    <div className="grid grid-cols-3 gap-3 pt-1">
+                      <div className="bg-[#0d1523] rounded-lg p-2.5 text-center">
+                        <p className="text-[10px] text-slate-400">Total Bot Profit</p>
+                        <p className="text-xs font-bold text-amber-400">+${fmt(totalBotProfit)}</p>
+                      </div>
+                      <div className="bg-[#0d1523] rounded-lg p-2.5 text-center">
+                        <p className="text-[10px] text-slate-400">Trades Settled</p>
+                        <p className="text-xs font-bold text-white">{autoTradeCount || 0}</p>
+                      </div>
+                      <div className="bg-[#0d1523] rounded-lg p-2.5 text-center">
+                        <p className="text-[10px] text-slate-400">Paper Balance</p>
+                        <p className="text-xs font-bold text-emerald-400">${fmt(paperBalance)}</p>
+                      </div>
+                    </div>
+
+                    {/* Live Paper Auto Trade Feed */}
+                    {autoTradeLogs && autoTradeLogs.length > 0 && (
+                      <div className="space-y-2 pt-2">
+                        <p className="text-[11px] font-semibold text-white">Live Paper Auto Execution Stream</p>
+                        <div className="space-y-1.5 max-h-48 overflow-y-auto no-scrollbar">
+                          {autoTradeLogs.slice(0, 15).map((log, idx) => (
+                            <div key={log.id || idx} className="p-2.5 rounded-lg bg-[#0d1523] border border-slate-800/60 flex items-center justify-between text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-bold text-emerald-400">AUTO</span>
+                                <span className="text-slate-300 font-medium">{log.text || log.message || 'Paper Trade Executed'}</span>
+                              </div>
+                              <span className="text-[10px] text-slate-500 shrink-0">{log.time}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* BUY / SELL toggle */}
                 <div className="flex items-center justify-between">
                   <div className="flex bg-[#060d18] p-1 rounded-xl border border-slate-700/60 gap-1">
@@ -594,6 +732,7 @@ export const PaperTradingPanel = () => {
                     <p className="text-sm font-bold text-white">${fmt(paperBalance)} USDT</p>
                   </div>
                 </div>
+
 
                 {/* Form fields */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
