@@ -1102,17 +1102,33 @@ export const CryptoProvider = ({ children }) => {
         }
 
         const currPnL = parseFloat(((currSell - currBuy) * pos.amount - (pos.invested * 0.0004)).toFixed(2));
+        const pnlPct  = pos.invested > 0 ? parseFloat(((currPnL / pos.invested) * 100).toFixed(2)) : 0;
+        const tpGate  = pos.takeProfitPct || minProfitThreshold || 0.25;
+        const slGate  = pos.stopLossPct || 1.0;
 
-        // Settle position when PnL is positive (minimum $0.01) — automatic sell take profit
-        if (currPnL >= 0.01 || (pos.takeProfitPrice && currSell >= pos.takeProfitPrice)) {
-          // Mark for settlement — handle wallet/history OUTSIDE setState
-          positionsToSettle.push({ ...pos, currentBuyPrice: currBuy, currentSellPrice: currSell, unrealizedPnL: currPnL, settledPnL: currPnL });
+        // Settle position ONLY when Take-Profit Gate (+TP%) or Stop-Loss Gate (-SL%) target is reached
+        const isTakeProfitHit = pnlPct >= tpGate || (pos.takeProfitPrice && currSell >= pos.takeProfitPrice);
+        const isStopLossHit   = pnlPct <= -Math.abs(slGate);
+
+        if (isTakeProfitHit || isStopLossHit) {
+          const reason = isTakeProfitHit ? 'TAKE_PROFIT_GATE' : 'STOP_LOSS_GATE';
+          positionsToSettle.push({
+            ...pos,
+            currentBuyPrice: currBuy,
+            currentSellPrice: currSell,
+            unrealizedPnL: currPnL,
+            settledPnL: currPnL,
+            settleReason: reason,
+            pnlPct
+          });
         } else {
           remainingPositions.push({
             ...pos,
             currentBuyPrice: currBuy,
             currentSellPrice: currSell,
             unrealizedPnL: currPnL,
+            pnlPct,
+            targetTpPct: tpGate,
             duration: `${Math.floor((Date.now() - new Date(pos.timestamp).getTime()) / 1000)}s`
           });
         }
@@ -1120,81 +1136,68 @@ export const CryptoProvider = ({ children }) => {
       return remainingPositions;
     });
 
-    // Process settled positions OUTSIDE setOpenPositions to avoid nested setState crash
+    // Handle wallet updates, history recording & audio notification for settled positions
     if (positionsToSettle.length > 0) {
-      let totalSettledPnL = 0;
-      let totalReturnedInvested = 0;
-      const newHistoryItems = [];
-
       positionsToSettle.forEach(pos => {
-        const pnl = pos.settledPnL;
-        totalSettledPnL += pnl;
-        totalReturnedInvested += pos.invested;
+        const isTp = pos.settleReason === 'TAKE_PROFIT_GATE';
+        const returnAmount = pos.invested + pos.settledPnL;
+
+        setWallet(w => ({
+          ...w,
+          virtualBalance: parseFloat((w.virtualBalance + returnAmount).toFixed(2)),
+          totalEquity: parseFloat((w.totalEquity + pos.settledPnL).toFixed(2)),
+          todayProfit: parseFloat(((w.todayProfit || 0) + pos.settledPnL).toFixed(2))
+        }));
+
+        setTotalBotProfit(prev => parseFloat((prev + Math.max(0, pos.settledPnL)).toFixed(2)));
+        setAutoTradeCount(prev => prev + 1);
 
         const autoSellTxHash = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
 
-        newHistoryItems.push({
-          id: `TRD-AUTO-SELL-${Math.floor(100 + Math.random() * 900)}`,
+        const auditRecord = {
+          id: `TRD-AUTO-${Math.floor(100 + Math.random() * 900)}`,
+          timestamp: new Date().toISOString(),
           time: new Date().toLocaleTimeString(),
           symbol: pos.symbol,
-          strategy: 'Auto-Sell Take Profit Engine',
           buyExchange: pos.buyExchange || 'Binance Pro',
           sellExchange: pos.sellExchange || 'Bybit Quant',
+          amount: pos.amount,
+          invested: pos.invested,
           entryPrice: pos.entryBuyPrice || pos.entryPrice,
           exitPrice: pos.currentSellPrice,
-          amount: pos.amount,
+          grossProfit: pos.settledPnL,
           fees: parseFloat((pos.invested * 0.0004).toFixed(2)),
-          netProfit: pnl,
+          netProfit: pos.settledPnL,
+          pnlPct: pos.pnlPct,
           txHash: autoSellTxHash,
-          result: pnl >= 0 ? 'PROFIT' : 'LOSS'
-        });
+          settleReason: pos.settleReason,
+          result: isTp ? 'PROFIT' : 'LOSS'
+        };
 
-        // Add Auto-Sell log entry
-        setAutoTradeLogs(prev => [{
+        setTradeHistory(prev => [auditRecord, ...prev]);
+
+        const timeStr = new Date().toLocaleTimeString();
+        const logMsg = {
           id: Date.now() + Math.random(),
-          text: `🟢 [AUTO-SELL TAKE PROFIT] Sold ${pos.amount} ${pos.symbol} @ $${(pos.currentSellPrice || 0).toLocaleString()} (+$${pnl.toFixed(2)} profit locked in) — Tx: ${autoSellTxHash.substring(0, 10)}...`,
-          time: new Date().toLocaleTimeString(),
-          type: 'success'
-        }, ...prev.slice(0, 15)]);
+          text: isTp
+            ? `🟢 [TAKE-PROFIT GATE MET] ${pos.symbol} (+${pos.pnlPct}% >= +${pos.targetTpPct || 0.25}%) | Closed @ $${(pos.currentSellPrice || 0).toLocaleString()} (+$${pos.settledPnL.toFixed(2)} USDT profit locked in)`
+            : `🛑 [STOP-LOSS GATE] ${pos.symbol} (${pos.pnlPct}%) | Closed @ $${(pos.currentSellPrice || 0).toLocaleString()} (-$${Math.abs(pos.settledPnL).toFixed(2)} USDT)`,
+          time: timeStr,
+          type: isTp ? 'success' : 'danger'
+        };
+        setAutoTradeLogs(prev => [logMsg, ...prev.slice(0, 19)]);
 
-        // Live MetaMask Account Direct Auto-Withdraw Integration
-        const liveMetaMaskAddr = (typeof window !== 'undefined' && window.ethereum && window.ethereum.selectedAddress)
-          ? window.ethereum.selectedAddress
-          : (realWalletAddress || realWallet?.address || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41');
-        
-        const shortMetaMask = `${liveMetaMaskAddr.substring(0, 6)}...${liveMetaMaskAddr.substring(liveMetaMaskAddr.length - 4)}`;
-        const sweepTxHash = `0x${Math.floor(Math.random()*1e16).toString(16)}c01dff`;
-
-        // Record in Withdrawal Ledger for user audit
-        setWithdrawalHistory(wh => [{
-          id: `WTH-${Math.floor(1000 + Math.random() * 9000)}`,
-          time: new Date().toLocaleTimeString(),
-          amount: pnl,
-          address: liveMetaMaskAddr,
-          network: realWalletNetwork || 'Arbitrum One',
-          status: 'METAMASK AUTO-WITHDRAW CONFIRMED 🟢',
-          txHash: sweepTxHash,
-          source: 'AUTOPILOT BOT SWEEP'
-        }, ...wh]);
-
-        addNotification(`🦊 METAMASK DIRECT AUTO-WITHDRAW: +$${pnl.toFixed(2)} USDT automatically withdrawn & credited to your MetaMask account (${shortMetaMask}) | Tx: ${sweepTxHash.substring(0, 14)}...`, 'success');
+        if (isTp) {
+          try { audioFx?.playTradeSuccess(); } catch (_) {}
+          addNotification(`🎯 Take Profit Gate Met! Closed ${pos.symbol} (+${pos.pnlPct}% | +$${pos.settledPnL.toFixed(2)} USDT)`, 'success');
+        } else {
+          try { audioFx?.playAlertChime(); } catch (_) {}
+          addNotification(`🛑 Stop Loss Triggered: Closed ${pos.symbol} (${pos.pnlPct}%)`, 'warning');
+        }
       });
-
-      // Batch wallet update & sweep for all settled positions
-      setTotalBotProfit(prev => parseFloat((prev + totalSettledPnL).toFixed(2)));
-      setWallet(w => ({
-        ...w,
-        virtualBalance: parseFloat((w.virtualBalance + totalSettledPnL + totalReturnedInvested).toFixed(2)),
-        totalEquity: parseFloat((w.totalEquity + totalSettledPnL).toFixed(2)),
-        todayProfit: parseFloat(((w.todayProfit || 0) + totalSettledPnL).toFixed(2)),
-        roiPct: w.totalEquity > 0 ? parseFloat((((w.todayProfit || 0) + totalSettledPnL) / w.totalEquity * 100).toFixed(2)) : 0
-      }));
-
-      setTradeHistory(th => [...newHistoryItems, ...th]);
-
-      try { audioFx.playTradeSuccess(); } catch (_) {}
     }
   };
+
 
   const closePosition = (posId, finalPnL = null, reason = 'MANUAL') => {
     const targetPos = openPositions.find(p => p.id === posId);
