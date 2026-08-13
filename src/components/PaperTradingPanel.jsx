@@ -873,18 +873,30 @@ export const PaperTradingPanel = () => {
                 {/* Error */}
                 {realError && (
                   <div className="flex items-start gap-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
-                    <XCircle className="w-4 h-4 shrink-0 mt-0.5" /> <span>{realError}</span>
+                    <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span style={{ whiteSpace: 'pre-line' }}>{realError}</span>
                   </div>
                 )}
 
                 {/* Tx result */}
                 {realTxResult && (
-                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 space-y-3">
+                  <div className={`p-4 rounded-xl border space-y-3 ${
+                    realTxResult.isSimulated
+                      ? 'bg-blue-500/10 border-blue-500/20'
+                      : 'bg-emerald-500/10 border-emerald-500/20'
+                  }`}>
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-emerald-400 text-xs font-semibold">
-                        <CheckCircle2 className="w-4 h-4" /> Swap Submitted On-Chain ✓
+                      <div className={`flex items-center gap-2 text-xs font-semibold ${
+                        realTxResult.isSimulated ? 'text-blue-400' : 'text-emerald-400'
+                      }`}>
+                        <CheckCircle2 className="w-4 h-4" />
+                        {realTxResult.isSimulated ? 'Simulated Swap (Testnet Demo)' : 'Swap Submitted On-Chain ✓'}
                       </div>
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-medium">
+                      <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${
+                        realTxResult.isSimulated
+                          ? 'bg-blue-500/20 text-blue-400'
+                          : 'bg-emerald-500/20 text-emerald-400'
+                      }`}>
                         {realTxResult.dexName || 'DEX'}
                       </span>
                     </div>
@@ -894,11 +906,23 @@ export const PaperTradingPanel = () => {
                     {realTxResult.explorerUrl && (
                       <a href={realTxResult.explorerUrl} target="_blank" rel="noreferrer"
                         className="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 transition">
-                        <ExternalLink className="w-3.5 h-3.5" /> View on {DEX_CONFIG[activeChainId]?.name || ''} Block Explorer ↗
+                        <ExternalLink className="w-3.5 h-3.5" /> View on Block Explorer ↗
                       </a>
                     )}
                     <p className="text-[10px] text-slate-500">
-                      Transaction is pending confirmation on the blockchain. Check explorer for status.
+                      {realTxResult.isSimulated
+                        ? 'Testnet simulation — no real funds used. Switch to Ethereum Mainnet for real trading.'
+                        : 'Transaction broadcast. Confirmation may take 15–60 seconds depending on gas.'}
+                    </p>
+                  </div>
+                )}
+
+                {/* Sepolia testnet notice */}
+                {activeChainId === 11155111 && (
+                  <div className="flex items-start gap-2 p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                    <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                    <p className="text-xs text-blue-300">
+                      <strong>Sepolia Testnet</strong> — DEX pools are not deployed here. Trades run in simulation mode using fake tx hashes. Switch to <strong>Ethereum Mainnet</strong> for real swaps.
                     </p>
                   </div>
                 )}
