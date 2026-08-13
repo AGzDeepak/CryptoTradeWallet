@@ -1,22 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { Settings, Key, Server, Eye, EyeOff, Save, Bell, Volume2, Bot, Shield, Moon, Zap, RefreshCw, Check } from 'lucide-react';
+import { Server, Bell, Volume2, Bot, Shield, Moon, Zap, RefreshCw } from 'lucide-react';
 
 export const SettingsModal = () => {
   const { soundEnabled, setSoundEnabled, autoTradingEnabled, setAutoTradingEnabled } = useCrypto();
-
-  const [flaskUrl, setFlaskUrl]   = useState('http://localhost:5000/api');
-  const [wsUrl, setWsUrl]         = useState('ws://localhost:5000/ws');
-  const [showKeys, setShowKeys]   = useState(false);
-  const [binanceKey, setBinanceKey] = useState('binance_api_key_8921x_prod');
-  const [bybitKey, setBybitKey]   = useState('bybit_api_key_4412z_prod');
-  const [saved, setSaved]         = useState(false);
-
-  const handleSave = (e) => {
-    e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
 
   const Toggle = ({ on, onToggle }) => (
     <button
@@ -25,18 +12,6 @@ export const SettingsModal = () => {
     >
       <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all shadow ${on ? 'left-5' : 'left-0.5'}`} />
     </button>
-  );
-
-  const InputField = ({ label, value, onChange, type = 'text' }) => (
-    <div className="space-y-1.5">
-      <label className="text-xs text-slate-400 font-medium">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={onChange}
-        className="w-full bg-[#060d18] border border-slate-700/60 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none focus:border-violet-500/50 transition font-mono"
-      />
-    </div>
   );
 
   return (
@@ -128,42 +103,7 @@ export const SettingsModal = () => {
         </div>
       </div>
 
-      {/* API Keys & Endpoints */}
-      <form onSubmit={handleSave}>
-        <div className="rounded-2xl bg-[#0d1523] border border-slate-800/70 overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800/70">
-            <h2 className="text-sm font-semibold text-white">API Keys & Endpoints</h2>
-            <button
-              type="button"
-              onClick={() => setShowKeys(!showKeys)}
-              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 transition"
-            >
-              {showKeys ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-              {showKeys ? 'Hide' : 'Show Keys'}
-            </button>
-          </div>
-          <div className="p-5 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <InputField label="Flask REST Endpoint" value={flaskUrl} onChange={e => setFlaskUrl(e.target.value)} />
-              <InputField label="WebSocket Gateway" value={wsUrl} onChange={e => setWsUrl(e.target.value)} />
-              <InputField label="Binance API Key" value={binanceKey} onChange={e => setBinanceKey(e.target.value)} type={showKeys ? 'text' : 'password'} />
-              <InputField label="Bybit API Key" value={bybitKey} onChange={e => setBybitKey(e.target.value)} type={showKeys ? 'text' : 'password'} />
-            </div>
-
-            <button
-              type="submit"
-              className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-semibold transition ${
-                saved
-                  ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
-                  : 'bg-violet-600 hover:bg-violet-500 text-white'
-              }`}
-            >
-              {saved ? <><Check className="w-4 h-4" /> Saved!</> : <><Save className="w-4 h-4" /> Save Settings</>}
-            </button>
-          </div>
-        </div>
-      </form>
-
     </div>
   );
 };
+
