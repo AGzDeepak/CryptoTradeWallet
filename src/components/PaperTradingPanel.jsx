@@ -31,7 +31,7 @@ export const PaperTradingPanel = () => {
   const {
     wallet, resetWallet,
     openPositions, tradeHistory,
-    executeOrder, executeAutoTrade,
+    executeOrder, closePosition, executeAutoTrade,
     openModal, totalBotProfit, autoTradeCount,
     autoTradingEnabled, setAutoTradingEnabled,
     autoTradeLogs, arbitrageOpps,
@@ -49,6 +49,18 @@ export const PaperTradingPanel = () => {
   const [symbol, setSymbol]     = useState('BTCUSDT');
   const [exchange, setExchange] = useState('Binance Pro');
   const [amount, setAmount]     = useState('0.10');
+
+  /* ── paper auto buy & sell engine state ────────────────────── */
+  const [paperAutoEnabled, setPaperAutoEnabled]   = useState(false);
+  const [paperAutoTargetSymbol, setPaperAutoTargetSymbol] = useState('ALL'); // 'ALL' | 'BTCUSDT' | 'ETHUSDT' etc.
+  const [paperAutoOrderUsd, setPaperAutoOrderUsd] = useState(250);       // $100, $250, $500
+  const [paperAutoTakeProfit, setPaperAutoTakeProfit] = useState(1.0);    // +1.0% PnL auto sell
+  const [paperAutoStopLoss, setPaperAutoStopLoss] = useState(1.0);      // -1.0% PnL auto sell
+  const [paperAutoInterval, setPaperAutoInterval] = useState(3);         // seconds
+  const [paperAutoLogs, setPaperAutoLogs]         = useState([]);
+  const [paperAutoStatusMsg, setPaperAutoStatusMsg] = useState('Paper Auto-Bot Standby — Ready to launch');
+  const [paperAutoStats, setPaperAutoStats]       = useState({ buyCount: 0, sellCount: 0, totalProfitUsd: 0 });
+
 
   const [isExec, setIsExec]     = useState(false);
   const [execStep, setExecStep] = useState(0);   // 0=idle, 1-5=pipeline, 6=done
@@ -244,6 +256,134 @@ export const PaperTradingPanel = () => {
     try { audioFx?.playTradeSuccess(); } catch (_) {}
     addNotification('⚡ Quant Bot trade triggered!', 'success');
   };
+
+  /* ── Paper Auto-Trading Buy & Sell Engine Loop ───────────────── */
+  useEffect(() => {
+    if (!paperAutoEnabled) {
+      setPaperAutoStatusMsg('Paper Auto-Bot Standby — Ready to launch');
+      return;
+    }
+
+    let timer;
+    const runAutoEngine = async () => {
+      try {
+        const bal = wallet?.virtualBalance ?? 0;
+
+        // 1. AUTO-SELL MONITORING: Check open positions for Take-Profit or Stop-Loss
+        let openPosList = openPositions || [];
+        if (paperAutoTargetSymbol !== 'ALL') {
+          openPosList = openPosList.filter(p => p.symbol === paperAutoTargetSymbol);
+        }
+
+        let soldPosition = false;
+        for (const pos of openPosList) {
+          const coin = marketData.find(c => c.symbol === pos.symbol) || marketData[0];
+          const currPrice = coin.basePrice;
+          const entryPrice = pos.entryPrice || pos.entryBuyPrice || currPrice;
+          const pnlPct = ((currPrice - entryPrice) / entryPrice) * 100;
+          const pnlUsd = (currPrice - entryPrice) * pos.amount;
+
+          // Check Take-Profit (e.g. >= +1.0%)
+          if (pnlPct >= paperAutoTakeProfit) {
+            setPaperAutoStatusMsg(`🎯 TAKE PROFIT (+${pnlPct.toFixed(2)}%)! Auto-Selling ${pos.amount} ${pos.symbol}…`);
+            const success = executeOrder('SELL', pos.symbol, pos.exchange, pos.amount);
+            if (success) {
+              soldPosition = true;
+              const logEntry = {
+                id: `P-SELL-${Date.now()}`,
+                type: 'AUTO_SELL_TP',
+                actionLabel: 'AUTO-SELL (TAKE PROFIT)',
+                symbol: pos.symbol,
+                exchange: pos.exchange,
+                amount: pos.amount,
+                price: currPrice,
+                pnlPct: pnlPct.toFixed(2),
+                pnlUsd: pnlUsd.toFixed(2),
+                time: new Date().toLocaleTimeString()
+              };
+              setPaperAutoLogs(prev => [logEntry, ...prev.slice(0, 24)]);
+              setPaperAutoStats(prev => ({
+                ...prev,
+                sellCount: prev.sellCount + 1,
+                totalProfitUsd: parseFloat((prev.totalProfitUsd + Math.max(0.10, pnlUsd)).toFixed(2))
+              }));
+              addNotification(`🎯 Auto-Sell Take Profit! Closed ${pos.symbol} (+${pnlPct.toFixed(2)}% | +$${pnlUsd.toFixed(2)})`, 'success');
+              break;
+            }
+          }
+          // Check Stop-Loss (e.g. <= -1.0%)
+          else if (pnlPct <= -Math.abs(paperAutoStopLoss)) {
+            setPaperAutoStatusMsg(`🛑 STOP LOSS (${pnlPct.toFixed(2)}%)! Auto-Selling ${pos.amount} ${pos.symbol}…`);
+            const success = executeOrder('SELL', pos.symbol, pos.exchange, pos.amount);
+            if (success) {
+              soldPosition = true;
+              const logEntry = {
+                id: `P-SELL-${Date.now()}`,
+                type: 'AUTO_SELL_SL',
+                actionLabel: 'AUTO-SELL (STOP LOSS)',
+                symbol: pos.symbol,
+                exchange: pos.exchange,
+                amount: pos.amount,
+                price: currPrice,
+                pnlPct: pnlPct.toFixed(2),
+                pnlUsd: pnlUsd.toFixed(2),
+                time: new Date().toLocaleTimeString()
+              };
+              setPaperAutoLogs(prev => [logEntry, ...prev.slice(0, 24)]);
+              setPaperAutoStats(prev => ({
+                ...prev,
+                sellCount: prev.sellCount + 1,
+                totalProfitUsd: parseFloat((prev.totalProfitUsd + pnlUsd).toFixed(2))
+              }));
+              addNotification(`🛑 Auto-Sell Stop Loss! Closed ${pos.symbol} (${pnlPct.toFixed(2)}%)`, 'danger');
+              break;
+            }
+          }
+        }
+
+        // 2. AUTO-BUY ENTRY: If no auto-sell was executed in this tick and balance is available
+        if (!soldPosition && bal >= paperAutoOrderUsd) {
+          const validCoins = paperAutoTargetSymbol === 'ALL'
+            ? PAIRS
+            : [paperAutoTargetSymbol];
+          const chosenSymbol = validCoins[Math.floor(Math.random() * validCoins.length)];
+          const coin = marketData.find(c => c.symbol === chosenSymbol) || marketData[0];
+          const buyEx = EXCHANGES[Math.floor(Math.random() * EXCHANGES.length)];
+          const qty = parseFloat((paperAutoOrderUsd / coin.basePrice).toFixed(chosenSymbol.startsWith('BTC') ? 4 : 2));
+
+          if (qty > 0) {
+            setPaperAutoStatusMsg(`🟢 AUTO-BUY ENTRY! Buying ${qty} ${chosenSymbol} @ $${coin.basePrice.toLocaleString()} on ${buyEx}…`);
+            const success = executeOrder('BUY', chosenSymbol, buyEx, qty);
+            if (success) {
+              const logEntry = {
+                id: `P-BUY-${Date.now()}`,
+                type: 'AUTO_BUY',
+                actionLabel: 'AUTO-BUY (ENTRY)',
+                symbol: chosenSymbol,
+                exchange: buyEx,
+                amount: qty,
+                price: coin.basePrice,
+                pnlPct: '0.00',
+                pnlUsd: '0.00',
+                time: new Date().toLocaleTimeString()
+              };
+              setPaperAutoLogs(prev => [logEntry, ...prev.slice(0, 24)]);
+              setPaperAutoStats(prev => ({ ...prev, buyCount: prev.buyCount + 1 }));
+            }
+          }
+        } else if (!soldPosition) {
+          setPaperAutoStatusMsg(`📊 Monitoring ${openPosList.length} open position(s) & scanning entry signals…`);
+        }
+      } catch (err) {
+        setPaperAutoStatusMsg(`Notice: ${err.message || 'Auto engine error'}`);
+      }
+    };
+
+    runAutoEngine();
+    timer = setInterval(runAutoEngine, paperAutoInterval * 1000);
+    return () => clearInterval(timer);
+  }, [paperAutoEnabled, paperAutoTargetSymbol, paperAutoOrderUsd, paperAutoTakeProfit, paperAutoStopLoss, paperAutoInterval, openPositions, wallet, marketData, executeOrder, addNotification]);
+
 
   /* ── Fetch live balances + DEX quote ───────────────────────── */
   const fetchLiveData = useCallback(async () => {
@@ -602,37 +742,28 @@ export const PaperTradingPanel = () => {
 
                 {paperTradeMode === 'AUTO' && (
                   <div className="p-4 rounded-xl bg-[#060d18] border border-slate-800/80 space-y-4">
-                    {/* Bot Power & Quick Trigger Header */}
+                    {/* Bot Power Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
                         <Bot className="w-5 h-5 text-emerald-400" />
                         <div>
-                          <h4 className="text-xs font-bold text-white">Paper Arbitrage Auto-Trader</h4>
-                          <p className="text-[10px] text-slate-400">Scans Binance, Bybit, OKX, Coinbase & executes auto trades</p>
+                          <h4 className="text-xs font-bold text-white">Paper Auto Buy & Sell Engine</h4>
+                          <p className="text-[10px] text-slate-400">Automates paper entry buys & take-profit / stop-loss sells</p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => setAutoTradingEnabled(!autoTradingEnabled)}
+                          onClick={() => setPaperAutoEnabled(!paperAutoEnabled)}
                           className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
-                            autoTradingEnabled
+                            paperAutoEnabled
                               ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
                               : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
                           }`}
                         >
-                          <span className={`w-2 h-2 rounded-full ${autoTradingEnabled ? 'bg-white animate-ping' : 'bg-slate-500'}`} />
-                          {autoTradingEnabled ? 'PAPER BOT ACTIVE (ON)' : 'START PAPER BOT'}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={handleBotTrade}
-                          className="px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold flex items-center gap-1.5 transition"
-                          title="Trigger instant paper trade"
-                        >
-                          <Zap className="w-3.5 h-3.5 fill-current" /> Trigger Now
+                          <span className={`w-2 h-2 rounded-full ${paperAutoEnabled ? 'bg-white animate-ping' : 'bg-slate-500'}`} />
+                          {paperAutoEnabled ? 'AUTO BOT ACTIVE (ON)' : 'START AUTO BUY & SELL'}
                         </button>
                       </div>
                     </div>
@@ -640,36 +771,79 @@ export const PaperTradingPanel = () => {
                     {/* Status Monitor Bar */}
                     <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800/70 flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
-                        <Activity className={`w-3.5 h-3.5 ${autoTradingEnabled ? 'text-emerald-400 animate-pulse' : 'text-slate-500'}`} />
-                        <span className="text-slate-300 font-medium">
-                          {autoTradingEnabled
-                            ? '🟢 BOT RUNNING — Scanning 4 Exchanges for Arbitrage Spreads…'
-                            : '⚪ BOT PAUSED — Click Start Paper Bot to run automated loop'}
-                        </span>
+                        <Activity className={`w-3.5 h-3.5 ${paperAutoEnabled ? 'text-emerald-400 animate-pulse' : 'text-slate-500'}`} />
+                        <span className="text-slate-300 font-medium">{paperAutoStatusMsg}</span>
                       </div>
                     </div>
 
-                    {/* Bot Controls & Parameters */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <label className="text-[11px] text-slate-400">Min Profit Threshold Gate (%)</label>
-                        <select
-                          value={minProfitThreshold || 0.25}
-                          onChange={e => setMinProfitThreshold(parseFloat(e.target.value))}
-                          className="w-full bg-[#0d1523] border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
-                        >
-                          <option value={0.10}>0.10% (Aggressive High-Frequency)</option>
-                          <option value={0.25}>0.25% (Balanced Standard)</option>
-                          <option value={0.50}>0.50% (High Margin)</option>
-                          <option value={1.00}>1.00% (Ultra Conservative)</option>
-                        </select>
+                    {/* Bot Controls & Parameters Grid */}
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[11px] text-slate-400">Target Asset</label>
+                          <select
+                            value={paperAutoTargetSymbol}
+                            onChange={e => setPaperAutoTargetSymbol(e.target.value)}
+                            className="w-full bg-[#0d1523] border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
+                          >
+                            <option value="ALL">All Pairs (BTC, ETH, SOL, XRP)</option>
+                            {PAIRS.map(p => <option key={p} value={p}>{p.replace('USDT', '/USDT')}</option>)}
+                          </select>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[11px] text-slate-400">Auto Buy Order Size</label>
+                          <select
+                            value={paperAutoOrderUsd}
+                            onChange={e => setPaperAutoOrderUsd(parseFloat(e.target.value))}
+                            className="w-full bg-[#0d1523] border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
+                          >
+                            <option value={100}>$100 USDT / Trade</option>
+                            <option value={250}>$250 USDT / Trade</option>
+                            <option value={500}>$500 USDT / Trade</option>
+                          </select>
+                        </div>
                       </div>
 
-                      <div className="space-y-1">
-                        <label className="text-[11px] text-slate-400">Paper Capital Sizing</label>
-                        <div className="w-full bg-[#0d1523] border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 flex items-center justify-between">
-                          <span>25% balance / trade</span>
-                          <span className="font-mono text-emerald-400">Max $500</span>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="space-y-1">
+                          <label className="text-[11px] text-slate-400">Take Profit Target</label>
+                          <select
+                            value={paperAutoTakeProfit}
+                            onChange={e => setPaperAutoTakeProfit(parseFloat(e.target.value))}
+                            className="w-full bg-[#0d1523] border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-emerald-400 font-semibold outline-none"
+                          >
+                            <option value={0.5}>+0.5% (Quick Scalp)</option>
+                            <option value={1.0}>+1.0% (Standard TP)</option>
+                            <option value={2.0}>+2.0% (High Target)</option>
+                            <option value={5.0}>+5.0% (Runner)</option>
+                          </select>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[11px] text-slate-400">Stop Loss Guard</label>
+                          <select
+                            value={paperAutoStopLoss}
+                            onChange={e => setPaperAutoStopLoss(parseFloat(e.target.value))}
+                            className="w-full bg-[#0d1523] border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-rose-400 font-semibold outline-none"
+                          >
+                            <option value={0.5}>-0.5% (Tight SL)</option>
+                            <option value={1.0}>-1.0% (Standard SL)</option>
+                            <option value={2.0}>-2.0% (Wide Guard)</option>
+                          </select>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[11px] text-slate-400">Execution Speed</label>
+                          <select
+                            value={paperAutoInterval}
+                            onChange={e => setPaperAutoInterval(parseInt(e.target.value))}
+                            className="w-full bg-[#0d1523] border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
+                          >
+                            <option value={2}>Every 2 Seconds</option>
+                            <option value={3}>Every 3 Seconds</option>
+                            <option value={5}>Every 5 Seconds</option>
+                          </select>
                         </div>
                       </div>
                     </div>
@@ -677,31 +851,46 @@ export const PaperTradingPanel = () => {
                     {/* Paper Bot Stats Row */}
                     <div className="grid grid-cols-3 gap-3 pt-1">
                       <div className="bg-[#0d1523] rounded-lg p-2.5 text-center">
-                        <p className="text-[10px] text-slate-400">Total Bot Profit</p>
-                        <p className="text-xs font-bold text-amber-400">+${fmt(totalBotProfit)}</p>
+                        <p className="text-[10px] text-slate-400">Auto-Buys Executed</p>
+                        <p className="text-xs font-bold text-emerald-400">{paperAutoStats.buyCount}</p>
                       </div>
                       <div className="bg-[#0d1523] rounded-lg p-2.5 text-center">
-                        <p className="text-[10px] text-slate-400">Trades Settled</p>
-                        <p className="text-xs font-bold text-white">{autoTradeCount || 0}</p>
+                        <p className="text-[10px] text-slate-400">Auto-Sells Settled</p>
+                        <p className="text-xs font-bold text-cyan-400">{paperAutoStats.sellCount}</p>
                       </div>
                       <div className="bg-[#0d1523] rounded-lg p-2.5 text-center">
-                        <p className="text-[10px] text-slate-400">Paper Balance</p>
-                        <p className="text-xs font-bold text-emerald-400">${fmt(paperBalance)}</p>
+                        <p className="text-[10px] text-slate-400">Auto Profit Generated</p>
+                        <p className="text-xs font-bold text-amber-400">+${paperAutoStats.totalProfitUsd.toFixed(2)}</p>
                       </div>
                     </div>
 
-                    {/* Live Paper Auto Trade Feed */}
-                    {autoTradeLogs && autoTradeLogs.length > 0 && (
+                    {/* Live Paper Auto Execution Stream */}
+                    {paperAutoLogs.length > 0 && (
                       <div className="space-y-2 pt-2">
                         <p className="text-[11px] font-semibold text-white">Live Paper Auto Execution Stream</p>
                         <div className="space-y-1.5 max-h-48 overflow-y-auto no-scrollbar">
-                          {autoTradeLogs.slice(0, 15).map((log, idx) => (
-                            <div key={log.id || idx} className="p-2.5 rounded-lg bg-[#0d1523] border border-slate-800/60 flex items-center justify-between text-xs">
+                          {paperAutoLogs.map((log) => (
+                            <div key={log.id} className="p-2.5 rounded-lg bg-[#0d1523] border border-slate-800/60 flex items-center justify-between text-xs">
                               <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-bold text-emerald-400">AUTO</span>
-                                <span className="text-slate-300 font-medium">{log.text || log.message || 'Paper Trade Executed'}</span>
+                                <span className={`text-[9px] px-1.5 py-0.3 rounded font-bold ${
+                                  log.type === 'AUTO_BUY'
+                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                    : log.type === 'AUTO_SELL_TP'
+                                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                                    : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                }`}>
+                                  {log.actionLabel}
+                                </span>
+                                <span className="font-medium text-white">{log.amount} {log.symbol.replace('USDT', '')} @ ${log.price?.toLocaleString()}</span>
                               </div>
-                              <span className="text-[10px] text-slate-500 shrink-0">{log.time}</span>
+                              <div className="flex items-center gap-2">
+                                {log.type.startsWith('AUTO_SELL') && (
+                                  <span className={`text-[10px] font-bold ${parseFloat(log.pnlPct) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                    {parseFloat(log.pnlPct) >= 0 ? `+${log.pnlPct}% (+$${log.pnlUsd})` : `${log.pnlPct}% (-$${log.pnlUsd})`}
+                                  </span>
+                                )}
+                                <span className="text-[10px] text-slate-500">{log.time}</span>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -709,6 +898,7 @@ export const PaperTradingPanel = () => {
                     )}
                   </div>
                 )}
+
 
                 {/* BUY / SELL toggle */}
                 <div className="flex items-center justify-between">
