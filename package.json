@@ -15,6 +15,7 @@
   "dependencies": {
     "canvas-confetti": "^1.9.2",
     "clsx": "^2.1.0",
+    "ethers": "^6.17.0",
     "firebase": "^12.16.0",
     "framer-motion": "^11.0.0",
     "lucide-react": "^0.344.0",

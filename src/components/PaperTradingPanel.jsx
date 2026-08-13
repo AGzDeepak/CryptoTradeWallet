@@ -1,16 +1,17 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import {
   Bot, Play, Pause, Zap, RefreshCw, Activity, Terminal,
   CheckCircle2, ExternalLink, XCircle, ArrowUpRight, ArrowDownLeft,
   Wallet, Copy, Check, Loader2, Globe, TrendingUp, ShieldCheck,
-  Clock, CircleDollarSign, LogIn
+  Clock, CircleDollarSign, LogIn, ArrowLeftRight, Info
 } from 'lucide-react';
-import {
-  isWeb3Available, connectRealWeb3Wallet, sendRealWeb3Transaction,
-  executeRealBuyEthereumOrder, executeRealSellEthereumOrder, SUPPORTED_NETWORKS
-} from '../services/web3Service';
+import { isWeb3Available, sendRealWeb3Transaction, SUPPORTED_NETWORKS } from '../services/web3Service';
 import { shortAddress } from '../services/walletService';
+import {
+  executeDexBuy, executeDexSell, getDexQuote, getDexConfig,
+  getTokensForChain, getNativeBalance, getTokenBalance, parseDexError, DEX_CONFIG, TOKENS
+} from '../services/dexService';
 
 /* ── tiny helpers ────────────────────────────────────────────────── */
 const fmt = (n, dec = 2) =>
@@ -54,15 +55,21 @@ export const PaperTradingPanel = () => {
   const [paperCopied, setPaperCopied] = useState(false);
 
   /* ── real trade state ───────────────────────────────────────── */
-  const [realSide, setRealSide]         = useState('BUY');
-  const [realAmt, setRealAmt]           = useState('0.01');
-  const [realPair, setRealPair]         = useState('ETH');
-  const [activeChainId, setActiveChainId] = useState(null);  // live MetaMask chain
+  const [realSide, setRealSide]             = useState('BUY');
+  const [realAmt, setRealAmt]               = useState('0.01');
+  const [realToken, setRealToken]           = useState('USDT');    // token to buy/sell
+  const [realSlippage, setRealSlippage]     = useState(1.0);       // slippage %
+  const [activeChainId, setActiveChainId]   = useState(null);      // live MetaMask chain
   const [isSwitchingNet, setIsSwitchingNet] = useState(false);
-  const [isRealExec, setIsRealExec]     = useState(false);
-  const [realTxResult, setRealTxResult] = useState(null);
-  const [realError, setRealError]       = useState('');
+  const [isRealExec, setIsRealExec]         = useState(false);
+  const [realExecStep, setRealExecStep]     = useState('');         // step label shown during execution
+  const [realTxResult, setRealTxResult]     = useState(null);
+  const [realError, setRealError]           = useState('');
   const [realConnecting, setRealConnecting] = useState(false);
+  const [nativeBal, setNativeBal]           = useState(null);       // live native balance
+  const [tokenBal, setTokenBal]             = useState(null);       // live token balance
+  const [swapQuote, setSwapQuote]           = useState(null);       // live DEX quote
+  const [isFetchingQuote, setIsFetchingQuote] = useState(false);
 
   /* ── deposit state ──────────────────────────────────────────── */
   const [depAmt, setDepAmt]         = useState('');
@@ -226,46 +233,110 @@ export const PaperTradingPanel = () => {
     addNotification('⚡ Quant Bot trade triggered!', 'success');
   };
 
-  /* ── Real Trade Execute (MetaMask eth_sendTransaction) ──────── */
+  /* ── Fetch live balances + DEX quote ───────────────────────── */
+  const fetchLiveData = useCallback(async () => {
+    if (!isMMConnected || !activeChainId) return;
+    try {
+      const [nb, tb] = await Promise.all([
+        getNativeBalance(realWalletAddress),
+        getTokenBalance(activeChainId, realWalletAddress, realToken),
+      ]);
+      setNativeBal(nb);
+      setTokenBal(tb);
+    } catch (_) {}
+  }, [isMMConnected, activeChainId, realWalletAddress, realToken]);
+
+  useEffect(() => { fetchLiveData(); }, [fetchLiveData]);
+
+  /* ── Live DEX quote (debounced) ─────────────────────────────── */
+  useEffect(() => {
+    const fetch = async () => {
+      if (!activeChainId || !realAmt || parseFloat(realAmt) <= 0) {
+        setSwapQuote(null);
+        return;
+      }
+      try {
+        const { ethers } = await import('ethers');
+        setIsFetchingQuote(true);
+        const dex    = getDexConfig(activeChainId);
+        const tokens = getTokensForChain(activeChainId);
+        const token  = tokens[realToken];
+        if (!token) { setSwapQuote(null); setIsFetchingQuote(false); return; }
+        const path = realSide === 'BUY'
+          ? [dex.weth, token.address]
+          : [token.address, dex.weth];
+        const amtIn = realSide === 'BUY'
+          ? ethers.parseEther(realAmt.toString())
+          : ethers.parseUnits(realAmt.toString(), token.decimals);
+        const quote = await getDexQuote(activeChainId, amtIn, path);
+        if (quote !== null) {
+          const formatted = realSide === 'BUY'
+            ? ethers.formatUnits(quote, token.decimals)
+            : ethers.formatEther(quote);
+          setSwapQuote(parseFloat(formatted).toFixed(6));
+        } else {
+          setSwapQuote(null);
+        }
+      } catch (_) {
+        setSwapQuote(null);
+      } finally {
+        setIsFetchingQuote(false);
+      }
+    };
+    const timer = setTimeout(fetch, 600);
+    return () => clearTimeout(timer);
+  }, [activeChainId, realAmt, realSide, realToken]);
+
+  /* ── Real Trade Execute via DEX Router ─────────────────────── */
   const handleRealTrade = async (e) => {
     e?.preventDefault();
     setRealError('');
     setRealTxResult(null);
     if (!isMMConnected) { setRealError('Connect MetaMask first.'); return; }
+    if (!activeChainId)  { setRealError('Network not detected. Switch network in MetaMask.'); return; }
     const qty = parseFloat(realAmt);
     if (!qty || qty <= 0) { setRealError('Enter a valid amount.'); return; }
+
+    const tokens = getTokensForChain(activeChainId);
+    if (!tokens[realToken]) {
+      setRealError(`${realToken} is not supported on this network. Try USDT or USDC.`);
+      return;
+    }
+
     setIsRealExec(true);
+    setRealExecStep('');
     try {
-      // Always fetch fresh address directly from MetaMask — never rely on stale state
       let fromAddr = realWalletAddress;
       if (isWeb3Available()) {
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         if (accounts?.[0]) {
           fromAddr = accounts[0];
-          // Sync state if it drifted
           if (fromAddr !== realWalletAddress) setRealWalletAddress(fromAddr);
         }
       }
       if (!fromAddr || !/^0x[0-9a-fA-F]{40}$/.test(fromAddr)) {
-        throw new Error('No valid wallet address found. Please reconnect MetaMask.');
+        throw new Error('No valid wallet address. Please reconnect MetaMask.');
       }
+
       let result;
       if (realSide === 'BUY') {
-        result = await executeRealBuyEthereumOrder(fromAddr, String(qty));
+        // Native ETH/BNB/MATIC → Token via DEX router
+        setRealExecStep(`Swapping ${qty} ${DEX_CONFIG[activeChainId]?.nativeSymbol || 'ETH'} → ${realToken} on ${DEX_CONFIG[activeChainId]?.name || 'DEX'}…`);
+        result = await executeDexBuy(activeChainId, fromAddr, qty, realToken, realSlippage);
       } else {
-        result = await executeRealSellEthereumOrder(fromAddr, String(qty));
+        // Token → Native ETH via DEX router (needs ERC-20 approval first)
+        setRealExecStep(`Step 1/2: Approving ${realToken} for DEX router…`);
+        result = await executeDexSell(activeChainId, fromAddr, qty, realToken, realSlippage);
       }
+
+      setRealExecStep('');
       setRealTxResult(result);
-      addNotification(`🚀 Real ${realSide} ${qty} ${realPair} — Tx: ${result.txHash?.substring(0, 14)}...`, 'success');
+      addNotification(`🚀 ${realSide} ${qty} ${realToken} via ${result.dexName} — Tx: ${result.txHash?.substring(0, 14)}…`, 'success');
+      // refresh balances after successful trade
+      setTimeout(fetchLiveData, 3000);
     } catch (err) {
-      // Translate MetaMask internal errors into friendly messages
-      const msg = err.message || 'Transaction failed';
-      setRealError(
-        msg.includes('user rejected') ? 'Transaction cancelled in MetaMask.' :
-        msg.includes('insufficient funds') ? 'Insufficient ETH balance for gas fees.' :
-        msg.includes('invalid') ? 'MetaMask rejected the transaction. Ensure your wallet is unlocked and on the correct network.' :
-        msg
-      );
+      setRealExecStep('');
+      setRealError(parseDexError(err));
     } finally {
       setIsRealExec(false);
     }
@@ -680,10 +751,10 @@ export const PaperTradingPanel = () => {
                 {/* BUY / SELL toggle */}
                 <div className="flex items-center gap-2">
                   {['BUY', 'SELL'].map(s => (
-                    <button key={s} onClick={() => setRealSide(s)}
+                    <button key={s} onClick={() => { setRealSide(s); setRealTxResult(null); setRealError(''); setSwapQuote(null); }}
                       className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition ${
                         realSide === s
-                          ? s === 'BUY' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+                          ? s === 'BUY' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20' : 'bg-rose-600 text-white shadow-lg shadow-rose-500/20'
                           : 'bg-[#060d18] border border-slate-700/60 text-slate-400 hover:text-white'
                       }`}>
                       {s === 'BUY' ? '↑ Buy' : '↓ Sell'}
@@ -691,37 +762,131 @@ export const PaperTradingPanel = () => {
                   ))}
                 </div>
 
-                {/* Asset + Amount */}
-                <div className="grid grid-cols-2 gap-4">
+                {/* DEX Info bar */}
+                {activeChainId && DEX_CONFIG[activeChainId] && (
+                  <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-[#060d18] border border-slate-700/40">
+                    <div className="flex items-center gap-2">
+                      <ArrowLeftRight className="w-3.5 h-3.5 text-violet-400" />
+                      <span className="text-xs text-slate-300 font-medium">{DEX_CONFIG[activeChainId].name}</span>
+                    </div>
+                    <span className="text-[10px] text-slate-500">
+                      {realSide === 'BUY'
+                        ? `${DEX_CONFIG[activeChainId].nativeSymbol} → Token swap`
+                        : `Token → ${DEX_CONFIG[activeChainId].nativeSymbol} swap`}
+                    </span>
+                  </div>
+                )}
+
+                {/* Token selector + Amount */}
+                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-xs text-slate-400 font-medium">Asset</label>
-                    <select value={realPair} onChange={e => setRealPair(e.target.value)}
-                      className="w-full bg-[#060d18] border border-slate-700/60 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-violet-500/50 transition appearance-none">
-                      {['ETH', 'BTC', 'BNB', 'MATIC', 'AVAX'].map(a => <option key={a}>{a}</option>)}
+                    <label className="text-xs text-slate-400 font-medium">
+                      {realSide === 'BUY' ? 'Receive Token' : 'Sell Token'}
+                    </label>
+                    <select value={realToken} onChange={e => { setRealToken(e.target.value); setSwapQuote(null); }}
+                      className="w-full bg-[#060d18] border border-slate-700/60 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-violet-500/50 transition appearance-none">
+                      {activeChainId && TOKENS[activeChainId]
+                        ? Object.keys(TOKENS[activeChainId]).map(t => <option key={t} value={t}>{t}</option>)
+                        : ['USDT', 'USDC'].map(t => <option key={t} value={t}>{t}</option>)
+                      }
                     </select>
+                    {/* Token balance for SELL */}
+                    {realSide === 'SELL' && tokenBal !== null && (
+                      <p className="text-[10px] text-slate-500 px-1">
+                        Bal: <span className="text-slate-300">{parseFloat(tokenBal).toFixed(4)} {realToken}</span>
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs text-slate-400 font-medium">
-                      Amount ({realSide === 'BUY' ? 'USDT' : realPair})
+                      {realSide === 'BUY'
+                        ? `Amount (${DEX_CONFIG[activeChainId]?.nativeSymbol || 'ETH'})`
+                        : `Amount (${realToken})`}
                     </label>
-                    <input type="number" step="0.001" min="0.001" value={realAmt} onChange={e => setRealAmt(e.target.value)}
-                      className="w-full bg-[#060d18] border border-slate-700/60 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-violet-500/50 transition" />
+                    <input type="number" step="0.001" min="0.0001" value={realAmt}
+                      onChange={e => { setRealAmt(e.target.value); setSwapQuote(null); }}
+                      className="w-full bg-[#060d18] border border-slate-700/60 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-violet-500/50 transition" />
+                    {/* Native balance for BUY */}
+                    {realSide === 'BUY' && nativeBal !== null && (
+                      <p className="text-[10px] text-slate-500 px-1">
+                        Bal: <span className="text-slate-300">{parseFloat(nativeBal).toFixed(5)} {DEX_CONFIG[activeChainId]?.nativeSymbol || 'ETH'}</span>
+                        <button onClick={() => setRealAmt((parseFloat(nativeBal) * 0.9).toFixed(6))}
+                          className="ml-2 text-violet-400 hover:text-violet-300">Max 90%</button>
+                      </p>
+                    )}
                   </div>
                 </div>
 
+                {/* Slippage selector */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs text-slate-400 font-medium">Slippage Tolerance</label>
+                    <span className="text-xs text-violet-400 font-semibold">{realSlippage}%</span>
+                  </div>
+                  <div className="flex gap-2">
+                    {[0.1, 0.5, 1.0, 3.0].map(s => (
+                      <button key={s} onClick={() => setRealSlippage(s)}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition ${
+                          realSlippage === s
+                            ? 'bg-violet-600 text-white'
+                            : 'bg-[#060d18] border border-slate-700/60 text-slate-400 hover:text-white'
+                        }`}>
+                        {s}%
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Live DEX Quote */}
+                <div className={`flex items-center justify-between px-4 py-2.5 rounded-xl border ${
+                  swapQuote ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-[#060d18] border-slate-700/40'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-3.5 h-3.5 text-slate-400" />
+                    <span className="text-xs text-slate-400">DEX Quote</span>
+                    {isFetchingQuote && <Loader2 className="w-3 h-3 animate-spin text-violet-400" />}
+                  </div>
+                  {swapQuote ? (
+                    <div className="text-right">
+                      <span className="text-xs font-semibold text-white">
+                        {realSide === 'BUY'
+                          ? `≈ ${swapQuote} ${realToken}`
+                          : `≈ ${swapQuote} ${DEX_CONFIG[activeChainId]?.nativeSymbol || 'ETH'}`}
+                      </span>
+                      <p className="text-[10px] text-slate-500">{realSlippage}% slippage applied</p>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-slate-500">
+                      {activeChainId ? (isFetchingQuote ? 'Fetching…' : 'Enter amount') : 'Select network'}
+                    </span>
+                  )}
+                </div>
+
+                {/* Execution step indicator */}
+                {isRealExec && realExecStep && (
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-violet-500/10 border border-violet-500/20">
+                    <Loader2 className="w-4 h-4 animate-spin text-violet-400 shrink-0" />
+                    <p className="text-xs text-violet-300">{realExecStep}</p>
+                  </div>
+                )}
+
                 {/* Error */}
                 {realError && (
-                  <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
-                    <XCircle className="w-4 h-4 shrink-0" /> {realError}
+                  <div className="flex items-start gap-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
+                    <XCircle className="w-4 h-4 shrink-0 mt-0.5" /> <span>{realError}</span>
                   </div>
                 )}
 
                 {/* Tx result */}
                 {realTxResult && (
                   <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 space-y-3">
-                    <div className="flex items-center gap-2 text-emerald-400 text-xs font-semibold">
-                      <CheckCircle2 className="w-4 h-4" />
-                      {realTxResult.mode === 'REAL_ON_CHAIN' ? 'Transaction Broadcast On-Chain ✓' : 'Transaction Submitted (Demo Mode)'}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-emerald-400 text-xs font-semibold">
+                        <CheckCircle2 className="w-4 h-4" /> Swap Submitted On-Chain ✓
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-medium">
+                        {realTxResult.dexName || 'DEX'}
+                      </span>
                     </div>
                     <div className="bg-[#060d18] rounded-lg px-3 py-2 text-[11px] text-slate-400 font-mono break-all">
                       {realTxResult.txHash}
@@ -729,9 +894,12 @@ export const PaperTradingPanel = () => {
                     {realTxResult.explorerUrl && (
                       <a href={realTxResult.explorerUrl} target="_blank" rel="noreferrer"
                         className="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 transition">
-                        <ExternalLink className="w-3.5 h-3.5" /> View on {SUPPORTED_NETWORKS[activeChainId]?.name || 'Block'} Explorer ↗
+                        <ExternalLink className="w-3.5 h-3.5" /> View on {DEX_CONFIG[activeChainId]?.name || ''} Block Explorer ↗
                       </a>
                     )}
+                    <p className="text-[10px] text-slate-500">
+                      Transaction is pending confirmation on the blockchain. Check explorer for status.
+                    </p>
                   </div>
                 )}
 
@@ -740,30 +908,37 @@ export const PaperTradingPanel = () => {
                   <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
                     <span className="text-amber-400 text-sm shrink-0">⚠️</span>
                     <p className="text-xs text-amber-300">
-                      You are on <strong>{SUPPORTED_NETWORKS[activeChainId]?.name}</strong> (Mainnet). This will spend <strong>real {SUPPORTED_NETWORKS[activeChainId]?.symbol}</strong>. Use Sepolia testnet for practice.
+                      <strong>{DEX_CONFIG[activeChainId]?.name}</strong> on Mainnet. This spends real{' '}
+                      <strong>{DEX_CONFIG[activeChainId]?.nativeSymbol}</strong> + gas. Use Sepolia for testing.
                     </p>
                   </div>
                 )}
 
-                <button onClick={handleRealTrade} disabled={isRealExec || !isMMConnected}
+                <button onClick={handleRealTrade} disabled={isRealExec || !isMMConnected || !activeChainId}
                   className={`w-full py-3.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition ${
-                    !isMMConnected
+                    !isMMConnected || !activeChainId
                       ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                      : isRealExec ? 'opacity-60 cursor-not-allowed bg-violet-600 text-white'
+                      : isRealExec ? 'opacity-70 cursor-not-allowed bg-violet-600 text-white'
                       : realSide === 'BUY'
-                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                        : 'bg-rose-600 hover:bg-rose-500 text-white'
+                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+                        : 'bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-500/20'
                   }`}>
                   {isRealExec
-                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting to MetaMask…</>
-                    : <><ShieldCheck className="w-4 h-4" /> {isMMConnected ? `${realSide} ${realAmt} ${realPair}` : 'Connect MetaMask to Trade'}</>}
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Waiting for MetaMask…</>
+                    : <><ShieldCheck className="w-4 h-4" />
+                      {isMMConnected && activeChainId
+                        ? `${realSide === 'BUY' ? 'Buy' : 'Sell'} via ${DEX_CONFIG[activeChainId]?.name || 'DEX'}`
+                        : !isMMConnected ? 'Connect MetaMask to Trade' : 'Select a Network First'
+                      }
+                    </>}
                 </button>
 
                 <p className="text-[11px] text-slate-500 text-center">
-                  Transactions require MetaMask confirmation and network gas fees.
+                  Powered by {activeChainId && DEX_CONFIG[activeChainId] ? DEX_CONFIG[activeChainId].name : 'DEX Router'} · MetaMask approval required · Gas fees apply
                 </p>
               </div>
             )}
+
 
             {/* ── WEB3 DEPOSIT TAB ─────────────────────────────── */}
             {activeTab === 'Web3 Deposit' && (
