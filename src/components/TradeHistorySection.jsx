@@ -22,20 +22,24 @@ export const TradeHistorySection = () => {
   const [filter, setFilter]   = useState('All');
 
   const masterHistory = useMemo(() => {
-    const manual = (tradeHistory || []).map(t => ({
-      id:       t.id || `TX-${Math.floor(100000 + Math.random() * 900000)}`,
-      type:     t.type || 'BUY',
-      symbol:   (t.symbol || 'BTCUSDT').replace('USDT', '/USDT'),
-      exchange: t.exchange || 'Binance Pro',
-      amount:   t.amount || 0.1,
-      price:    t.price  || 67840.50,
-      total:    t.total  || (t.amount * t.price) || 6784.05,
-      time:     t.time   || 'Just now',
-      txHash:   t.txHash || `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`,
-      category: 'MANUAL',
-    }));
-    return manual.length >= 2 ? manual : DEFAULT_TRADES;
+    const manual = (tradeHistory || []).map(t => {
+      const detectedType = (t.type || t.side || t.action || (t.settleReason || t.exitPrice || t.profit != null ? 'SELL' : 'BUY')).toUpperCase();
+      return {
+        id:       t.id || `TX-${Math.floor(100000 + Math.random() * 900000)}`,
+        type:     detectedType,
+        symbol:   (t.symbol || 'BTCUSDT').replace('USDT', '/USDT'),
+        exchange: t.exchange || t.sellExchange || t.buyExchange || 'Binance Pro',
+        amount:   t.amount || 0.1,
+        price:    t.price || t.exitPrice || t.entryPrice || 67840.50,
+        total:    t.total || t.invested || (t.amount * t.price) || 6784.05,
+        time:     t.time   || 'Just now',
+        txHash:   t.txHash || `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`,
+        category: t.category || (t.strategy?.includes('Bot') || t.settleReason ? 'BOT' : 'MANUAL'),
+      };
+    });
+    return manual.length >= 1 ? manual : DEFAULT_TRADES;
   }, [tradeHistory]);
+
 
   const filtered = useMemo(() =>
     masterHistory.filter(t => {
