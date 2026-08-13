@@ -256,9 +256,14 @@ export const PaperTradingPanel = () => {
         return;
       }
       try {
+        const dex = getDexConfig(activeChainId);
+        // Sepolia / no-router networks → simulation mode, no quote needed
+        if (!dex || dex.isTestnet || !dex.router) {
+          setSwapQuote('SIMULATED');
+          return;
+        }
         const { ethers } = await import('ethers');
         setIsFetchingQuote(true);
-        const dex    = getDexConfig(activeChainId);
         const tokens = getTokensForChain(activeChainId);
         const token  = tokens[realToken];
         if (!token) { setSwapQuote(null); setIsFetchingQuote(false); return; }
@@ -269,7 +274,7 @@ export const PaperTradingPanel = () => {
           ? ethers.parseEther(realAmt.toString())
           : ethers.parseUnits(realAmt.toString(), token.decimals);
         const quote = await getDexQuote(activeChainId, amtIn, path);
-        if (quote !== null) {
+        if (quote !== null && quote > 0n) {
           const formatted = realSide === 'BUY'
             ? ethers.formatUnits(quote, token.decimals)
             : ethers.formatEther(quote);
@@ -286,6 +291,7 @@ export const PaperTradingPanel = () => {
     const timer = setTimeout(fetch, 600);
     return () => clearTimeout(timer);
   }, [activeChainId, realAmt, realSide, realToken]);
+
 
   /* ── Real Trade Execute via DEX Router ─────────────────────── */
   const handleRealTrade = async (e) => {
