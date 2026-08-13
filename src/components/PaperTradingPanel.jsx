@@ -39,9 +39,27 @@ export const PaperTradingPanel = () => {
     addNotification, audioFx, marketData,
     realWalletAddress, setRealWalletAddress,
     realWalletNetwork, setRealWalletNetwork,
+    activeTradeTab, setActiveTradeTab,
+    paperAutoEnabled, setPaperAutoEnabled,
+    paperAutoTargetSymbol, setPaperAutoTargetSymbol,
+    paperAutoOrderUsd, setPaperAutoOrderUsd,
+    paperAutoTakeProfit, setPaperAutoTakeProfit,
+    paperAutoStopLoss, setPaperAutoStopLoss,
+    paperAutoInterval, setPaperAutoInterval,
+    paperAutoLogs, setPaperAutoLogs,
+    paperAutoStatusMsg, setPaperAutoStatusMsg,
+    paperAutoStats, setPaperAutoStats,
+    realAutoEnabled, setRealAutoEnabled,
+    realAutoMinSpread, setRealAutoMinSpread,
+    realAutoInterval, setRealAutoInterval,
+    realAutoLogList, setRealAutoLogList,
+    realAutoStats, setRealAutoStats,
+    realAutoStatusMsg, setRealAutoStatusMsg,
+    withdrawFunds
   } = useCrypto();
 
-  const [activeTab, setActiveTab] = useState('Paper Trade');
+  const activeTab = activeTradeTab || 'Paper Trade';
+  const setActiveTab = setActiveTradeTab;
 
   /* ── paper trade form state ─────────────────────────────────── */
   const [paperTradeMode, setPaperTradeMode] = useState('MANUAL'); // 'MANUAL' | 'AUTO'
@@ -49,18 +67,6 @@ export const PaperTradingPanel = () => {
   const [symbol, setSymbol]     = useState('BTCUSDT');
   const [exchange, setExchange] = useState('Binance Pro');
   const [amount, setAmount]     = useState('0.10');
-
-  /* ── paper auto buy & sell engine state ────────────────────── */
-  const [paperAutoEnabled, setPaperAutoEnabled]   = useState(false);
-  const [paperAutoTargetSymbol, setPaperAutoTargetSymbol] = useState('ALL'); // 'ALL' | 'BTCUSDT' | 'ETHUSDT' etc.
-  const [paperAutoOrderUsd, setPaperAutoOrderUsd] = useState(250);       // $100, $250, $500
-  const [paperAutoTakeProfit, setPaperAutoTakeProfit] = useState(1.0);    // +1.0% PnL auto sell
-  const [paperAutoStopLoss, setPaperAutoStopLoss] = useState(1.0);      // -1.0% PnL auto sell
-  const [paperAutoInterval, setPaperAutoInterval] = useState(3);         // seconds
-  const [paperAutoLogs, setPaperAutoLogs]         = useState([]);
-  const [paperAutoStatusMsg, setPaperAutoStatusMsg] = useState('Paper Auto-Bot Standby — Ready to launch');
-  const [paperAutoStats, setPaperAutoStats]       = useState({ buyCount: 0, sellCount: 0, totalProfitUsd: 0 });
-
 
   const [isExec, setIsExec]     = useState(false);
   const [execStep, setExecStep] = useState(0);   // 0=idle, 1-5=pipeline, 6=done
@@ -86,18 +92,13 @@ export const PaperTradingPanel = () => {
   const [isFetchingQuote, setIsFetchingQuote] = useState(false);
 
   /* ── real auto-trading bot state ────────────────────────────── */
-  const [realAutoMode, setRealAutoMode]         = useState('MANUAL'); // 'MANUAL' | 'AUTO'
-  const [realAutoEnabled, setRealAutoEnabled]   = useState(false);
-  const [realAutoMinSpread, setRealAutoMinSpread] = useState(0.25);
-  const [realAutoInterval, setRealAutoInterval] = useState(10);       // seconds
-  const [realAutoLogList, setRealAutoLogList]   = useState([]);
-  const [realAutoStats, setRealAutoStats]       = useState({ totalTrades: 0, totalProfitUsd: 0 });
-  const [realAutoStatusMsg, setRealAutoStatusMsg] = useState('Bot Standby — Ready to start');
+  const [realAutoMode, setRealAutoMode]     = useState('MANUAL'); // 'MANUAL' | 'AUTO'
 
   /* ── Refs for stable Real On-Chain Auto-Bot loop ──────────────── */
   const realAutoEnabledRef   = useRef(realAutoEnabled);
   const activeChainIdRef     = useRef(activeChainId);
   const realWalletAddressRef = useRef(realWalletAddress);
+
   const realTokenRef         = useRef(realToken);
   const realSideRef          = useRef(realSide);
   const realAmtRef           = useRef(realAmt);

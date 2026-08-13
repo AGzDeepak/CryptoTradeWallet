@@ -203,6 +203,26 @@ export const CryptoProvider = ({ children }) => {
   const [totalBotProfit, setTotalBotProfit] = useState(0.00);
   const [autoTradeCount, setAutoTradeCount] = useState(0);
 
+  // Persistent Trade Sub-Tab & Bot Activity State Across Navigation
+  const [activeTradeTab, setActiveTradeTab] = useState('Paper Trade');
+  const [paperAutoEnabled, setPaperAutoEnabled] = useState(false);
+  const [paperAutoTargetSymbol, setPaperAutoTargetSymbol] = useState('ALL');
+  const [paperAutoOrderUsd, setPaperAutoOrderUsd] = useState(250);
+  const [paperAutoTakeProfit, setPaperAutoTakeProfit] = useState(1.0);
+  const [paperAutoStopLoss, setPaperAutoStopLoss] = useState(1.0);
+  const [paperAutoInterval, setPaperAutoInterval] = useState(3);
+  const [paperAutoLogs, setPaperAutoLogs] = useState([]);
+  const [paperAutoStatusMsg, setPaperAutoStatusMsg] = useState('Paper Auto-Bot Standby — Ready to launch');
+  const [paperAutoStats, setPaperAutoStats] = useState({ buyCount: 0, sellCount: 0, totalProfitUsd: 0 });
+
+  const [realAutoEnabled, setRealAutoEnabled] = useState(false);
+  const [realAutoMinSpread, setRealAutoMinSpread] = useState(0.25);
+  const [realAutoInterval, setRealAutoInterval] = useState(10);
+  const [realAutoLogList, setRealAutoLogList] = useState([]);
+  const [realAutoStats, setRealAutoStats] = useState({ totalTrades: 0, totalProfitUsd: 0 });
+  const [realAutoStatusMsg, setRealAutoStatusMsg] = useState('Bot Standby — Ready to start');
+
+
   // Money Control Risk Limits (User Configurable)
   const [takeProfitTarget, setTakeProfitTarget] = useState(500.00); // Stop trading when profit hits target
   const [stopLossLimit, setStopLossLimit] = useState(150.00);     // Stop trading if loss exceeds max limit
@@ -1395,7 +1415,40 @@ export const CryptoProvider = ({ children }) => {
         autoStopReason,
         setAutoStopReason,
         resetLimitsAndResume,
+        activeTradeTab,
+        setActiveTradeTab,
+        paperAutoEnabled,
+        setPaperAutoEnabled,
+        paperAutoTargetSymbol,
+        setPaperAutoTargetSymbol,
+        paperAutoOrderUsd,
+        setPaperAutoOrderUsd,
+        paperAutoTakeProfit,
+        setPaperAutoTakeProfit,
+        paperAutoStopLoss,
+        setPaperAutoStopLoss,
+        paperAutoInterval,
+        setPaperAutoInterval,
+        paperAutoLogs,
+        setPaperAutoLogs,
+        paperAutoStatusMsg,
+        setPaperAutoStatusMsg,
+        paperAutoStats,
+        setPaperAutoStats,
+        realAutoEnabled,
+        setRealAutoEnabled,
+        realAutoMinSpread,
+        setRealAutoMinSpread,
+        realAutoInterval,
+        setRealAutoInterval,
+        realAutoLogList,
+        setRealAutoLogList,
+        realAutoStats,
+        setRealAutoStats,
+        realAutoStatusMsg,
+        setRealAutoStatusMsg,
         autoTradeLogs,
+
         totalBotProfit,
         autoTradeCount,
         wallet,
