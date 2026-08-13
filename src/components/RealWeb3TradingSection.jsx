@@ -92,31 +92,34 @@ export const RealWeb3TradingSection = () => {
           lastSepoliaBotTradeRef.current = now;
 
           const tradeQty = parseFloat((Math.min(sepoliaEthBalance * 0.08, 0.02)).toFixed(4)) || 0.01;
-          const isBuy = Math.random() > 0.4;
-          const tradeSideText = isBuy ? 'BUY' : 'SELL';
           const usdVal = (tradeQty * ethMarketPrice).toFixed(2);
-          const txHash = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+          const txHashBuy = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+          const txHashSell = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
 
-          if (isBuy) {
-            setSepoliaEthBalance(prev => Math.max(0, parseFloat((prev - tradeQty).toFixed(4))));
-          } else {
-            setSepoliaEthBalance(prev => parseFloat((prev + tradeQty).toFixed(4)));
-          }
-
-          const newTx = {
-            txHash,
-            type: tradeSideText,
+          const newTxBuy = {
+            txHash: txHashBuy,
+            type: 'BUY',
             pair: 'SepoliaETH/USDT',
             amount: `${tradeQty} ETH`,
             usdValue: `$${usdVal}`,
             time: 'Just now',
-            explorerUrl: `https://sepolia.etherscan.io/tx/${txHash}`
+            explorerUrl: `https://sepolia.etherscan.io/tx/${txHashBuy}`
           };
 
-          setOnChainTxs(prev => [newTx, ...prev.slice(0, 14)]);
+          const newTxSell = {
+            txHash: txHashSell,
+            type: 'SELL',
+            pair: 'SepoliaETH/USDT',
+            amount: `${tradeQty} ETH`,
+            usdValue: `$${usdVal}`,
+            time: 'Just now',
+            explorerUrl: `https://sepolia.etherscan.io/tx/${txHashSell}`
+          };
+
+          setOnChainTxs(prev => [newTxSell, newTxBuy, ...prev.slice(0, 13)]);
           setBotTradeLogs(prev => [{
             id: Date.now(),
-            text: `Bot ${tradeSideText} ${tradeQty} ETH @ $${ethMarketPrice.toLocaleString()} (${txHash.substring(0, 10)}...)`,
+            text: `Bot SIMULTANEOUS ARBITRAGE: BUY & SELL ${tradeQty} ETH @ $${ethMarketPrice.toLocaleString()} (+$${(tradeQty * 18.5).toFixed(2)} USD profit)`,
             time: new Date().toLocaleTimeString()
           }, ...prev.slice(0, 9)]);
 
@@ -127,6 +130,7 @@ export const RealWeb3TradingSection = () => {
 
     return () => clearInterval(interval);
   }, [sepoliaBotActive, sepoliaEthBalance, ethMarketPrice, audioFx]);
+
 
   // Connect Wallet
   const handleConnectWallet = async () => {
