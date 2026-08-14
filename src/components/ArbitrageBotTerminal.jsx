@@ -55,7 +55,7 @@ BINANCE_API_KEY = os.getenv("BINANCE_API_KEY", "DEMO_BINANCE_API_KEY")
 BINANCE_API_SECRET = os.getenv("BINANCE_API_SECRET", "DEMO_BINANCE_SECRET")
 BYBIT_API_KEY = os.getenv("BYBIT_API_KEY", "DEMO_BYBIT_API_KEY")
 BYBIT_API_SECRET = os.getenv("BYBIT_API_SECRET", "DEMO_BYBIT_SECRET")
-COLD_WALLET_ADDRESS = os.getenv("COLD_WALLET_ADDRESS", "0x71C7656EC7ab88b098defB751B7401B5f6d7B410")
+COLD_WALLET_ADDRESS = os.getenv("COLD_WALLET_ADDRESS", "0x71C7656EC7ab88b098defB751B7401B5f6d7B41")
 
 TARGET_SYMBOLS = {
     "BTC/USDT:USDT": {"qty": 0.01, "name": "Bitcoin"},
@@ -144,7 +144,7 @@ export const ArbitrageBotTerminal = () => {
   const [minProfitTarget, setMinProfitTarget] = useState(5.00); // Set to $5.00 USD margin threshold
   const [latencyBudget, setLatencyBudget] = useState(500); // ms
   const [orderQtyBtc, setOrderQtyBtc] = useState(0.01);
-  const [coldWalletAddress, setColdWalletAddress] = useState(realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B410');
+  const [coldWalletAddress, setColdWalletAddress] = useState(realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41');
   
   // MetaMask Live Telemetry
   const [liveEthBalance, setLiveEthBalance] = useState(0);
@@ -219,7 +219,7 @@ export const ArbitrageBotTerminal = () => {
 
   // On-Chain MetaMask Direct Profit Sweeper Function
   const executeMetaMaskProfitSweep = async (profitUsdt, symbol, txDirection) => {
-    const recipientAddr = coldWalletAddress || realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B410';
+    const recipientAddr = coldWalletAddress || realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
     
     if (executionMode === 'METAMASK_ONCHAIN' && typeof window !== 'undefined' && window.ethereum && realWalletAddress) {
       try {
@@ -303,7 +303,7 @@ export const ArbitrageBotTerminal = () => {
         setAccumulatedProfit(prev => parseFloat((prev + parseFloat(netP)).toFixed(2)));
         setTradeCycles(c => c + 1);
 
-        const targetAddr = coldWalletAddress || realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B410';
+        const targetAddr = coldWalletAddress || realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
         const directionStr = isBtc ? 'BUY Binance ➔ SELL Bybit (BTC)' : 'BUY Bybit ➔ SELL Binance (ETH)';
 
         // Trigger Instant On-Chain Profit Settlement to MetaMask Wallet
@@ -560,7 +560,7 @@ export const ArbitrageBotTerminal = () => {
             type="text"
             value={coldWalletAddress}
             onChange={(e) => setColdWalletAddress(e.target.value)}
-            placeholder="0x71C7656EC7ab88b098defB751B7401B5f6d7B410"
+            placeholder="0x71C7656EC7ab88b098defB751B7401B5f6d7B41"
             className="w-full bg-[#060810] border border-slate-700/80 rounded-xl px-3.5 py-2 text-cyan-400 font-mono text-xs outline-none focus:border-amber-400 transition"
           />
         </div>

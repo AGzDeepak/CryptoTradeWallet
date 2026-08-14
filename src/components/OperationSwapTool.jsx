@@ -61,13 +61,13 @@ export const OperationSwapTool = () => {
       setIsBroadcasting(true);
       try {
         addNotification(`🦊 Opening MetaMask extension window for ${side} REAL ${getCoin} transaction signature...`, 'info');
-        const userAddr = realWallet.address || '0x71C7656EC7ab88b098defB751B7401B5f6d7B410';
+        const userAddr = realWallet.address || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
         let txRes;
 
         if (side === 'BUY') {
-          txRes = await executeRealBuyEthereumOrder(userAddr, amount.toString(), '0x71C7656EC7ab88b098defB751B7401B5f6d7B410');
+          txRes = await executeRealBuyEthereumOrder(userAddr, amount.toString(), '0x71C7656EC7ab88b098defB751B7401B5f6d7B41');
         } else {
-          txRes = await executeRealSellEthereumOrder(userAddr, (amount / targetPrice).toFixed(4), '0x71C7656EC7ab88b098defB751B7401B5f6d7B410');
+          txRes = await executeRealSellEthereumOrder(userAddr, (amount / targetPrice).toFixed(4), '0x71C7656EC7ab88b098defB751B7401B5f6d7B41');
         }
 
         // Record in Python Swap Engine

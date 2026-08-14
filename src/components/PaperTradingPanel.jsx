@@ -154,7 +154,7 @@ export const PaperTradingPanel = () => {
       return;
     }
 
-    const targetAddr = wthAddr?.trim() || realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B410';
+    const targetAddr = wthAddr?.trim() || realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
     if (!/^0x[0-9a-fA-F]{40}$/.test(targetAddr)) {
       setWthError('Enter a valid EVM wallet address (0x...)');
       return;
@@ -242,13 +242,13 @@ export const PaperTradingPanel = () => {
           addNotification(`🦊 MetaMask Connected: ${accounts[0].substring(0, 10)}... on ${netMap[chainId] || 'Unknown Network'}`, 'success');
         }
       } else {
-        const demoAddr = '0x71C7656EC7ab88b098defB751B7401B5f6d7B410';
+        const demoAddr = '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
         setRealWalletAddress(demoAddr);
         if (!activeChainId) setActiveChainId(11155111);
         addNotification(`⚡ Connected Web3 Live Terminal: ${demoAddr.substring(0, 10)}...`, 'success');
       }
     } catch (err) {
-      const demoAddr = '0x71C7656EC7ab88b098defB751B7401B5f6d7B410';
+      const demoAddr = '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
       setRealWalletAddress(demoAddr);
       if (!activeChainId) setActiveChainId(11155111);
       addNotification(`⚡ Web3 Live Terminal Active: ${demoAddr.substring(0, 10)}...`, 'info');
@@ -529,7 +529,7 @@ export const PaperTradingPanel = () => {
   const runRealAutoScanStep = useCallback(async () => {
     try {
       const chainId = activeChainIdRef.current || 11155111;
-      const walletAddr = realWalletAddressRef.current || '0x71C7656EC7ab88b098defB751B7401B5f6d7B410';
+      const walletAddr = realWalletAddressRef.current || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
       const tokenSymbol = realTokenRef.current || 'USDT';
       const qty = parseFloat(realAmtRef.current) || 0.01;
       const minSpread = realAutoMinSpreadRef.current || 0.25;
@@ -1829,7 +1829,7 @@ export const PaperTradingPanel = () => {
                     </div>
                     <input
                       type="text"
-                      placeholder="0x71C7656EC7ab88b098defB751B7401B5f6d7B410"
+                      placeholder="0x71C7656EC7ab88b098defB751B7401B5f6d7B41"
                       value={wthAddr}
                       onChange={e => setWthAddr(e.target.value)}
                       className="w-full bg-[#060d18] border border-slate-700/60 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-600 outline-none focus:border-rose-500/50 font-mono"

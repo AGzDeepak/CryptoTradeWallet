@@ -47,7 +47,7 @@ export const GlobalModals = () => {
   const [withdrawTab, setWithdrawTab] = useState('form'); // 'form' or 'history'
   const [withdrawAmount, setWithdrawAmount] = useState('5000');
   const [withdrawCurrency, setWithdrawCurrency] = useState('USDT');
-  const [withdrawAddress, setWithdrawAddress] = useState('0x71C765b28F3D140a831C28190d7B41');
+  const [withdrawAddress, setWithdrawAddress] = useState('0x71C7656EC7ab88b098defB751B7401B5f6d7B41');
   const [withdrawNetwork, setWithdrawNetwork] = useState('Arbitrum One');
   const [withdrawSuccess, setWithdrawSuccess] = useState(false);
 

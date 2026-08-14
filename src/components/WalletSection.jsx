@@ -64,7 +64,7 @@ export const WalletSection = () => {
       amount: 0.05,
       symbol: 'ETH',
       usdValue: 157.50,
-      address: '0x71C7656EC7ab88b098defB751B7401B5f6d7B410',
+      address: '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
       time: '10 mins ago',
       status: 'CONFIRMED',
       txHash: '0x7f39a82b...41b0'
@@ -253,7 +253,7 @@ export const WalletSection = () => {
         addNotification(`🚀 Web3 Withdrawal Sent: ${amt} ETH to ${shortAddress(targetAddr)}`, 'success');
       } else {
         // Paper Wallet Withdrawal
-        const targetAddr = withdrawAddr?.trim() || '0x71C7656EC7ab88b098defB751B7401B5f6d7B410';
+        const targetAddr = withdrawAddr?.trim() || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
         await withdrawFunds?.(amt * 1000, targetAddr);
         const newTx = {
           id: `WITH-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -594,7 +594,7 @@ export const WalletSection = () => {
 
               <InputField
                 label="Destination Address (0x EVM)"
-                placeholder="0x71C7656EC7ab88b098defB751B7401B5f6d7B410"
+                placeholder="0x71C7656EC7ab88b098defB751B7401B5f6d7B41"
                 value={withdrawAddr}
                 onChange={e => setWithdrawAddr(e.target.value)}
                 rightLabel={isConnected ? `From: ${shortAddress(connectedAddress)}` : 'Connect MetaMask'}

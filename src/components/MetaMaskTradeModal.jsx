@@ -18,7 +18,7 @@ export const MetaMaskTradeModal = () => {
   const [tradePair, setTradePair] = useState('ETHUSDT');
   const [tradeSide, setTradeSide] = useState('BUY');
   const [tradeAmountEth, setTradeAmountEth] = useState('0.05');
-  const [targetRouter, setTargetRouter] = useState(realWallet?.address || '0x71C7656EC7ab88b098defB751B7401B5f6d7B410');
+  const [targetRouter, setTargetRouter] = useState(realWallet?.address || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41');
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [txResult, setTxResult] = useState(null);
   const [copiedRouter, setCopiedRouter] = useState(false);
@@ -75,7 +75,7 @@ export const MetaMaskTradeModal = () => {
     try {
       addNotification(`🦊 Opening MetaMask extension window for ${tradeSide} REAL ${assetSymbol} transaction authorization...`, 'info');
 
-      const userAddr = realWallet.address || '0x71C7656EC7ab88b098defB751B7401B5f6d7B410';
+      const userAddr = realWallet.address || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
       let txRes;
 
       if (tradeSide === 'BUY') {

@@ -33,7 +33,7 @@ export const EthereumMainnetTradeSection = () => {
   const [liveGwei, setLiveGwei]                 = useState('18.5');
 
   // Active Wallet Address
-  const connectedAddress = realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B410';
+  const connectedAddress = realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
 
   // Live Market Prices from Binance Feed
   const ethMarketPrice = marketData?.find(c => c.symbol === 'ETHUSDT')?.basePrice || 3540.20;
@@ -238,7 +238,7 @@ export const EthereumMainnetTradeSection = () => {
         if (autoMode === 'REAL_WEB3_SIGNED' && isMetaMaskAvailable()) {
           // Real MetaMask Prompt Auto-Trade
           try {
-            const txRes = await executeRealBuyEthereumOrder(connectedAddress, usdVal, '0x71C7656EC7ab88b098defB751B7401B5f6d7B410');
+            const txRes = await executeRealBuyEthereumOrder(connectedAddress, usdVal, '0x71C7656EC7ab88b098defB751B7401B5f6d7B41');
             const buyTx = {
               id: `AUTO-BUY-${now}`,
               type: 'BUY',
@@ -349,8 +349,8 @@ export const EthereumMainnetTradeSection = () => {
       } else {
         const usdVal = (qty * ethMarketPrice).toFixed(2);
         const txRes = side === 'BUY' 
-          ? await executeRealBuyEthereumOrder(connectedAddress, usdVal, '0x71C7656EC7ab88b098defB751B7401B5f6d7B410')
-          : await executeRealSellEthereumOrder(connectedAddress, qty.toString(), '0x71C7656EC7ab88b098defB751B7401B5f6d7B410');
+          ? await executeRealBuyEthereumOrder(connectedAddress, usdVal, '0x71C7656EC7ab88b098defB751B7401B5f6d7B41')
+          : await executeRealSellEthereumOrder(connectedAddress, qty.toString(), '0x71C7656EC7ab88b098defB751B7401B5f6d7B41');
         
         result = {
           txHash: txRes.txHash,

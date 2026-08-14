@@ -101,7 +101,7 @@ export const MetaMaskTradeTerminalSection = () => {
         setRealWalletAddress(address);
         addNotification(`🦊 MetaMask Connected: ${address.substring(0, 10)}... on ${networkName}`, 'success');
       } else {
-        const inputAddr = window.prompt('Enter your MetaMask account address (0x...):', '0x71C7656EC7ab88b098defB751B7401B5f6d7B410');
+        const inputAddr = window.prompt('Enter your MetaMask account address (0x...):', '0x71C7656EC7ab88b098defB751B7401B5f6d7B41');
         if (inputAddr && inputAddr.startsWith('0x')) {
           setRealWalletAddress(inputAddr);
           addNotification(`✅ Address Connected: ${inputAddr.substring(0, 10)}...`, 'success');
@@ -140,7 +140,7 @@ export const MetaMaskTradeTerminalSection = () => {
           method: 'eth_sendTransaction',
           params: [{
             from: fromAddr,
-            to: '0x71C7656EC7ab88b098defB751B7401B5f6d7B410',
+            to: '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
             data: '0x8f2910ab'
           }]
         });
@@ -462,7 +462,7 @@ export const MetaMaskTradeTerminalSection = () => {
                 <div className="p-4 rounded-xl bg-[#070a11] border border-slate-800 space-y-2 text-[11px]">
                   <div className="flex justify-between text-slate-400">
                     <span>Target Contract:</span>
-                    <span className="text-white font-mono font-bold">0x71C7656EC7ab88b098defB751B7401B5f6d7B410</span>
+                    <span className="text-white font-mono font-bold">0x71C7656EC7ab88b098defB751B7401B5f6d7B41</span>
                   </div>
                   <div className="flex justify-between text-slate-400">
                     <span>On-Chain Function:</span>

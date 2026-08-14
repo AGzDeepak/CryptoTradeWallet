@@ -33,7 +33,7 @@ export const RealWeb3TradingSection = () => {
   const [copiedAddr, setCopiedAddr]           = useState(false);
 
   // Active Wallet Address
-  const connectedAddress = realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B410';
+  const connectedAddress = realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
 
   // Live Market Prices
   const ethMarketPrice = marketData?.find(c => c.symbol === 'ETHUSDT')?.basePrice || 3540.20;
@@ -245,9 +245,9 @@ export const RealWeb3TradingSection = () => {
 
       let txRes;
       if (side === 'BUY') {
-        txRes = await executeRealBuyEthereumOrder(connectedAddress, usdVal, '0x71C7656EC7ab88b098defB751B7401B5f6d7B410');
+        txRes = await executeRealBuyEthereumOrder(connectedAddress, usdVal, '0x71C7656EC7ab88b098defB751B7401B5f6d7B41');
       } else {
-        txRes = await executeRealSellEthereumOrder(connectedAddress, qty.toString(), '0x71C7656EC7ab88b098defB751B7401B5f6d7B410');
+        txRes = await executeRealSellEthereumOrder(connectedAddress, qty.toString(), '0x71C7656EC7ab88b098defB751B7401B5f6d7B41');
       }
 
       setLastTxResult(txRes);

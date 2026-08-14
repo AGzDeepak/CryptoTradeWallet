@@ -17,7 +17,7 @@ export const isWeb3Available = () => {
   return typeof window !== 'undefined' && typeof window.ethereum !== 'undefined';
 };
 
-const DEFAULT_ROUTER_ADDRESS = '0x71C7656EC7ab88b098defB751B7401B5f6d7B410'; // Valid 42-char (20-byte) address
+const DEFAULT_ROUTER_ADDRESS = '0x71C7656EC7ab88b098defB751B7401B5f6d7B41'; // Valid 42-char (20-byte) address
 
 export const cleanEvmAddress = (addr, fallback) => {
   if (typeof addr === 'string' && /^0x[0-9a-fA-F]{40}$/.test(addr.trim())) {
