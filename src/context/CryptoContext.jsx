@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
+
 import { audioFx } from '../utils/audio';
 import { recordFirebaseLoginLog, recordFirebaseWithdrawal, recordFirebaseBotTradeLog, sanitizeInput } from '../services/securityService';
 import { connectRealWeb3Wallet, sendRealWeb3Transaction, executeRealBuyEthereumOrder, executeRealSellEthereumOrder, isWeb3Available } from '../services/web3Service';
