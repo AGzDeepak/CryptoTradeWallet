@@ -13,6 +13,8 @@ import {
   getTokensForChain, getNativeBalance, getTokenBalance, parseDexError, DEX_CONFIG, TOKENS
 } from '../services/dexService';
 
+import { FlashArbitrageTerminal } from './FlashArbitrageTerminal';
+
 /* ── tiny helpers ────────────────────────────────────────────────── */
 const fmt = (n, dec = 2) =>
   (n || 0).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
@@ -22,7 +24,8 @@ const genHash = () =>
 
 const PAIRS     = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'LTCUSDT', 'AVAXUSDT', 'XRPUSDT'];
 const EXCHANGES = ['Binance Pro', 'Bybit Quant', 'OKX Institutional', 'Coinbase Pro'];
-const TABS      = ['Paper Trade', 'Real Trading', 'Web3 Deposit', 'Withdraw Funds'];
+const TABS      = ['Paper Trade', 'Real Trading', 'Flash Arbitrage', 'Web3 Deposit', 'Withdraw Funds'];
+
 
 /* ═══════════════════════════════════════════════════════════════════
    TRADE SECTION
@@ -1620,6 +1623,12 @@ export const PaperTradingPanel = () => {
                 </p>
               </div>
             )}
+
+            {/* ── FLASH ARBITRAGE TAB ──────────────────────────── */}
+            {activeTab === 'Flash Arbitrage' && (
+              <FlashArbitrageTerminal />
+            )}
+
 
 
             {/* ── WEB3 DEPOSIT TAB ─────────────────────────────── */}
