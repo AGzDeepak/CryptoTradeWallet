@@ -8,16 +8,20 @@ import {
 import {
   Wallet, Copy, Check, Send, RefreshCw, ArrowDownLeft, ArrowUpLeft,
   Loader2, ExternalLink, ShieldCheck, Globe, LogIn, Activity, TrendingUp, CircleDollarSign,
-  XCircle, CheckCircle2, Info
+  XCircle, CheckCircle2, Info, Plus, Sparkles, Key
 } from 'lucide-react';
 
 import { getNativeBalance, getDexConfig } from '../services/dexService';
 import { sendRealWeb3Transaction, isWeb3Available, SUPPORTED_NETWORKS } from '../services/web3Service';
+import { CreateWalletModal } from './wallet/CreateWalletModal';
+import { ImportWalletModal } from './wallet/ImportWalletModal';
+import { VaultAccountsTab } from './wallet/VaultAccountsTab';
 
 const fmt = (n, dec = 2) =>
   (n || 0).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
 
-const TABS = ['Overview', 'Deposit', 'Withdraw', 'History'];
+const TABS = ['Overview', 'Deposit', 'Withdraw', 'Vault Accounts', 'History'];
+
 
 export const WalletSection = () => {
   const {
@@ -36,6 +40,11 @@ export const WalletSection = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isFetching, setIsFetching]     = useState(false);
   const [lastRefresh, setLastRefresh]   = useState('');
+
+  // Professional Web3 Wallet Creation Modals
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+
 
   // Mode Selection ('WEB3' | 'PAPER')
   const [depMode, setDepMode]           = useState('WEB3');
@@ -305,11 +314,34 @@ export const WalletSection = () => {
   return (
     <div className="space-y-6">
 
-      {/* Page title */}
-      <div>
-        <h1 className="text-xl font-bold text-white tracking-tight">Wallet</h1>
-        <p className="text-sm text-slate-400 mt-0.5">Manage your virtual and on-chain wallet deposits & withdrawals</p>
+      {/* Page title & Quick Actions */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-white tracking-tight">Wallet Studio & Vault</h1>
+          <p className="text-sm text-slate-400 mt-0.5">Manage non-custodial Web3 accounts, deposits, withdrawals & real-time key creation</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowImportModal(true)}
+            className="px-3.5 py-2 rounded-xl bg-[#0d1523] border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white font-bold text-xs font-mono transition flex items-center gap-1.5"
+          >
+            <Key className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Import</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowCreateModal(true)}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs font-mono transition flex items-center gap-1.5 shadow-lg shadow-violet-600/25"
+          >
+            <Plus className="w-4 h-4" />
+            <span>+ Create Web3 Wallet</span>
+          </button>
+        </div>
       </div>
+
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -694,8 +726,38 @@ export const WalletSection = () => {
             </div>
           )}
 
+          {/* VAULT ACCOUNTS (NON-CUSTODIAL MULTI-WALLET) */}
+          {activeTab === 'Vault Accounts' && (
+            <VaultAccountsTab
+              onOpenCreateModal={() => setShowCreateModal(true)}
+              onOpenImportModal={() => setShowImportModal(true)}
+            />
+          )}
+
+
         </div>
       </div>
+
+      {/* Professional Real-Time BIP-39 Wallet Creation Modal */}
+      <CreateWalletModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onWalletCreated={(newWallet) => {
+          loadWalletData(newWallet.address);
+          setActiveTab('Vault Accounts');
+        }}
+      />
+
+      {/* Import Wallet Modal */}
+      <ImportWalletModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onWalletImported={(impWallet) => {
+          loadWalletData(impWallet.address);
+          setActiveTab('Vault Accounts');
+        }}
+      />
     </div>
   );
 };
+
