@@ -17,7 +17,8 @@ import { calculateIndicators, evaluateStrategy } from '../../services/autoTradeE
 import { validateTradeRisk } from '../../services/autoTradeRiskManager';
 import { executeAutoTradeTransaction } from '../../services/autoTradeExecution';
 import { connectMetaMask } from '../../services/walletService';
-import { Zap, ArrowDownLeft, ShieldCheck, Play, Pause, Bot, RefreshCw } from 'lucide-react';
+import { Zap, ArrowDownLeft, ShieldCheck, Play, Pause, Bot, RefreshCw, Sliders } from 'lucide-react';
+
 
 export const AutoTradeSection = () => {
   const { 
