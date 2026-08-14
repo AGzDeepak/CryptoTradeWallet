@@ -222,6 +222,47 @@ export const CryptoProvider = ({ children }) => {
   const [realAutoStats, setRealAutoStats] = useState({ totalTrades: 0, totalProfitUsd: 0 });
   const [realAutoStatusMsg, setRealAutoStatusMsg] = useState('Bot Standby — Ready to start');
 
+  // Persistent Auto Trade Engine State Across Navigation
+  const [autoTradeBotEnabled, setAutoTradeBotEnabled] = useState(false);
+  const [autoTradeBotStatus, setAutoTradeBotStatus] = useState('Monitoring Market');
+  const [autoTradeNetworkMode, setAutoTradeNetworkMode] = useState('TESTNET');
+  const [autoTradeConfig, setAutoTradeConfig] = useState({
+    pair: 'ETH/USDT',
+    strategyMode: 'Balanced',
+    maxTradeAmount: 500,
+    minTradeAmount: 10,
+    takeProfitPct: 4.0,
+    stopLossPct: 2.0,
+    maxDailyLoss: 250,
+    maxTradesPerDay: 20,
+    cooldownSeconds: 30,
+    slippageTolerancePct: 1.0,
+  });
+  const [autoTradeSectionLogs, setAutoTradeSectionLogs] = useState([
+    {
+      id: 'LOG-1001',
+      timestamp: new Date(Date.now() - 180000).toLocaleTimeString(),
+      side: 'BUY',
+      pair: 'ETH/USDT',
+      amount: 0.15,
+      price: 3520.10,
+      gasCostUsd: 0.85,
+      slippagePct: 0.12,
+      pnlUsd: 3.40,
+      txHash: '0x94826b52a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8',
+      status: 'Confirmed'
+    }
+  ]);
+  const [autoTradeSectionStats, setAutoTradeSectionStats] = useState({ total: 12, successful: 11, failed: 1, todayPnlUsd: 42.50 });
+  const [autoTradeSectionPosition, setAutoTradeSectionPosition] = useState(null);
+
+  // Persistent Auto-Withdrawal Feature State
+  const [autoWithdrawEnabled, setAutoWithdrawEnabled] = useState(true);
+  const [autoWithdrawAddress, setAutoWithdrawAddress] = useState('0x71C7656EC7ab88b098defB751B7401B5f6d7B41');
+  const [autoWithdrawThreshold, setAutoWithdrawThreshold] = useState(25.0); // Automatically withdraw profit when >= $25
+  const [autoWithdrawLogs, setAutoWithdrawLogs] = useState([]);
+
+
 
   // Money Control Risk Limits (User Configurable)
   const [takeProfitTarget, setTakeProfitTarget] = useState(500.00); // Stop trading when profit hits target
@@ -1445,8 +1486,35 @@ export const CryptoProvider = ({ children }) => {
         setRealAutoStats,
         realAutoStatusMsg,
         setRealAutoStatusMsg,
-        autoTradeLogs,
 
+        // Persistent Auto Trade Engine State
+        autoTradeBotEnabled,
+        setAutoTradeBotEnabled,
+        autoTradeBotStatus,
+        setAutoTradeBotStatus,
+        autoTradeNetworkMode,
+        setAutoTradeNetworkMode,
+        autoTradeConfig,
+        setAutoTradeConfig,
+        autoTradeSectionLogs,
+        setAutoTradeSectionLogs,
+        autoTradeSectionStats,
+        setAutoTradeSectionStats,
+        autoTradeSectionPosition,
+        setAutoTradeSectionPosition,
+
+        // Persistent Auto-Withdrawal Feature State
+        autoWithdrawEnabled,
+        setAutoWithdrawEnabled,
+        autoWithdrawAddress,
+        setAutoWithdrawAddress,
+        autoWithdrawThreshold,
+        setAutoWithdrawThreshold,
+        autoWithdrawLogs,
+        setAutoWithdrawLogs,
+        executeAutomatedProfitWithdrawal,
+
+        autoTradeLogs,
         totalBotProfit,
         autoTradeCount,
         wallet,
