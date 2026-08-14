@@ -33,6 +33,7 @@ import { SolidityContractSection } from './components/SolidityContractSection';
 import { BankToBankTransferSection } from './components/BankToBankTransferSection';
 import { ExchangesSection } from './components/ExchangesSection';
 import { TradeHistorySection } from './components/TradeHistorySection';
+import { AutoTradeSection } from './components/auto-trade/AutoTradeSection';
 
 const DashboardContent = () => {
   const { activeTab } = useCrypto();
@@ -41,14 +42,20 @@ const DashboardContent = () => {
     <main className="flex-1 overflow-y-auto pb-24 lg:pb-8 no-scrollbar bg-[#060d18]">
       <div className="p-6 lg:p-8 space-y-0 min-h-full">
 
+        {/* ── AUTO TRADE SECTION ── */}
+        {activeTab === 'autotrade' && (
+          <AutoTradeSection />
+        )}
+
         {/* ── DASHBOARD ── */}
-        {(activeTab === 'dashboard' || !['papertrading','simulation','account','wallet','realwallet','ethmainnet','contracts','solidity',
+        {(activeTab === 'dashboard' || !['autotrade','papertrading','simulation','account','wallet','realwallet','ethmainnet','contracts','solidity',
           'decentralized','contractprocess','banktransfer','portfolio','metamaskterminal','realtrading',
           'exchanges','tradehistory','settings','markets','scanner','trades','strategies','analytics'].includes(activeTab)) && (
           <div className="space-y-6">
             <TotalAssetsHero />
           </div>
         )}
+
 
         {/* ── ETHEREUM MAINNET ORIGINAL TRADE ── */}
         {activeTab === 'ethmainnet' && (

@@ -10,7 +10,8 @@ import {
   Gem,
   ShieldCheck,
   Users,
-  Zap
+  Zap,
+  Cpu
 } from 'lucide-react';
 
 export const MobileBottomNav = () => {
@@ -18,11 +19,12 @@ export const MobileBottomNav = () => {
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
+    { id: 'autotrade', label: 'Auto Trade', icon: Cpu },
     { id: 'metamaskterminal', label: 'MetaMask', icon: Zap },
     { id: 'realwallet', label: 'Real Wallet', icon: Gem },
-    { id: 'decentralized', label: 'Vault', icon: ShieldCheck },
     { id: 'account', label: 'Account', icon: User }
   ];
+
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-[#0b0c10]/95 backdrop-blur-xl border-t border-slate-800/90 px-3 py-2 shadow-[0_-10px_25px_rgba(0,0,0,0.5)] font-sans">

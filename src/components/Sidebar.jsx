@@ -11,14 +11,17 @@ import {
   LogOut,
   Moon,
   Flame,
-  FileCode
+  FileCode,
+  Cpu
 } from 'lucide-react';
+
 
 export const Sidebar = () => {
   const { activeTab, setActiveTab, logout } = useCrypto();
 
   const navItems = [
     { id: 'dashboard',    label: 'Dashboard',     icon: LayoutDashboard },
+    { id: 'autotrade',    label: 'Auto Trade',    icon: Cpu },
     { id: 'ethmainnet',   label: 'ETH Mainnet',   icon: Flame },
     { id: 'contracts',    label: 'Smart Contracts', icon: FileCode },
     { id: 'exchanges',    label: 'Market',         icon: BarChart2 },
@@ -28,6 +31,7 @@ export const Sidebar = () => {
     { id: 'wallet',       label: 'Wallet',         icon: Wallet },
     { id: 'settings',     label: 'Settings',       icon: Settings },
   ];
+
 
   return (
     <aside className="hidden lg:flex w-56 shrink-0 h-full flex-col bg-[#080f1c] border-r border-slate-800/60 z-30 overflow-y-auto no-scrollbar">
