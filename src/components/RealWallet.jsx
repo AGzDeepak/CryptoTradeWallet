@@ -265,7 +265,6 @@ export const RealWallet = () => {
         from: realWalletAddress,
         to: SWAP_ROUTER,
         value: amountInWei,
-        gas: '0x5208',
         data: '0x',
       };
 

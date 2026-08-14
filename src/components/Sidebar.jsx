@@ -9,7 +9,9 @@ import {
   Settings,
   Wallet,
   LogOut,
-  Moon
+  Moon,
+  Flame,
+  FileCode
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -17,6 +19,8 @@ export const Sidebar = () => {
 
   const navItems = [
     { id: 'dashboard',    label: 'Dashboard',     icon: LayoutDashboard },
+    { id: 'ethmainnet',   label: 'ETH Mainnet',   icon: Flame },
+    { id: 'contracts',    label: 'Smart Contracts', icon: FileCode },
     { id: 'exchanges',    label: 'Market',         icon: BarChart2 },
     { id: 'papertrading', label: 'Trade',          icon: ArrowLeftRight },
     { id: 'tradehistory', label: 'History',        icon: ClipboardList },

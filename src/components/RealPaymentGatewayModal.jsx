@@ -163,24 +163,18 @@ export const RealPaymentGatewayModal = () => {
       const ethVal = (num / 3540.20).toFixed(6);
 
       if (typeof window !== 'undefined' && window.ethereum) {
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-          const fromAddr = accounts && accounts[0] ? accounts[0] : (realWalletAddress || targetContract);
-          const valueWeiHex = '0x' + (BigInt(Math.floor(parseFloat(ethVal) * 1e18))).toString(16);
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const fromAddr = accounts && accounts[0] ? accounts[0] : (realWalletAddress || targetContract);
+        const valueWeiHex = '0x' + (BigInt(Math.floor(parseFloat(ethVal) * 1e18))).toString(16);
 
-          txHash = await window.ethereum.request({
-            method: 'eth_sendTransaction',
-            params: [{
-              from: fromAddr,
-              to: targetContract,
-              value: valueWeiHex,
-              gas: '0x5208'
-            }]
-          });
-        } catch (ethErr) {
-          console.info('MetaMask deposit fallback:', ethErr);
-          txHash = `0x${Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
-        }
+        txHash = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: fromAddr,
+            to: targetContract,
+            value: valueWeiHex
+          }]
+        });
       } else {
         txHash = `0x${Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
       }

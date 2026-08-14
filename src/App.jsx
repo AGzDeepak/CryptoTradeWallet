@@ -27,7 +27,9 @@ import { LiveCryptoNews } from './components/LiveCryptoNews';
 import { SimulationSection } from './components/SimulationSection';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { RealWeb3TradingSection } from './components/RealWeb3TradingSection';
+import { EthereumMainnetTradeSection } from './components/EthereumMainnetTradeSection';
 import { ContractProcessSection } from './components/ContractProcessSection';
+import { SolidityContractSection } from './components/SolidityContractSection';
 import { BankToBankTransferSection } from './components/BankToBankTransferSection';
 import { ExchangesSection } from './components/ExchangesSection';
 import { TradeHistorySection } from './components/TradeHistorySection';
@@ -40,12 +42,17 @@ const DashboardContent = () => {
       <div className="p-6 lg:p-8 space-y-0 min-h-full">
 
         {/* ── DASHBOARD ── */}
-        {(activeTab === 'dashboard' || !['papertrading','simulation','account','wallet','realwallet',
+        {(activeTab === 'dashboard' || !['papertrading','simulation','account','wallet','realwallet','ethmainnet','contracts','solidity',
           'decentralized','contractprocess','banktransfer','portfolio','metamaskterminal','realtrading',
           'exchanges','tradehistory','settings','markets','scanner','trades','strategies','analytics'].includes(activeTab)) && (
           <div className="space-y-6">
             <TotalAssetsHero />
           </div>
+        )}
+
+        {/* ── ETHEREUM MAINNET ORIGINAL TRADE ── */}
+        {activeTab === 'ethmainnet' && (
+          <EthereumMainnetTradeSection />
         )}
 
         {/* ── EXCHANGES ── */}
@@ -96,9 +103,9 @@ const DashboardContent = () => {
           <DecentralizedWalletView />
         )}
 
-        {/* ── CONTRACT PROCESS ── */}
-        {activeTab === 'contractprocess' && (
-          <ContractProcessSection />
+        {/* ── SMART CONTRACTS & SOLIDITY ENGINE ── */}
+        {(activeTab === 'contracts' || activeTab === 'solidity' || activeTab === 'contractprocess') && (
+          <SolidityContractSection />
         )}
 
         {/* ── BANK TO BANK TRANSFER ── */}

@@ -35,7 +35,7 @@ export const NETWORKS = {
     nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
     rpcUrl: 'https://eth.llamarpc.com',
     blockExplorer: 'https://etherscan.io',
-    contractAddress: '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
+    contractAddress: '0x71C7656EC7ab88b098defB751B7401B5f6d7B410',
     color: 'indigo'
   },
   arbitrum: {

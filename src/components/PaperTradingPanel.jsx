@@ -151,7 +151,7 @@ export const PaperTradingPanel = () => {
       return;
     }
 
-    const targetAddr = wthAddr?.trim() || realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
+    const targetAddr = wthAddr?.trim() || realWalletAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d7B410';
     if (!/^0x[0-9a-fA-F]{40}$/.test(targetAddr)) {
       setWthError('Enter a valid EVM wallet address (0x...)');
       return;
@@ -239,13 +239,13 @@ export const PaperTradingPanel = () => {
           addNotification(`🦊 MetaMask Connected: ${accounts[0].substring(0, 10)}... on ${netMap[chainId] || 'Unknown Network'}`, 'success');
         }
       } else {
-        const demoAddr = '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
+        const demoAddr = '0x71C7656EC7ab88b098defB751B7401B5f6d7B410';
         setRealWalletAddress(demoAddr);
         if (!activeChainId) setActiveChainId(11155111);
         addNotification(`⚡ Connected Web3 Live Terminal: ${demoAddr.substring(0, 10)}...`, 'success');
       }
     } catch (err) {
-      const demoAddr = '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
+      const demoAddr = '0x71C7656EC7ab88b098defB751B7401B5f6d7B410';
       setRealWalletAddress(demoAddr);
       if (!activeChainId) setActiveChainId(11155111);
       addNotification(`⚡ Web3 Live Terminal Active: ${demoAddr.substring(0, 10)}...`, 'info');
@@ -526,7 +526,7 @@ export const PaperTradingPanel = () => {
   const runRealAutoScanStep = useCallback(async () => {
     try {
       const chainId = activeChainIdRef.current || 11155111;
-      const walletAddr = realWalletAddressRef.current || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41';
+      const walletAddr = realWalletAddressRef.current || '0x71C7656EC7ab88b098defB751B7401B5f6d7B410';
       const tokenSymbol = realTokenRef.current || 'USDT';
       const qty = parseFloat(realAmtRef.current) || 0.01;
       const minSpread = realAutoMinSpreadRef.current || 0.25;
@@ -1820,7 +1820,7 @@ export const PaperTradingPanel = () => {
                     </div>
                     <input
                       type="text"
-                      placeholder="0x71C7656EC7ab88b098defB751B7401B5f6d7B41"
+                      placeholder="0x71C7656EC7ab88b098defB751B7401B5f6d7B410"
                       value={wthAddr}
                       onChange={e => setWthAddr(e.target.value)}
                       className="w-full bg-[#060d18] border border-slate-700/60 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-600 outline-none focus:border-rose-500/50 font-mono"
@@ -1936,52 +1936,123 @@ export const PaperTradingPanel = () => {
         {/* Right: Bot engine control panel */}
         <div className="space-y-4">
 
-          {/* Auto-Sell Take Profit Control */}
-          <div className="rounded-2xl bg-[#0d1523] border border-slate-800/70 p-5 space-y-4">
+          {/* Quant Bot Take-Profit Gate Engine Control */}
+          <div className="rounded-2xl bg-[#0a0f1d] border border-slate-800 p-5 space-y-4 font-sans shadow-xl relative overflow-hidden">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${autoTradingEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
-                <h3 className="text-sm font-semibold text-white">Quant Bot</h3>
+                <div className={`w-2.5 h-2.5 rounded-full ${autoTradingEnabled ? 'bg-[#00e676] animate-pulse shadow-[0_0_8px_rgba(0,230,118,0.8)]' : 'bg-slate-600'}`} />
+                <h3 className="text-sm font-bold text-white font-mono tracking-tight">Quant Bot</h3>
               </div>
-              <span className={`text-xs font-medium px-2 py-0.5 rounded-lg ${autoTradingEnabled ? 'bg-emerald-500/15 text-emerald-400' : 'bg-slate-700/50 text-slate-400'}`}>
+              <button
+                type="button"
+                onClick={() => {
+                  const nextState = !autoTradingEnabled;
+                  setAutoTradingEnabled(nextState);
+                  addNotification(nextState ? '🟢 Quant Bot Online & Scanning Spreads' : '⏸️ Quant Bot Execution Paused', nextState ? 'success' : 'info');
+                }}
+                className={`text-xs font-bold px-3 py-1 rounded-xl transition cursor-pointer border ${
+                  autoTradingEnabled 
+                    ? 'bg-emerald-950/80 text-[#00e676] border-[#00e676]/40 shadow-[0_0_12px_rgba(0,230,118,0.25)] hover:brightness-110' 
+                    : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:text-white'
+                }`}
+              >
                 {autoTradingEnabled ? 'Online' : 'Paused'}
-              </span>
+              </button>
             </div>
 
+            {/* Slider & Presets */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400">Take-Profit Gate</span>
-                <span className="text-emerald-400 font-bold">+{minProfitThreshold.toFixed(2)}%</span>
+              <div className="flex items-center justify-between text-xs font-mono">
+                <span className="text-slate-400 font-medium">Take-Profit Gate</span>
+                <span className="text-[#00e676] font-black text-sm">+{minProfitThreshold.toFixed(2)}%</span>
               </div>
-              <input type="range" min="0.10" max="5.00" step="0.10" value={minProfitThreshold}
-                onChange={e => setMinProfitThreshold(parseFloat(e.target.value))}
-                className="w-full h-1.5 bg-[#060d18] rounded-full appearance-none cursor-pointer accent-violet-500" />
-              <div className="flex flex-wrap gap-1.5">
-                {[0.25, 0.50, 1.00, 2.50, 5.00].map(v => (
-                  <button key={v} onClick={() => setMinProfitThreshold(v)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition ${
-                      minProfitThreshold === v
-                        ? 'bg-violet-600/20 text-violet-300 border border-violet-500/30'
-                        : 'bg-[#060d18] border border-slate-700/60 text-slate-400 hover:text-white'
-                    }`}>
-                    +{v.toFixed(2)}%
-                  </button>
-                ))}
+              
+              {/* Interactive Range Slider */}
+              <div className="relative flex items-center py-1">
+                <input 
+                  type="range" 
+                  min="0.10" 
+                  max="5.00" 
+                  step="0.05" 
+                  value={minProfitThreshold}
+                  onChange={e => {
+                    const val = parseFloat(e.target.value);
+                    setMinProfitThreshold(val);
+                  }}
+                  className="w-full h-2 bg-[#060a14] rounded-lg appearance-none cursor-pointer accent-[#a78bfa] hover:accent-[#8b5cf6] transition" 
+                />
+              </div>
+
+              {/* Preset Buttons Grid */}
+              <div className="grid grid-cols-5 gap-1.5 pt-1 font-mono">
+                {[0.25, 0.50, 1.00, 2.50, 5.00].map(v => {
+                  const isActive = Math.abs(minProfitThreshold - v) < 0.01;
+                  return (
+                    <button 
+                      key={v} 
+                      type="button"
+                      onClick={() => {
+                        setMinProfitThreshold(v);
+                        addNotification(`🎯 Take-Profit Gate set to +${v.toFixed(2)}%`, 'info');
+                      }}
+                      className={`py-1.5 px-1 rounded-xl text-[11px] font-bold transition text-center cursor-pointer border ${
+                        isActive
+                          ? 'bg-[#1c1836] text-[#a78bfa] border-[#7c3aed] shadow-[0_0_12px_rgba(124,58,237,0.35)]'
+                          : 'bg-[#060a14] border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                      }`}
+                    >
+                      +{v.toFixed(2)}%
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            <div className="border-t border-slate-800/60 pt-3 space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400">Scan Interval</span>
-                <span className="text-white">400ms</span>
+            {/* Metadata Footer */}
+            <div className="border-t border-slate-800/80 pt-3.5 space-y-2.5 font-mono text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400 font-medium">Scan Interval</span>
+                <select
+                  value={paperAutoInterval || 400}
+                  onChange={(e) => {
+                    const newInterval = parseInt(e.target.value);
+                    setPaperAutoInterval(newInterval);
+                    addNotification(`⚡ Scan Interval updated to ${newInterval}ms`, 'info');
+                  }}
+                  className="bg-[#060a14] border border-slate-800 rounded-lg px-2 py-0.5 text-xs text-white font-bold outline-none focus:border-[#7c3aed] cursor-pointer"
+                >
+                  <option value={100}>100ms (HFT)</option>
+                  <option value={200}>200ms (Ultra)</option>
+                  <option value={400}>400ms (Fast)</option>
+                  <option value={1000}>1000ms (Standard)</option>
+                </select>
               </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400">Auto-Sell Mode</span>
-                <span className="text-emerald-400 font-medium">🟢 Active</span>
+
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400 font-medium">Auto-Sell Mode</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextMode = !paperAutoEnabled;
+                    setPaperAutoEnabled(nextMode);
+                    addNotification(nextMode ? '🟢 Auto-Sell Engine Active' : '⏸️ Auto-Sell Engine Paused', nextMode ? 'success' : 'info');
+                  }}
+                  className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-bold transition cursor-pointer border ${
+                    paperAutoEnabled 
+                      ? 'bg-emerald-950/70 text-[#00e676] border-[#00e676]/30 shadow-[0_0_8px_rgba(0,230,118,0.2)]' 
+                      : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:text-white'
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${paperAutoEnabled ? 'bg-[#00e676] animate-pulse' : 'bg-slate-500'}`} />
+                  <span>{paperAutoEnabled ? 'Active' : 'Paused'}</span>
+                </button>
               </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400">Settled Trades</span>
-                <span className="text-white">{autoTradeCount}</span>
+
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400 font-medium">Settled Trades</span>
+                <span className="text-white font-bold text-sm bg-[#060a14] px-2.5 py-0.5 rounded-lg border border-slate-800">
+                  {autoTradeCount}
+                </span>
               </div>
             </div>
           </div>

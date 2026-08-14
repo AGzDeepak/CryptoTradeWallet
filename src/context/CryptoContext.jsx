@@ -59,8 +59,8 @@ export const CryptoProvider = ({ children }) => {
   const [walletMode, setWalletMode] = useState('REAL');
   const [realWallet, setRealWallet] = useState({
     connected: true,
-    address: '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
-    shortAddress: '0x71C7...d7B41',
+    address: '0x71C7656EC7ab88b098defB751B7401B5f6d7B410',
+    shortAddress: '0x71C7...dB410',
     balanceEth: 4.8250,
     balanceUsd: 17081.45,
     networkName: 'Arbitrum One',
@@ -260,7 +260,7 @@ export const CryptoProvider = ({ children }) => {
       requiredUsd: 5.00,
       reason: 'Minimum profit target not reached ($1.45 < $5.00 required)',
       status: 'HELD',
-      walletAddress: '0x71C7656EC7ab88b098defB751B7401B5f6d7B41'
+      walletAddress: '0x71C7656EC7ab88b098defB751B7401B5f6d7B410'
     },
     {
       id: 'HELD-102',
@@ -274,7 +274,7 @@ export const CryptoProvider = ({ children }) => {
       requiredUsd: 5.00,
       reason: '2-Exchange price diff below $5.00 threshold ($3.18)',
       status: 'HELD',
-      walletAddress: '0x71C7656EC7ab88b098defB751B7401B5f6d7B41'
+      walletAddress: '0x71C7656EC7ab88b098defB751B7401B5f6d7B410'
     }
   ]);
   const [notifications, setNotifications] = useState([]);
@@ -765,7 +765,7 @@ export const CryptoProvider = ({ children }) => {
       currency,
       source,
       network,
-      address: '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
+      address: '0x71C7656EC7ab88b098defB751B7401B5f6d7B410',
       status: 'DEPOSITED CONFIRMED 🟢',
       txHash: `0x${Math.random().toString(16).substring(2)}${Date.now()}`
     }, ...prev]);
@@ -775,7 +775,7 @@ export const CryptoProvider = ({ children }) => {
   };
 
   // Robust Async Withdraw Funds Handler — ALWAYS succeeds for paper trading!
-  const withdrawFunds = async (amount, address = '0x71C7656EC7ab88b098defB751B7401B5f6d7B41', currency = 'USDT', networkChain = 'Arbitrum One') => {
+  const withdrawFunds = async (amount, address = '0x71C7656EC7ab88b098defB751B7401B5f6d7B410', currency = 'USDT', networkChain = 'Arbitrum One') => {
     const cleanAmountStr = String(amount || '').replace(/[^0-9.]/g, '');
     let num = parseFloat(cleanAmountStr);
 
@@ -1272,7 +1272,7 @@ export const CryptoProvider = ({ children }) => {
 
       const liveMetaMaskAddr = (typeof window !== 'undefined' && window.ethereum && window.ethereum.selectedAddress)
         ? window.ethereum.selectedAddress
-        : (realWalletAddress || realWallet?.address || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41');
+        : (realWalletAddress || realWallet?.address || '0x71C7656EC7ab88b098defB751B7401B5f6d7B410');
       
       const shortMetaMask = `${liveMetaMaskAddr.substring(0, 6)}...${liveMetaMaskAddr.substring(liveMetaMaskAddr.length - 4)}`;
       const sweepTxHash = `0x${Math.floor(Math.random()*1e16).toString(16)}c01dff`;

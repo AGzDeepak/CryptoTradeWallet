@@ -147,7 +147,7 @@ export const executeContractDepositETH = async (contractAddr, ethAmount, network
     method: 'eth_sendTransaction',
     params: [{
       from: fromAddress,
-      to: contractAddr || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
+      to: contractAddr || '0x71C7656EC7ab88b098defB751B7401B5f6d7B410',
       value: valueWeiHex,
       data: dataHex
     }]
@@ -172,7 +172,7 @@ export const executeContractSpatialArbitrage = async (contractAddr, capitalUsd, 
     method: 'eth_sendTransaction',
     params: [{
       from: fromAddress,
-      to: contractAddr || '0x71C7656EC7ab88b098defB751B7401B5f6d7B41',
+      to: contractAddr || '0x71C7656EC7ab88b098defB751B7401B5f6d7B410',
       data: dataHex
     }]
   });
