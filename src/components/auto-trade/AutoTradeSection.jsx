@@ -17,8 +17,7 @@ import { calculateIndicators, evaluateStrategy } from '../../services/autoTradeE
 import { validateTradeRisk } from '../../services/autoTradeRiskManager';
 import { executeAutoTradeTransaction } from '../../services/autoTradeExecution';
 import { connectMetaMask } from '../../services/walletService';
-import { Zap, ArrowDownLeft, ShieldCheck, Play, Pause, Bot, RefreshCw, Sliders } from 'lucide-react';
-
+import { Zap, ArrowDownLeft, Sliders, ShieldCheck } from 'lucide-react';
 
 export const AutoTradeSection = () => {
   const { 
@@ -27,7 +26,7 @@ export const AutoTradeSection = () => {
     addNotification, 
     audioFx,
     wallet,
-    // Persistent state from global CryptoContext
+    // Persistent global state from CryptoContext
     autoTradeBotEnabled,
     setAutoTradeBotEnabled,
     autoTradeBotStatus,
@@ -53,8 +52,8 @@ export const AutoTradeSection = () => {
     executeAutomatedProfitWithdrawal
   } = useCrypto();
 
-  // Minimal Sub-Tab Navigation: 'engine' | 'withdrawal' | 'settings'
-  const [activeSubTab, setActiveSubTab] = useState('engine');
+  // Exactly TWO Sections: 'dashboard' (Section 1) & 'controls' (Section 2)
+  const [activeSubTab, setActiveSubTab] = useState('dashboard');
 
   // Session Auth State
   const [authSession, setAuthSession] = useState(() => getStoredAuthSession(realWalletAddress));
@@ -400,7 +399,7 @@ export const AutoTradeSection = () => {
   return (
     <div className="space-y-5 max-w-7xl mx-auto pb-12">
 
-      {/* Minimal Top Header & Primary Controls */}
+      {/* Top Banner with Clean 2-Section Tab Switcher */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#0d1523] border border-slate-800/80 p-4 sm:p-5 rounded-2xl shadow-sm">
         <div>
           <div className="flex items-center gap-2">
@@ -411,53 +410,41 @@ export const AutoTradeSection = () => {
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Minimal quantitative trading engine · Automatic BUY/SELL execution · Inbuilt profit auto-withdrawal
+            Simple 2-Section Trading Hub · Continuous Automated Execution · Inbuilt Profit Auto-Withdrawal
           </p>
         </div>
 
-        {/* Minimal Nav Sub-Tabs & Network Switcher */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1 bg-[#060d18] p-1 rounded-xl border border-slate-800">
-            <button
-              onClick={() => setActiveSubTab('engine')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 ${
-                activeSubTab === 'engine'
-                  ? 'bg-violet-600/30 text-violet-300 border border-violet-500/40 shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Zap className="w-3.5 h-3.5" />
-              <span>Trading Dashboard</span>
-            </button>
+        {/* EXACTLY TWO SECTIONS SWITCHER */}
+        <div className="flex items-center gap-1.5 bg-[#060d18] p-1.5 rounded-xl border border-slate-800">
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('dashboard')}
+            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 ${
+              activeSubTab === 'dashboard'
+                ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+            }`}
+          >
+            <Zap className="w-4 h-4" />
+            <span>1. Auto Trade Dashboard</span>
+          </button>
 
-            <button
-              onClick={() => setActiveSubTab('withdrawal')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 ${
-                activeSubTab === 'withdrawal'
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Auto Withdrawal</span>
-            </button>
-
-            <button
-              onClick={() => setActiveSubTab('settings')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 ${
-                activeSubTab === 'settings'
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Sliders className="w-3.5 h-3.5 text-amber-400" />
-              <span>Strategy Config</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('controls')}
+            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 ${
+              activeSubTab === 'controls'
+                ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/30'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+            }`}
+          >
+            <ArrowDownLeft className="w-4 h-4" />
+            <span>2. Auto Withdrawal & Strategy</span>
+          </button>
         </div>
       </div>
 
-      {/* Wallet Signature Authentication Bar */}
+      {/* Wallet Signature Authentication Card */}
       <WalletAuthCard
         walletAddress={realWalletAddress}
         onConnectWallet={handleConnectWallet}
@@ -468,10 +455,10 @@ export const AutoTradeSection = () => {
         addNotification={addNotification}
       />
 
-      {/* Sub-Tab 1: Main Minimal Trading Dashboard */}
-      {activeSubTab === 'engine' && (
+      {/* ── SECTION 1: AUTO TRADE DASHBOARD ── */}
+      {activeSubTab === 'dashboard' && (
         <div className="space-y-5">
-          {/* Essential 3 Cards: Live Ticker, Bot Controller, Portfolio */}
+          {/* Core 3 Cards: Live Ticker, Bot Controller, Portfolio */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             <MarketCard
               pair={autoTradeConfig.pair || 'ETH/USDT'}
@@ -502,7 +489,7 @@ export const AutoTradeSection = () => {
             />
           </div>
 
-          {/* Quick Emergency Interlocks */}
+          {/* Emergency Safety Controls */}
           <EmergencyControls
             onPauseBot={handlePauseBot}
             onStopAutoTrading={handleStopAutoTrading}
@@ -512,39 +499,40 @@ export const AutoTradeSection = () => {
             hasActivePosition={!!(autoTradeSectionPosition && autoTradeSectionPosition.amount > 0)}
           />
 
-          {/* Minimal Activity Feed Table */}
+          {/* Minimalist Live Activity Log Table */}
           <TradeActivityTable
             activityLogs={autoTradeSectionLogs}
           />
         </div>
       )}
 
-      {/* Sub-Tab 2: Inbuilt Auto Withdrawal Gateway */}
-      {activeSubTab === 'withdrawal' && (
-        <InbuiltWithdrawalCard
-          autoWithdrawEnabled={autoWithdrawEnabled}
-          setAutoWithdrawEnabled={setAutoWithdrawEnabled}
-          autoWithdrawAddress={autoWithdrawAddress}
-          setAutoWithdrawAddress={setAutoWithdrawAddress}
-          autoWithdrawThreshold={autoWithdrawThreshold}
-          setAutoWithdrawThreshold={setAutoWithdrawThreshold}
-          autoWithdrawLogs={autoWithdrawLogs}
-          realWalletAddress={realWalletAddress}
-          availableBalanceUsd={wallet?.virtualBalance || 12480.50}
-          onExecuteManualWithdraw={handleExecuteManualWithdraw}
-          addNotification={addNotification}
-        />
+      {/* ── SECTION 2: AUTO WITHDRAWAL & STRATEGY CONTROLS ── */}
+      {activeSubTab === 'controls' && (
+        <div className="space-y-5">
+          {/* Inbuilt Auto Withdrawal Gateway */}
+          <InbuiltWithdrawalCard
+            autoWithdrawEnabled={autoWithdrawEnabled}
+            setAutoWithdrawEnabled={setAutoWithdrawEnabled}
+            autoWithdrawAddress={autoWithdrawAddress}
+            setAutoWithdrawAddress={setAutoWithdrawAddress}
+            autoWithdrawThreshold={autoWithdrawThreshold}
+            setAutoWithdrawThreshold={setAutoWithdrawThreshold}
+            autoWithdrawLogs={autoWithdrawLogs}
+            realWalletAddress={realWalletAddress}
+            availableBalanceUsd={wallet?.virtualBalance || 12480.50}
+            onExecuteManualWithdraw={handleExecuteManualWithdraw}
+            addNotification={addNotification}
+          />
+
+          {/* Strategy & Risk Controls */}
+          <StrategyPanel
+            config={autoTradeConfig}
+            onChangeConfig={setAutoTradeConfig}
+          />
+        </div>
       )}
 
-      {/* Sub-Tab 3: Strategy Configuration Panel */}
-      {activeSubTab === 'settings' && (
-        <StrategyPanel
-          config={autoTradeConfig}
-          onChangeConfig={setAutoTradeConfig}
-        />
-      )}
-
-      {/* Modals */}
+      {/* Confirmation Modals */}
       <AutoTradeEnableModal
         isOpen={showEnableModal}
         onClose={() => setShowEnableModal(false)}
