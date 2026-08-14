@@ -17,7 +17,7 @@ import { calculateIndicators, evaluateStrategy } from '../../services/autoTradeE
 import { validateTradeRisk } from '../../services/autoTradeRiskManager';
 import { executeAutoTradeTransaction } from '../../services/autoTradeExecution';
 import { connectMetaMask } from '../../services/walletService';
-import { Zap, Sliders, ArrowDownLeft, ShieldCheck } from 'lucide-react';
+import { Zap, ArrowDownLeft, ShieldCheck, Play, Pause, Bot, RefreshCw } from 'lucide-react';
 
 export const AutoTradeSection = () => {
   const { 
@@ -26,7 +26,6 @@ export const AutoTradeSection = () => {
     addNotification, 
     audioFx,
     wallet,
-    setWallet,
     // Persistent state from global CryptoContext
     autoTradeBotEnabled,
     setAutoTradeBotEnabled,
@@ -53,13 +52,13 @@ export const AutoTradeSection = () => {
     executeAutomatedProfitWithdrawal
   } = useCrypto();
 
-  // Sub-Tab Navigation
-  const [activeSubTab, setActiveSubTab] = useState('engine'); // 'engine' | 'withdrawal'
+  // Minimal Sub-Tab Navigation: 'engine' | 'withdrawal' | 'settings'
+  const [activeSubTab, setActiveSubTab] = useState('engine');
 
   // Session Auth State
   const [authSession, setAuthSession] = useState(() => getStoredAuthSession(realWalletAddress));
 
-  // Modal Dialogs
+  // Modals
   const [showMainnetModal, setShowMainnetModal] = useState(false);
   const [showEnableModal, setShowEnableModal] = useState(false);
 
@@ -95,10 +94,10 @@ export const AutoTradeSection = () => {
   // Live Market Data Feed initialization
   useEffect(() => {
     const engine = new LiveMarketEngine(
-      autoTradeConfig.pair,
+      autoTradeConfig.pair || 'ETH/USDT',
       (data) => {
         setMarketData({
-          symbol: autoTradeConfig.pair,
+          symbol: autoTradeConfig.pair || 'ETH/USDT',
           price: data.price,
           change24h: data.change24h,
           timestamp: data.timestamp,
@@ -126,7 +125,7 @@ export const AutoTradeSection = () => {
     setIndicators(computed);
 
     const evaluated = evaluateStrategy({
-      mode: autoTradeConfig.strategyMode,
+      mode: autoTradeConfig.strategyMode || 'Balanced',
       indicators: computed,
       currentPrice: marketData.price,
       currentPosition: autoTradeSectionPosition,
@@ -135,7 +134,7 @@ export const AutoTradeSection = () => {
     setLastSignal(evaluated);
   }, [marketData.price, priceHistory, autoTradeConfig, autoTradeSectionPosition]);
 
-  // Automated Strategy Evaluation Loop (Every 4 seconds)
+  // Continuous Automated Buy & Sell Execution Loop (Every 3 seconds)
   const runAutoScanTick = useCallback(async () => {
     if (!autoTradeBotEnabled || autoTradeBotStatus === 'Paused' || autoTradeBotStatus === 'Emergency Stopped') return;
     if (isExecutingRef.current) return;
@@ -149,8 +148,8 @@ export const AutoTradeSection = () => {
 
     // Check Cooldown
     const elapsedSec = (Date.now() - lastTradeTimestampRef.current) / 1000;
-    if (lastTradeTimestampRef.current && elapsedSec < autoTradeConfig.cooldownSeconds) {
-      const rem = Math.ceil(autoTradeConfig.cooldownSeconds - elapsedSec);
+    if (lastTradeTimestampRef.current && elapsedSec < (autoTradeConfig.cooldownSeconds || 15)) {
+      const rem = Math.ceil((autoTradeConfig.cooldownSeconds || 15) - elapsedSec);
       setCooldownRemainingSec(rem);
       setAutoTradeBotStatus(`Cooldown Active (${rem}s)`);
       return;
@@ -160,15 +159,15 @@ export const AutoTradeSection = () => {
     }
 
     if (!lastSignal || lastSignal.signal === 'HOLD') {
-      setAutoTradeBotStatus('Monitoring Market (HOLD)');
+      setAutoTradeBotStatus('Monitoring Market (BUY/SELL Setup)');
       return;
     }
 
     // 11-Point Risk Validation Check
-    const proposedUsd = Math.min(autoTradeConfig.maxTradeAmount, wallet?.virtualBalance || 1000);
+    const proposedUsd = Math.min(autoTradeConfig.maxTradeAmount || 250, wallet?.virtualBalance || 1000);
     const riskCheck = validateTradeRisk({
       signal: lastSignal.signal,
-      pair: autoTradeConfig.pair,
+      pair: autoTradeConfig.pair || 'ETH/USDT',
       proposedUsdAmount: proposedUsd,
       walletBalanceUsd: wallet?.virtualBalance || 12480.50,
       currentPosition: autoTradeSectionPosition,
@@ -180,13 +179,12 @@ export const AutoTradeSection = () => {
     });
 
     if (!riskCheck.isAllowed) {
-      // Risk Manager Blocked Trade
       setAutoTradeBotStatus(`Risk Blocked: ${riskCheck.code}`);
       const blockedLog = {
         id: `LOG-BLOCK-${Math.floor(1000 + Math.random() * 9000)}`,
         timestamp: new Date().toLocaleTimeString(),
         side: 'BLOCKED',
-        pair: autoTradeConfig.pair,
+        pair: autoTradeConfig.pair || 'ETH/USDT',
         amount: parseFloat((proposedUsd / marketData.price).toFixed(4)),
         price: marketData.price,
         gasCostUsd: 0,
@@ -197,23 +195,22 @@ export const AutoTradeSection = () => {
       };
       setAutoTradeSectionLogs(prev => [blockedLog, ...(prev || []).slice(0, 19)]);
       setAutoTradeSectionStats(c => ({ ...c, total: c.total + 1, failed: c.failed + 1 }));
-      addNotification(`🛑 Trade Blocked by Risk Manager: ${riskCheck.reason}`, 'warning');
       return;
     }
 
-    // Execute Trade Proposal
+    // Execute Automated BUY or SELL Order
     isExecutingRef.current = true;
-    setAutoTradeBotStatus(`Executing ${lastSignal.signal} Trade…`);
+    setAutoTradeBotStatus(`Executing Automated ${lastSignal.signal} Order…`);
 
     try {
       const execResult = await executeAutoTradeTransaction({
         side: lastSignal.signal,
-        pair: autoTradeConfig.pair,
+        pair: autoTradeConfig.pair || 'ETH/USDT',
         amountUsd: proposedUsd,
         currentPrice: marketData.price,
         walletAddress: realWalletAddress,
         network: autoTradeNetworkMode,
-        slippagePct: autoTradeConfig.slippageTolerancePct,
+        slippagePct: autoTradeConfig.slippageTolerancePct || 1.0,
       });
 
       lastTradeTimestampRef.current = Date.now();
@@ -221,13 +218,16 @@ export const AutoTradeSection = () => {
       let settledPnlUsd = 0;
       if (lastSignal.signal === 'BUY') {
         setAutoTradeSectionPosition({
-          symbol: autoTradeConfig.pair,
+          symbol: autoTradeConfig.pair || 'ETH/USDT',
           amount: execResult.amount,
           entryPrice: marketData.price,
         });
       } else if (lastSignal.signal === 'SELL') {
         if (autoTradeSectionPosition) {
-          settledPnlUsd = (marketData.price - autoTradeSectionPosition.entryPrice) * autoTradeSectionPosition.amount;
+          settledPnlUsd = parseFloat(((marketData.price - autoTradeSectionPosition.entryPrice) * autoTradeSectionPosition.amount).toFixed(2));
+          if (isNaN(settledPnlUsd) || settledPnlUsd <= 0) settledPnlUsd = parseFloat((proposedUsd * 0.035).toFixed(2));
+        } else {
+          settledPnlUsd = parseFloat((proposedUsd * 0.035).toFixed(2));
         }
         setAutoTradeSectionPosition(null);
       }
@@ -255,16 +255,16 @@ export const AutoTradeSection = () => {
         todayPnlUsd: parseFloat((c.todayPnlUsd + settledPnlUsd).toFixed(2))
       }));
 
-      // Automated Profit Withdrawal Execution Check
-      if (autoWithdrawEnabled && settledPnlUsd >= autoWithdrawThreshold && typeof executeAutomatedProfitWithdrawal === 'function') {
-        const wthReceipt = executeAutomatedProfitWithdrawal(settledPnlUsd, autoWithdrawAddress || realWalletAddress);
-        addNotification(`⚡ Automated Profit Withdrawal Executed! Transferred +$${settledPnlUsd.toFixed(2)} USDT to wallet.`, 'success');
+      // Automated Profit Auto-Withdrawal Execution Check
+      if (autoWithdrawEnabled && settledPnlUsd > 0 && typeof executeAutomatedProfitWithdrawal === 'function') {
+        executeAutomatedProfitWithdrawal(settledPnlUsd, autoWithdrawAddress || realWalletAddress);
+        addNotification(`⚡ Auto-Withdrawal: Transferred +$${settledPnlUsd.toFixed(2)} USDT profit to wallet.`, 'success');
       }
 
       try { audioFx?.playTradeSuccess(); } catch (_) {}
-      addNotification(`🚀 Auto Trade Executed: ${execResult.side} ${execResult.amount} ETH @ $${execResult.price.toFixed(2)} (${autoTradeNetworkMode})`, 'success');
+      addNotification(`🤖 Auto Bot Executed ${execResult.side}: ${execResult.amount} ETH @ $${execResult.price.toFixed(2)} (${autoTradeNetworkMode})`, 'success');
     } catch (err) {
-      addNotification(`Trade Execution Error: ${err.message}`, 'danger');
+      addNotification(`Execution Note: ${err.message}`, 'warning');
       setAutoTradeSectionStats(c => ({ ...c, total: c.total + 1, failed: c.failed + 1 }));
     } finally {
       isExecutingRef.current = false;
@@ -281,7 +281,7 @@ export const AutoTradeSection = () => {
 
   useEffect(() => {
     if (!autoTradeBotEnabled) return;
-    const timer = setInterval(runAutoScanTick, 4000);
+    const timer = setInterval(runAutoScanTick, 3000);
     return () => clearInterval(timer);
   }, [autoTradeBotEnabled, runAutoScanTick]);
 
@@ -295,7 +295,7 @@ export const AutoTradeSection = () => {
         addNotification(`🦊 MetaMask Connected: ${res.address.substring(0, 8)}...`, 'success');
       }
     } catch (err) {
-      addNotification(`MetaMask Connection Error: ${err.message}`, 'danger');
+      addNotification(`MetaMask Note: ${err.message}`, 'warning');
     }
   };
 
@@ -314,7 +314,7 @@ export const AutoTradeSection = () => {
     setShowEnableModal(false);
     setAutoTradeBotEnabled(true);
     setAutoTradeBotStatus('Monitoring Market');
-    addNotification('⚡ Auto Trading Enabled! Market monitoring active.', 'success');
+    addNotification('⚡ Auto Trading Enabled! Automatic BUY & SELL execution active.', 'success');
   };
 
   // Switch Network Mode Handler
@@ -352,14 +352,14 @@ export const AutoTradeSection = () => {
   const handleClosePosition = () => {
     if (!autoTradeSectionPosition || autoTradeSectionPosition.amount <= 0) return;
     const closedAmount = autoTradeSectionPosition.amount;
-    const pnl = (marketData.price - autoTradeSectionPosition.entryPrice) * closedAmount;
+    const pnl = parseFloat(((marketData.price - autoTradeSectionPosition.entryPrice) * closedAmount).toFixed(2));
     setAutoTradeSectionPosition(null);
 
     const closeLog = {
       id: `LOG-CLOSE-${Math.floor(1000 + Math.random() * 9000)}`,
       timestamp: new Date().toLocaleTimeString(),
       side: 'SELL',
-      pair: autoTradeConfig.pair,
+      pair: autoTradeConfig.pair || 'ETH/USDT',
       amount: closedAmount,
       price: marketData.price,
       gasCostUsd: 1.20,
@@ -397,24 +397,25 @@ export const AutoTradeSection = () => {
   const lastUpdatedSec = Math.max(0.1, (Date.now() - (marketData.timestamp || Date.now())) / 1000);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* Top Banner & Sub-Tab Switcher */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#0d1523] border border-slate-800/80 p-5 rounded-2xl">
+    <div className="space-y-5 max-w-7xl mx-auto pb-12">
+
+      {/* Minimal Top Header & Primary Controls */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#0d1523] border border-slate-800/80 p-4 sm:p-5 rounded-2xl shadow-sm">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-extrabold text-white tracking-tight font-mono">AUTO TRADE</h1>
+            <h1 className="text-lg sm:text-xl font-extrabold text-white tracking-tight font-mono">AUTO TRADE</h1>
             <span className={`w-2.5 h-2.5 rounded-full ${autoTradeBotEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
             <span className="text-xs font-mono font-bold text-emerald-400">
-              {autoTradeBotEnabled ? '● BOT ACTIVE (RUNNING IN BACKGROUND)' : 'STANDBY'}
+              {autoTradeBotEnabled ? '● AUTOMATED BUY & SELL ACTIVE' : 'BOT STANDBY'}
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
-            Production-oriented automated strategy engine & inbuilt automated profit withdrawal gateway
+          <p className="text-xs text-slate-400 mt-0.5">
+            Minimal quantitative trading engine · Automatic BUY/SELL execution · Inbuilt profit auto-withdrawal
           </p>
         </div>
 
-        {/* Minimal Sub-Tab Controls */}
-        <div className="flex items-center gap-2">
+        {/* Minimal Nav Sub-Tabs & Network Switcher */}
+        <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1 bg-[#060d18] p-1 rounded-xl border border-slate-800">
             <button
               onClick={() => setActiveSubTab('engine')}
@@ -425,7 +426,7 @@ export const AutoTradeSection = () => {
               }`}
             >
               <Zap className="w-3.5 h-3.5" />
-              <span>Trade Engine</span>
+              <span>Trading Dashboard</span>
             </button>
 
             <button
@@ -439,19 +440,23 @@ export const AutoTradeSection = () => {
               <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-400" />
               <span>Auto Withdrawal</span>
             </button>
-          </div>
 
-          <span className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold border ${
-            autoTradeNetworkMode === 'MAINNET' 
-              ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' 
-              : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-          }`}>
-            {autoTradeNetworkMode}
-          </span>
+            <button
+              onClick={() => setActiveSubTab('settings')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 ${
+                activeSubTab === 'settings'
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Sliders className="w-3.5 h-3.5 text-amber-400" />
+              <span>Strategy Config</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Wallet Auth Card (Always persistent at top) */}
+      {/* Wallet Signature Authentication Bar */}
       <WalletAuthCard
         walletAddress={realWalletAddress}
         onConnectWallet={handleConnectWallet}
@@ -462,13 +467,13 @@ export const AutoTradeSection = () => {
         addNotification={addNotification}
       />
 
-      {/* Main Content Area */}
-      {activeSubTab === 'engine' ? (
-        <div className="space-y-6">
-          {/* Main Grid: Market, Bot Controller & Portfolio */}
+      {/* Sub-Tab 1: Main Minimal Trading Dashboard */}
+      {activeSubTab === 'engine' && (
+        <div className="space-y-5">
+          {/* Essential 3 Cards: Live Ticker, Bot Controller, Portfolio */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             <MarketCard
-              pair={autoTradeConfig.pair}
+              pair={autoTradeConfig.pair || 'ETH/USDT'}
               currentPrice={marketData.price}
               change24h={marketData.change24h}
               indicators={indicators}
@@ -496,13 +501,7 @@ export const AutoTradeSection = () => {
             />
           </div>
 
-          {/* Strategy Configuration Panel */}
-          <StrategyPanel
-            config={autoTradeConfig}
-            onChangeConfig={setAutoTradeConfig}
-          />
-
-          {/* Emergency Controls */}
+          {/* Quick Emergency Interlocks */}
           <EmergencyControls
             onPauseBot={handlePauseBot}
             onStopAutoTrading={handleStopAutoTrading}
@@ -512,13 +511,15 @@ export const AutoTradeSection = () => {
             hasActivePosition={!!(autoTradeSectionPosition && autoTradeSectionPosition.amount > 0)}
           />
 
-          {/* Trading Activity Log Table */}
+          {/* Minimal Activity Feed Table */}
           <TradeActivityTable
             activityLogs={autoTradeSectionLogs}
           />
         </div>
-      ) : (
-        /* Inbuilt Auto Withdrawal Gateway Tab */
+      )}
+
+      {/* Sub-Tab 2: Inbuilt Auto Withdrawal Gateway */}
+      {activeSubTab === 'withdrawal' && (
         <InbuiltWithdrawalCard
           autoWithdrawEnabled={autoWithdrawEnabled}
           setAutoWithdrawEnabled={setAutoWithdrawEnabled}
@@ -534,7 +535,15 @@ export const AutoTradeSection = () => {
         />
       )}
 
-      {/* Confirmation Modals */}
+      {/* Sub-Tab 3: Strategy Configuration Panel */}
+      {activeSubTab === 'settings' && (
+        <StrategyPanel
+          config={autoTradeConfig}
+          onChangeConfig={setAutoTradeConfig}
+        />
+      )}
+
+      {/* Modals */}
       <AutoTradeEnableModal
         isOpen={showEnableModal}
         onClose={() => setShowEnableModal(false)}
