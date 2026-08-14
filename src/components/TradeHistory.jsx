@@ -122,6 +122,7 @@ export const TradeHistory = () => {
   const { tradeHistory, addNotification, totalBotProfit, autoTradeCount } = useCrypto();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCoin, setSelectedCoin] = useState('ALL');
+  const [selectedSide, setSelectedSide] = useState('ALL'); // 'ALL' | 'BUY' | 'SELL'
   const [filterBotOnly, setFilterBotOnly] = useState(false);
   const [expandedRowId, setExpandedRowId] = useState(null);
 
@@ -130,14 +131,17 @@ export const TradeHistory = () => {
     : INITIAL_TRADE_SETTLEMENTS;
 
   const filteredHistory = combinedHistory.filter(item => {
+    const itemSide = (item.type || item.side || item.action || (item.settleReason || item.exitPrice || item.profit != null ? 'SELL' : 'BUY')).toUpperCase();
+    const matchesSide = selectedSide === 'ALL' || itemSide === selectedSide;
     const matchesSearch = item.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          item.buyExchange.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          item.sellExchange.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (item.buyExchange && item.buyExchange.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          (item.sellExchange && item.sellExchange.toLowerCase().includes(searchTerm.toLowerCase())) ||
                           (item.strategy && item.strategy.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCoin = selectedCoin === 'ALL' || item.symbol === selectedCoin;
     const matchesBot = !filterBotOnly || item.isBot || (item.strategy && item.strategy.toLowerCase().includes('bot'));
-    return matchesSearch && matchesCoin && matchesBot;
+    return matchesSide && matchesSearch && matchesCoin && matchesBot;
   });
+
 
   const totalNetProfit = filteredHistory.reduce((sum, item) => sum + (parseFloat(item.netProfit) || 0), 0);
 
@@ -258,6 +262,31 @@ export const TradeHistory = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          {/* Order Side Filter Tabs */}
+          <div className="flex items-center gap-1 bg-[#060810] p-1 rounded-xl border border-slate-800">
+            {[
+              { id: 'ALL', label: 'All Orders' },
+              { id: 'BUY', label: 'BUY Only' },
+              { id: 'SELL', label: 'SELL Only' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedSide(tab.id)}
+                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-mono font-bold transition ${
+                  selectedSide === tab.id
+                    ? tab.id === 'SELL'
+                      ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                      : tab.id === 'BUY'
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                      : 'bg-violet-600/30 text-violet-300 border border-violet-500/40'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
           {/* Bot Only Filter Toggle */}
           <button
             onClick={() => setFilterBotOnly(!filterBotOnly)}
@@ -268,14 +297,13 @@ export const TradeHistory = () => {
             }`}
           >
             <Bot className="w-3.5 h-3.5" />
-            <span>{filterBotOnly ? 'SHOWING BOT TRADES ONLY' : 'FILTER BOT TRADES'}</span>
+            <span>{filterBotOnly ? 'BOT ONLY' : 'BOT TRADES'}</span>
           </button>
 
-          <span className="text-slate-400 hidden sm:inline">Filter Pair:</span>
           <select
             value={selectedCoin}
             onChange={(e) => setSelectedCoin(e.target.value)}
-            className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 font-mono outline-none"
+            className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 font-mono outline-none text-xs"
           >
             <option value="ALL">All Asset Pairs</option>
             <option value="BTCUSDT">BTCUSDT (Bitcoin)</option>
@@ -284,6 +312,7 @@ export const TradeHistory = () => {
             <option value="AVAXUSDT">AVAXUSDT (Avalanche)</option>
           </select>
         </div>
+
       </div>
 
       {/* Audit Log Table with Detailed Buy and Sell Leg Columns — Vertical & Horizontal Scrollable */}
