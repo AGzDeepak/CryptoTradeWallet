@@ -256,12 +256,13 @@ export const ArbitrageSection = () => {
                 onChange={(e) => setExchange(e.target.value)}
                 className="w-full bg-[#060d18] border border-slate-700/80 rounded-xl px-3.5 py-3 text-xs text-white font-mono outline-none focus:border-blue-500 transition"
               >
-                <option value="Uniswap V2">Uniswap V2</option>
-                <option value="SushiSwap">SushiSwap</option>
-                <option value="PancakeSwap">PancakeSwap</option>
-                <option value="QuickSwap">QuickSwap</option>
-                <option value="Balancer">Balancer</option>
+                <option value="Camelot DEX (Arbitrum)">Camelot DEX (Arbitrum)</option>
+                <option value="Uniswap V3 (Arbitrum)">Uniswap V3 (Arbitrum)</option>
+                <option value="Trader Joe (Arbitrum)">Trader Joe (Arbitrum)</option>
+                <option value="SushiSwap (Arbitrum)">SushiSwap (Arbitrum)</option>
+                <option value="Balancer (Arbitrum)">Balancer (Arbitrum)</option>
               </select>
+
             </div>
 
             <div>

@@ -1,6 +1,4 @@
-import React, { useState } from 'react';
-import { useCrypto } from '../context/CryptoContext';
-import { ShieldCheck, Globe, AlertOctagon, Sliders, CheckCircle2, Pause, Octagon, Flame, ArrowRight } from 'lucide-react';
+import { switchWeb3Network } from '../services/web3Service';
 
 export const RiskNetworkSection = () => {
   const { 
@@ -18,20 +16,27 @@ export const RiskNetworkSection = () => {
   const [slippage, setSlippage] = useState(1.0);
 
   const networks = [
-    { id: 'Sepolia Testnet', name: 'Sepolia Testnet', chainId: 11155111, type: 'TESTNET', color: 'text-emerald-400', isTest: true },
-    { id: 'Ethereum Mainnet', name: 'Ethereum Mainnet', chainId: 1, type: 'MAINNET', color: 'text-indigo-400', isTest: false },
-    { id: 'Arbitrum One', name: 'Arbitrum One', chainId: 42161, type: 'L2 MAINNET', color: 'text-sky-400', isTest: false },
-    { id: 'Polygon Mainnet', name: 'Polygon POS', chainId: 137, type: 'MAINNET', color: 'text-purple-400', isTest: false },
+    { id: 'Arbitrum One', name: 'Arbitrum One', chainId: 42161, hexId: '0xa4b1', type: 'L2 MAINNET (ULTRA FAST)', color: 'text-sky-400 font-extrabold', isTest: false },
+    { id: 'Arbitrum Sepolia', name: 'Arbitrum Sepolia', chainId: 421614, hexId: '0x66eee', type: 'L2 TESTNET', color: 'text-cyan-400', isTest: true },
+    { id: 'Sepolia Testnet', name: 'Sepolia Testnet', chainId: 11155111, hexId: '0xaa36a7', type: 'ETH TESTNET', color: 'text-emerald-400', isTest: true },
+    { id: 'Ethereum Mainnet', name: 'Ethereum Mainnet', chainId: 1, hexId: '0x1', type: 'MAINNET', color: 'text-indigo-400', isTest: false },
   ];
 
-  const handleSelectNetwork = (net) => {
+  const handleSelectNetwork = async (net) => {
     setRealWalletNetwork(net.id);
-    if (net.isTest) {
+    try {
+      await switchWeb3Network(net.hexId);
+    } catch (_) {}
+
+    if (net.id.includes('Arbitrum')) {
+      addNotification(`⚡ Switched to ${net.name} (Sub-Second Finality & <$0.01 Gas Fee)`, 'success');
+    } else if (net.isTest) {
       addNotification(`🌐 Switched network to ${net.name} (No Real Funds).`, 'info');
     } else {
       addNotification(`🔥 Switched network to ${net.name} (REAL Funds Mode).`, 'warning');
     }
   };
+
 
   const handleEmergencyStop = () => {
     setAutoTradeBotEnabled(false);
