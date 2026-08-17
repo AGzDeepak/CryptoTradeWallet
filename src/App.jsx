@@ -35,6 +35,7 @@ import { TradeHistorySection } from './components/TradeHistorySection';
 import { AutoTradeSection } from './components/auto-trade/AutoTradeSection';
 import { RiskNetworkSection } from './components/RiskNetworkSection';
 import { FlashArbitrageTerminal } from './components/FlashArbitrageTerminal';
+import { ArbitrageSection } from './components/ArbitrageSection';
 
 const DashboardContent = () => {
   const { activeTab } = useCrypto();
@@ -69,10 +70,11 @@ const DashboardContent = () => {
           <AutoTradeSection />
         )}
 
-        {/* ── 6. ARBITRAGE SECTION (FLASH LOANS + REMIX + METAMASK) ── */}
+        {/* ── 6. ARBITRAGE SECTION (2-EXCHANGE, TRIANGULAR, MULTI-PAIR & FLASH LOAN ATOMIC) ── */}
         {(activeTab === 'arbitrage' || activeTab === 'contracts' || activeTab === 'solidity') && (
-          <FlashArbitrageTerminal />
+          <ArbitrageSection />
         )}
+
 
 
       </div>
