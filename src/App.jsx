@@ -30,136 +30,50 @@ import { RealWeb3TradingSection } from './components/RealWeb3TradingSection';
 import { EthereumMainnetTradeSection } from './components/EthereumMainnetTradeSection';
 import { ContractProcessSection } from './components/ContractProcessSection';
 import { SolidityContractSection } from './components/SolidityContractSection';
-import { BankToBankTransferSection } from './components/BankToBankTransferSection';
 import { ExchangesSection } from './components/ExchangesSection';
 import { TradeHistorySection } from './components/TradeHistorySection';
 import { AutoTradeSection } from './components/auto-trade/AutoTradeSection';
+import { RiskNetworkSection } from './components/RiskNetworkSection';
+import { FlashArbitrageTerminal } from './components/FlashArbitrageTerminal';
 
 const DashboardContent = () => {
   const { activeTab } = useCrypto();
+
 
   return (
     <main className="flex-1 overflow-y-auto pb-24 lg:pb-8 no-scrollbar bg-[#060d18]">
       <div className="p-6 lg:p-8 space-y-0 min-h-full">
 
-        {/* ── AUTO TRADE SECTION ── */}
-        {activeTab === 'autotrade' && (
-          <AutoTradeSection />
-        )}
-
-        {/* ── DASHBOARD ── */}
-        {(activeTab === 'dashboard' || !['autotrade','papertrading','simulation','account','wallet','realwallet','ethmainnet','contracts','solidity',
-          'decentralized','contractprocess','banktransfer','portfolio','metamaskterminal','realtrading',
-          'exchanges','tradehistory','settings','markets','scanner','trades','strategies','analytics'].includes(activeTab)) && (
-          <div className="space-y-6">
-            <TotalAssetsHero />
-          </div>
-        )}
-
-
-        {/* ── ETHEREUM MAINNET ORIGINAL TRADE ── */}
-        {activeTab === 'ethmainnet' && (
-          <EthereumMainnetTradeSection />
-        )}
-
-        {/* ── EXCHANGES ── */}
-        {activeTab === 'exchanges' && (
-          <ExchangesSection />
-        )}
-
-        {/* ── TRADE HISTORY ── */}
-        {activeTab === 'tradehistory' && (
-          <TradeHistorySection />
-        )}
-
-        {/* ── PAPER TRADING ── */}
-        {activeTab === 'papertrading' && (
-          <div className="space-y-6">
-            <PaperTradingPanel />
-            <LivePositions />
-          </div>
-        )}
-
-        {/* ── SIMULATION ── */}
-        {activeTab === 'simulation' && (
-          <SimulationSection />
-        )}
-
-        {/* ── ACCOUNT ── */}
-        {activeTab === 'account' && (
-          <AccountSection />
-        )}
-
-        {/* ── WALLET ── */}
-        {activeTab === 'wallet' && (
-          <WalletSection />
-        )}
-
-        {/* ── REAL TRADING & SEPOLIA EXCHANGE ── */}
-        {(activeTab === 'metamaskterminal' || activeTab === 'realtrading') && (
+        {/* ── 1. TRADE SECTION ── */}
+        {(activeTab === 'trade' || activeTab === 'papertrading' || activeTab === 'metamaskterminal' || activeTab === 'realtrading') && (
           <RealWeb3TradingSection />
         )}
 
-        {/* ── REAL WALLET ── */}
-        {activeTab === 'realwallet' && (
-          <RealWallet />
+        {/* ── 2. MARKET SECTION ── */}
+        {(activeTab === 'market' || activeTab === 'exchanges' || activeTab === 'markets' || activeTab === 'scanner') && (
+          <ExchangesSection />
         )}
 
-        {/* ── DECENTRALIZED VAULT WALLET ── */}
-        {activeTab === 'decentralized' && (
-          <DecentralizedWalletView />
-        )}
-
-        {/* ── SMART CONTRACTS & SOLIDITY ENGINE ── */}
-        {(activeTab === 'contracts' || activeTab === 'solidity' || activeTab === 'contractprocess') && (
-          <SolidityContractSection />
-        )}
-
-        {/* ── BANK TO BANK TRANSFER ── */}
-        {activeTab === 'banktransfer' && (
-          <BankToBankTransferSection />
-        )}
-
-        {/* ── PORTFOLIO ── */}
-        {activeTab === 'portfolio' && (
+        {/* ── 3. PORTFOLIO SECTION ── */}
+        {(activeTab === 'portfolio' || activeTab === 'account' || activeTab === 'wallet' || activeTab === 'realwallet' || activeTab === 'decentralized' || activeTab === 'dashboard') && (
           <WalletSection />
         )}
 
-        {/* ── MARKETS ── */}
-        {activeTab === 'markets' && (
-          <div className="space-y-6">
-            <TotalAssetsHero />
-            <OperationSwapTool />
-          </div>
+        {/* ── 4. RISK & NETWORK SECTION ── */}
+        {(activeTab === 'risk' || activeTab === 'settings') && (
+          <RiskNetworkSection />
         )}
 
-        {/* ── MARKET SCANNER ── */}
-        {activeTab === 'scanner' && (
-          <MarketScanner />
+        {/* ── 5. AUTOMATION SECTION ── */}
+        {(activeTab === 'automation' || activeTab === 'autotrade') && (
+          <AutoTradeSection />
         )}
 
-        {/* ── TRADE HISTORY LEDGER ── */}
-        {activeTab === 'trades' && (
-          <TradeHistory />
+        {/* ── 6. ARBITRAGE SECTION (FLASH LOANS + REMIX + METAMASK) ── */}
+        {(activeTab === 'arbitrage' || activeTab === 'contracts' || activeTab === 'solidity') && (
+          <FlashArbitrageTerminal />
         )}
 
-        {/* ── AI STRATEGIES ── */}
-        {activeTab === 'strategies' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-            <AiStrategyPanel />
-            <OperationSwapTool />
-          </div>
-        )}
-
-        {/* ── ANALYTICS ── */}
-        {activeTab === 'analytics' && (
-          <AnalyticsSection />
-        )}
-
-        {/* ── SETTINGS ── */}
-        {activeTab === 'settings' && (
-          <SettingsModal />
-        )}
 
       </div>
     </main>

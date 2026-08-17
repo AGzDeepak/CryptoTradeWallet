@@ -18,12 +18,14 @@ export const MobileBottomNav = () => {
   const { activeTab, setActiveTab } = useCrypto();
 
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
-    { id: 'autotrade', label: 'Auto Trade', icon: Cpu },
-    { id: 'metamaskterminal', label: 'MetaMask', icon: Zap },
-    { id: 'realwallet', label: 'Real Wallet', icon: Gem },
-    { id: 'account', label: 'Account', icon: User }
+    { id: 'trade', label: 'Trade', icon: Zap },
+    { id: 'market', label: 'Market', icon: LayoutGrid },
+    { id: 'portfolio', label: 'Portfolio', icon: User },
+    { id: 'risk', label: 'Risk', icon: ShieldCheck },
+    { id: 'automation', label: 'Auto', icon: Cpu },
+    { id: 'arbitrage', label: 'Arbitrage', icon: Gem }
   ];
+
 
 
   return (

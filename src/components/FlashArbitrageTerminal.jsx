@@ -430,7 +430,7 @@ export const FlashArbitrageTerminal = () => {
           </div>
         </div>
 
-        {/* Right 1 Col: Flash Arbitrage Audit History */}
+        {/* Right 1 Col: Flash Arbitrage Audit History & Remix IDE Integration */}
         <div className="space-y-4">
           <div className="rounded-2xl bg-[#0d1523] border border-slate-800/70 p-5 space-y-4">
             <div className="flex items-center justify-between">
@@ -443,9 +443,9 @@ export const FlashArbitrageTerminal = () => {
               </span>
             </div>
 
-            <div className="space-y-3 max-h-[420px] overflow-y-auto custom-scrollbar pr-1">
+            <div className="space-y-3 max-h-[220px] overflow-y-auto custom-scrollbar pr-1">
               {flashLogs.map((log) => (
-                <div key={log.id} className="p-3 rounded-xl bg-[#060d18] border border-slate-800/80 space-y-1.5 text-xs">
+                <div key={log.id} className="p-3 rounded-xl bg-[#060d18] border border-slate-800/80 space-y-1.5 text-xs font-mono">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-white">{log.pair}</span>
                     <span className="text-[10px] text-emerald-400 font-bold">+${fmt(log.netProfitUsd)} USDT</span>
@@ -454,12 +454,39 @@ export const FlashArbitrageTerminal = () => {
                     <span>Borrowed: ${fmt(log.loanUsd)}</span>
                     <span className="text-amber-400">{log.provider}</span>
                   </div>
-                  <div className="text-[10px] text-slate-500 font-mono truncate">
+                  <div className="text-[10px] text-slate-500 truncate">
                     Tx: {log.txHash.substring(0, 24)}…
                   </div>
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Live Remix IDE & MetaMask Contract Deployment Card */}
+          <div className="rounded-2xl bg-[#0d1523] border border-violet-500/30 p-5 space-y-3 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Cpu className="w-4 h-4 text-violet-400" />
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider">Remix IDE & MetaMask Web3 Provider</h3>
+              </div>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-violet-500/20 text-violet-300 font-mono font-bold">
+                SOLIDITY 0.8.20
+              </span>
+            </div>
+
+            <p className="text-[11px] text-slate-400 leading-relaxed font-mono">
+              Deploy your zero-collateral Flash Loan Arbitrage smart contract on Sepolia / Mainnet using Remix IDE and MetaMask Injected Web3 Provider.
+            </p>
+
+            <a
+              href="https://remix.ethereum.org"
+              target="_blank"
+              rel="noreferrer"
+              className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold font-mono transition flex items-center justify-center gap-1.5 shadow-lg shadow-violet-600/20"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span>Open in Remix IDE ↗</span>
+            </a>
           </div>
         </div>
 
@@ -467,3 +494,4 @@ export const FlashArbitrageTerminal = () => {
     </div>
   );
 };
+

@@ -11,7 +11,8 @@ import {
   LogOut,
   Moon,
   Flame,
-  FileCode,
+  ShieldCheck,
+  Zap,
   Cpu
 } from 'lucide-react';
 
@@ -20,17 +21,14 @@ export const Sidebar = () => {
   const { activeTab, setActiveTab, logout } = useCrypto();
 
   const navItems = [
-    { id: 'dashboard',    label: 'Dashboard',     icon: LayoutDashboard },
-    { id: 'autotrade',    label: 'Auto Trade',    icon: Cpu },
-    { id: 'ethmainnet',   label: 'ETH Mainnet',   icon: Flame },
-    { id: 'contracts',    label: 'Smart Contracts', icon: FileCode },
-    { id: 'exchanges',    label: 'Market',         icon: BarChart2 },
-    { id: 'papertrading', label: 'Trade',          icon: ArrowLeftRight },
-    { id: 'tradehistory', label: 'History',        icon: ClipboardList },
-    { id: 'account',      label: 'Portfolio',      icon: Briefcase },
-    { id: 'wallet',       label: 'Wallet',         icon: Wallet },
-    { id: 'settings',     label: 'Settings',       icon: Settings },
+    { id: 'trade',       label: 'Trade',          icon: ArrowLeftRight },
+    { id: 'market',      label: 'Market',         icon: BarChart2 },
+    { id: 'portfolio',   label: 'Portfolio',      icon: Briefcase },
+    { id: 'risk',        label: 'Risk & Network', icon: ShieldCheck },
+    { id: 'automation',  label: 'Automation',     icon: Cpu },
+    { id: 'arbitrage',   label: 'Arbitrage',      icon: Zap },
   ];
+
 
 
   return (
