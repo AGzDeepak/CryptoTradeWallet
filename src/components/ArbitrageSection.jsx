@@ -4,9 +4,11 @@ import {
   Zap, Play, Square, ExternalLink, RefreshCw, AlertCircle, 
   Info, ArrowRight, Layers, Cpu, CheckCircle2, ShieldCheck, DollarSign
 } from 'lucide-react';
+import { SolidityContractStudio } from './SolidityContractStudio';
 
 const fmt = (n, dec = 2) =>
   (n || 0).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+
 
 export const ArbitrageSection = () => {
   const { 
@@ -394,43 +396,13 @@ export const ArbitrageSection = () => {
               </div>
             </div>
 
-            {/* Remix IDE Smart Contract Integration Box */}
-            <div className="p-5 rounded-2xl bg-[#060e1c] border border-violet-500/40 space-y-3 font-mono">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div>
-                  <h4 className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
-                    <Cpu className="w-4 h-4 text-violet-400" />
-                    <span>Solidity Smart Contract (Remix IDE & MetaMask)</span>
-                  </h4>
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Deploy your production `FlashArbitrageBot.sol` on Sepolia / Mainnet using Remix IDE and MetaMask Injected Provider.
-                  </p>
-                </div>
-
-                <a
-                  href="https://remix.ethereum.org"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs font-mono transition flex items-center gap-1.5 shadow-lg shadow-violet-600/25 shrink-0"
-                >
-                  <span>Open in Remix IDE</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              </div>
-
-              {/* Remix IDE Deployment Setup Guide */}
-              <div className="p-3.5 rounded-xl bg-[#03070f] border border-slate-800 text-[11px] text-slate-300 space-y-1.5">
-                <div className="flex items-center justify-between text-slate-400">
-                  <span>Compiler Version: <strong className="text-emerald-400">0.8.20</strong></span>
-                  <span>Environment: <strong className="text-cyan-400">Injected Provider - MetaMask</strong></span>
-                </div>
-                <p className="text-[10px] text-slate-500">
-                  Contract Address: <span className="text-slate-400 font-bold">0x71C7656EC7ab88b098defB751B7401B5f6d7B41</span> (Verified on Sepolia)
-                </p>
-              </div>
+            {/* Production Solidity Contract Studio & Remix Deployer */}
+            <div className="pt-2">
+              <SolidityContractStudio />
             </div>
           </div>
         )}
+
 
 
         {/* ── COMMON PARAMETER INPUTS ── */}
