@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import {
   Zap, AlertOctagon, CheckCircle, XCircle,
@@ -82,6 +82,7 @@ export const ArbitrageSection = () => {
   const [backendOnline, setBackendOnline] = useState(false);
   const wsRef = useRef(null);
   const [status, setStatus] = useState(null);
+  const [readiness, setReadiness] = useState(null);
   const [config, setConfig] = useState(null);
   const [opportunities, setOpportunities] = useState([]);
   const [trades, setTrades] = useState([]);
@@ -110,7 +111,7 @@ export const ArbitrageSection = () => {
       ws.onmessage = (e) => {
         const msg = JSON.parse(e.data);
         if (msg.type === 'opportunities') setOpportunities(msg.data);
-        else if (msg.type === 'stats') setStats(msg.data);
+        else if (msg.type === 'stats') { setStats(msg.data); if (msg.data.readiness_status) setStatus(msg.data.readiness_status); }
         else if (msg.type === 'market') setPrices(msg.data);
         else if (msg.type === 'gas') setGas(msg.data);
         else if (msg.type === 'trade') setTrades(p => [msg.data, ...p].slice(0, 100));
@@ -125,9 +126,15 @@ export const ArbitrageSection = () => {
 
   useEffect(() => {
     connectWs();
-    fetchConfig(); fetchTrades();
-    return () => wsRef.current?.close();
+    fetchConfig(); fetchTrades(); fetchReadiness();
+    const interval = setInterval(fetchReadiness, 5000);
+    return () => { clearInterval(interval); wsRef.current?.close(); };
   }, []);
+
+  const fetchReadiness = async () => {
+    try { const r = await fetch(BACKEND+'/api/arbitrage/readiness'); if (r.ok) { const d = await r.json(); setReadiness(d); setStatus(d.status); } } catch (_) {}
+  };
+
 
   useEffect(() => { if (terminalRef.current) terminalRef.current.scrollTop = terminalRef.current.scrollHeight; }, [logs]);
 

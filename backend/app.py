@@ -88,6 +88,11 @@ async def websocket_endpoint(ws: WebSocket):
 async def get_status():
     return arbitrage_engine.get_status()
 
+@app.get("/api/arbitrage/readiness")
+async def get_readiness():
+    return arbitrage_engine.check_readiness()
+
+
 @app.get("/api/arbitrage/opportunities")
 async def get_opportunities():
     return {
