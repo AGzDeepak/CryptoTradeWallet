@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import {
   Zap, AlertOctagon, CheckCircle, XCircle, TrendingUp, Activity,
@@ -6,6 +6,7 @@ import {
   AlertTriangle, BarChart2, Play, Square, Eye, Clock, ChevronRight,
   Layers, Target, GitBranch, Hash, Flame, TrendingDown
 } from 'lucide-react';
+import { ContractPanel } from './ContractPanel';
 
 const BACKEND = 'http://localhost:8000';
 const WS_URL  = 'ws://localhost:8000/ws/arbitrage';
@@ -694,6 +695,7 @@ export const ArbitrageSection = () => {
       <div className="flex gap-1 bg-[#0a1020] rounded-xl p-1 border border-slate-800/60 overflow-x-auto">
         {[
           { id: 'execute',       label: '⚡ Execute',           icon: Zap },
+          { id: 'contract',      label: '📄 Contract',          icon: Layers },
           { id: 'opportunities', label: 'Opportunities (' + executableOpps.length + ')', icon: Target },
           { id: 'terminal',      label: 'Terminal',             icon: Terminal },
           { id: 'readiness',     label: '22-Pt Audit',          icon: Shield },
@@ -708,6 +710,13 @@ export const ArbitrageSection = () => {
           </button>
         ))}
       </div>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          TAB: CONTRACT — FlashArbitrageExecutor Contract Management
+      ══════════════════════════════════════════════════════════════════════ */}
+      {activeTab === 'contract' && (
+        <ContractPanel mode={mode} connected={connected} />
+      )}
 
       {/* ══════════════════════════════════════════════════════════════════════
           TAB: EXECUTE — Main Flash Trade Panel

@@ -207,35 +207,184 @@ class ExecutionEngine:
         return trade
 
     async def _execute_onchain(self, trade: TradeRecord, opp: ArbitrageOpportunity) -> TradeRecord:
-        """Real on-chain execution via deployed FlashArbitrageExecutor contract."""
+        """
+        Real on-chain execution via deployed FlashArbitrageExecutor contract.
+        Full lifecycle: verify → simulate → build tx → sign → broadcast → receipt → parse events.
+        """
+        from backend.bot.contract_manager import contract_manager, ContractStatus
+
+        # ── 1. Verify contract is deployed ────────────────────────────────────
+        self._emit("INFO", "EXEC", "Verifying FlashArbitrageExecutor contract on-chain...")
+        contract_info = await contract_manager.verify_onchain()
+
+        if contract_info["status"] == ContractStatus.NOT_CONFIGURED:
+            trade.status = "FAILED"
+            trade.error_message = "DEPLOYED_CONTRACT not set — deploy FlashArbitrageExecutor.sol first"
+            self._emit("ERROR", "EXEC", "❌ DEPLOYED_CONTRACT not configured in .env")
+            self._emit("ERROR", "EXEC", "   Deploy via Remix IDE → set DEPLOYED_CONTRACT=0x... in .env")
+            return trade
+
+        if contract_info["status"] == ContractStatus.NOT_DEPLOYED:
+            trade.status = "FAILED"
+            trade.error_message = f"No contract code at {contract_info['address']}"
+            self._emit("ERROR", "EXEC", f"❌ No contract at {contract_info['address']} on {settings.chain_name}")
+            return trade
+
+        if contract_info["status"] == ContractStatus.UNREACHABLE:
+            trade.status = "FAILED"
+            trade.error_message = f"RPC unreachable: {contract_info['message']}"
+            self._emit("ERROR", "EXEC", f"❌ RPC error: {contract_info['message'][:100]}")
+            return trade
+
+        if contract_info.get("is_paused"):
+            trade.status = "FAILED"
+            trade.error_message = "Contract is paused (emergency stop active)"
+            self._emit("ERROR", "EXEC", "❌ Contract is PAUSED — call resume() first")
+            return trade
+
+        self._emit("INFO", "EXEC", f"✓ Contract VERIFIED: {contract_info['address'][:12]}... | trades={contract_info.get('trade_count', 0)}")
+
         if not settings.rpc_url or not settings.private_key:
             trade.status = "FAILED"
             trade.error_message = "RPC_URL and PRIVATE_KEY required for on-chain execution"
-            self._emit("ERROR", "EXEC", "Missing RPC_URL or PRIVATE_KEY in .env")
+            self._emit("ERROR", "EXEC", "❌ Missing RPC_URL or PRIVATE_KEY in .env")
             return trade
 
         try:
             from web3 import AsyncWeb3
             from eth_account import Account
+            from backend.bot.contract_manager import FLASH_ARB_ABI
 
-            w3 = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(settings.rpc_url))
-            account = Account.from_key(settings.private_key)
+            w3  = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(settings.rpc_url))
+            acct = Account.from_key(settings.private_key)
 
-            self._emit("INFO", "EXEC", f"Chain: {settings.chain_name} | Wallet: {account.address[:8]}...{account.address[-4:]}")
-            self._emit("INFO", "SIMULATION", "Running eth_call simulation...")
+            self._emit("INFO", "EXEC", f"Wallet: {acct.address[:10]}...{acct.address[-6:]} | Chain: {settings.chain_name}")
 
+            checksum_addr = AsyncWeb3.to_checksum_address(contract_info["address"])
+            contract = w3.eth.contract(address=checksum_addr, abi=FLASH_ARB_ABI)
+
+            # ── 2. Build ABI-encoded ArbParams ────────────────────────────────
+            self._emit("INFO", "EXEC", "Building ABI-encoded ArbParams for executeFlashArbitrage()...")
+            trade_id_onchain = contract_info.get("trade_count", 0) + 1
+            params_bytes = contract_manager.build_arb_params(opp, trade_id_onchain)
+
+            asset_addr  = AsyncWeb3.to_checksum_address(settings.flash_loan_asset)
+            amount_raw  = int(opp.input_amount_usd * 1_000_000)  # USDC 6 decimals
+
+            self._emit("INFO", "FLASHLOAN", f"Flash loan: BORROW {amount_raw / 1e6:,.0f} USDC from Aave V3 @ {settings.aave_pool[:10]}...")
+            self._emit("INFO", "DEX", f"Route: {opp.buy_dex} → {opp.pair.split('/')[0]} → {opp.sell_dex} → repay Aave")
+
+            # ── 3. Gas estimation (eth_call simulation) ────────────────────────
+            self._emit("INFO", "SIMULATION", "Running eth_call simulation (gas estimation)...")
+            trade.status = "SIMULATING"
+
+            nonce      = await w3.eth.get_transaction_count(acct.address, "pending")
+            gas_price  = await w3.eth.gas_price
+            self.nonce = nonce
+
+            try:
+                estimated_gas = await contract.functions.executeFlashArbitrage(
+                    asset_addr, amount_raw, params_bytes
+                ).estimate_gas({"from": acct.address, "gasPrice": gas_price})
+                gas_limit = int(estimated_gas * 1.2)  # 20% buffer
+                self._emit("INFO", "GAS", f"Simulation OK — estimated gas: {estimated_gas:,} | limit: {gas_limit:,} | price: {AsyncWeb3.from_wei(gas_price,'gwei'):.4f} gwei")
+            except Exception as sim_err:
+                trade.status = "FAILED"
+                trade.error_message = f"eth_call simulation FAILED: {str(sim_err)[:200]}"
+                self._emit("ERROR", "SIMULATION", f"❌ Simulation REJECTED: {str(sim_err)[:200]}")
+                self._emit("ERROR", "SIMULATION", "Trade aborted — contract would revert on-chain")
+                return trade
+
+            # ── 4. Build and sign transaction ─────────────────────────────────
+            self._emit("INFO", "EXEC", "Building and signing transaction...")
             trade.status = "SIGNING"
-            # Build and send the transaction
-            # (Contract ABI call omitted for brevity — full ABI in contract artifact)
-            self._emit("WARNING", "EXEC", "On-chain execution: deploy FlashArbitrageExecutor.sol first via Remix IDE, then set DEPLOYED_CONTRACT in .env")
-            trade.status = "FAILED"
-            trade.error_message = "Deploy contract first: see contracts/FlashArbitrageExecutor.sol"
+
+            tx = await contract.functions.executeFlashArbitrage(
+                asset_addr, amount_raw, params_bytes
+            ).build_transaction({
+                "chainId":  settings.chain_id,
+                "from":     acct.address,
+                "nonce":    nonce,
+                "gas":      gas_limit,
+                "gasPrice": gas_price,
+            })
+
+            signed_tx = acct.sign_transaction(tx)
+            self._emit("INFO", "EXEC", f"Transaction signed | nonce={nonce} | gas={gas_limit:,}")
+
+            # ── 5. Broadcast ──────────────────────────────────────────────────
+            self._emit("INFO", "TX", "Broadcasting to mempool...")
+            trade.status = "PENDING"
+
+            tx_hash = await w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+            tx_hash_hex = tx_hash.hex()
+            trade.tx_hash = tx_hash_hex
+            self._emit("INFO", "TX", f"Submitted TX: {tx_hash_hex}")
+            self._emit("INFO", "TX", f"Explorer: {settings.explorer_url}/tx/{tx_hash_hex}")
+
+            # ── 6. Wait for receipt ───────────────────────────────────────────
+            self._emit("INFO", "TX", "Waiting for block confirmation...")
+            receipt = await w3.eth.wait_for_transaction_receipt(tx_hash, timeout=60)
+
+            trade.block_number = receipt["blockNumber"]
+            trade.gas_used     = receipt["gasUsed"]
+            gas_cost_eth       = float(AsyncWeb3.from_wei(receipt["gasUsed"] * gas_price, "ether"))
+            # Approximate ETH price from market data for USD conversion
+            from backend.bot.market_data import market_data
+            eth_price = market_data.get_price("ETH") or 2000.0
+            trade.gas_cost_usd = gas_cost_eth * eth_price
+            trade.confirmed_at = time.time()
+
+            self._emit("INFO", "TX", f"Confirmed block={receipt['blockNumber']} | gas={receipt['gasUsed']:,} | status={'SUCCESS' if receipt['status'] == 1 else 'REVERTED'}")
+
+            if receipt["status"] != 1:
+                trade.status        = "REVERTED"
+                trade.error_message = "Transaction reverted on-chain — profit invariant likely failed"
+                trade.actual_profit = -trade.gas_cost_usd
+                self.total_gas_spent += trade.gas_cost_usd
+                self.loss_count += 1
+                self._emit("ERROR", "TX", "❌ TX REVERTED — Contract profit invariant or deadline check failed")
+                return trade
+
+            # ── 7. Parse ArbitrageExecuted event ──────────────────────────────
+            try:
+                events = contract.events.ArbitrageExecuted().process_receipt(receipt)
+                if events:
+                    evt = events[0]["args"]
+                    net_profit_raw  = evt["netProfit"]
+                    actual_profit   = float(net_profit_raw) / 1_000_000  # USDC 6 decimals
+                    trade.actual_profit = actual_profit
+                    self._emit("INFO", "EXEC", f"ArbitrageExecuted event: netProfit={actual_profit:.4f} USDC | tradeId={evt['tradeId']}")
+                else:
+                    # Fallback: use expected profit
+                    trade.actual_profit = opp.net_profit
+                    self._emit("WARNING", "EXEC", "ArbitrageExecuted event not found — using expected profit")
+            except Exception as evt_err:
+                trade.actual_profit = opp.net_profit
+                self._emit("WARNING", "EXEC", f"Event parsing error: {evt_err} — using expected profit")
+
+            trade.status = "CONFIRMED"
+            self.total_profit    += trade.actual_profit
+            self.total_gas_spent += trade.gas_cost_usd
+            self.win_count += 1
+            opp.status = "EXECUTED"
+
+            self._emit("INFO", "EXEC", "=" * 60)
+            self._emit("INFO", "EXEC", f"✅ FLASH ARBITRAGE CONFIRMED ON-CHAIN")
+            self._emit("INFO", "EXEC", f"   TX:       {tx_hash_hex[:20]}...")
+            self._emit("INFO", "EXEC", f"   Block:    {receipt['blockNumber']}")
+            self._emit("INFO", "EXEC", f"   Gas:      {receipt['gasUsed']:,} units (${trade.gas_cost_usd:.4f})")
+            self._emit("INFO", "EXEC", f"   Expected: +${opp.net_profit:.4f} USDC")
+            self._emit("INFO", "EXEC", f"   Actual:   +${trade.actual_profit:.4f} USDC")
+            self._emit("INFO", "EXEC", f"   Explorer: {settings.explorer_url}/tx/{tx_hash_hex}")
+            self._emit("INFO", "EXEC", "=" * 60)
+
             return trade
 
         except Exception as e:
             trade.status = "FAILED"
-            trade.error_message = str(e)
-            self._emit("ERROR", "EXEC", f"On-chain execution error: {e}")
+            trade.error_message = str(e)[:300]
+            self._emit("ERROR", "EXEC", f"On-chain execution error: {str(e)[:200]}")
             return trade
 
     def get_stats(self) -> dict:

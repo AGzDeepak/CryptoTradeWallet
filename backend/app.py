@@ -19,6 +19,7 @@ from backend.bot.execution_engine import execution_engine
 from backend.bot.risk_engine import risk_engine
 from backend.bot.gas_engine import gas_engine
 from backend.bot.market_data import market_data
+from backend.bot.contract_manager import contract_manager
 from backend.websocket.manager import ws_manager
 
 logging.basicConfig(level=settings.log_level, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
@@ -201,6 +202,79 @@ async def emergency_resume():
     risk_engine.deactivate_emergency_stop()
     return {"status": "RESUMED"}
 
+# ─── CONTRACT ENDPOINTS ────────────────────────────────────────────────────────
+
+class SetContractRequest(BaseModel):
+    address: str
+
+@app.get("/api/contract/status")
+async def get_contract_status():
+    """
+    Return cached contract status + deployment info.
+    Includes: address, deployed?, owner, beneficiary, tradeCount, paused, authorized routers.
+    """
+    info = await contract_manager.get_status()
+    return info
+
+@app.post("/api/contract/verify")
+async def verify_contract():
+    """Force a fresh on-chain verification of the deployed contract."""
+    # Invalidate cache
+    contract_manager._cache_ts = 0
+    info = await contract_manager.verify_onchain()
+    return info
+
+@app.post("/api/contract/set-address")
+async def set_contract_address(req: SetContractRequest):
+    """
+    Set the deployed contract address at runtime (updates settings + rewrites .env).
+    The address must be a valid 42-char hex Ethereum address.
+    """
+    addr = req.address.strip()
+    if not addr.startswith("0x") or len(addr) != 42:
+        raise HTTPException(status_code=400, detail="Invalid Ethereum address — must be 0x + 40 hex chars")
+    try:
+        from web3 import Web3
+        checksum = Web3.to_checksum_address(addr)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Address checksum failed — invalid hex characters")
+
+    # Update runtime setting
+    settings.deployed_contract = checksum
+    # Invalidate cache so next call re-verifies
+    contract_manager._cache_ts = 0
+
+    # Persist to .env file if it exists
+    import os, re
+    env_path = ".env"
+    if os.path.exists(env_path):
+        with open(env_path, "r") as f:
+            content = f.read()
+        if "DEPLOYED_CONTRACT=" in content:
+            content = re.sub(r"DEPLOYED_CONTRACT=.*", f"DEPLOYED_CONTRACT={checksum}", content)
+        else:
+            content += f"\nDEPLOYED_CONTRACT={checksum}\n"
+        with open(env_path, "w") as f:
+            f.write(content)
+
+    logger.info(f"Contract address set: {checksum}")
+    return {
+        "success": True,
+        "address": checksum,
+        "message": f"Contract address updated to {checksum}. Run /api/contract/verify to confirm deployment.",
+    }
+
+@app.get("/api/contract/abi")
+async def get_contract_abi():
+    """Return the FlashArbitrageExecutor ABI as JSON."""
+    from backend.bot.contract_manager import FLASH_ARB_ABI
+    return {"abi": FLASH_ARB_ABI, "contract_name": "FlashArbitrageExecutor"}
+
+@app.get("/api/contract/deploy-instructions")
+async def get_deploy_instructions():
+    """Return step-by-step contract deployment instructions for the current chain."""
+    return contract_manager.get_deploy_instructions()
+
 @app.get("/health")
 async def health():
     return {
@@ -209,3 +283,4 @@ async def health():
         "mode": settings.execution_mode,
         "uptime": int(time.time() - arbitrage_engine.start_time) if arbitrage_engine.start_time else 0,
     }
+
